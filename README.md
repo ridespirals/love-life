@@ -12,3 +12,7 @@ Conway's Game of Life in Lua LÖVE
   - Classic Game of Life has the universe string `B3/S23`: A dead cell with exactly 2 neighbors will be born next round, and a cell with exactly 2 or 3 neighbors will survive the next round. A live cell with 0 or 1 neighbors will die of loneliness, and a live cell with 4 or more neighbors will die of overcrowding
   - Another life string `B3/S234` is called the Ant Colony Life, as the board begins to resemble an ant farm: the edges gradually expand, while the center gradually settles down, resembling an ant colony
 5. Video export: gif or mp4 (or some kind of simple video) showing the evolution of the board over a specified number of generations
+
+### Attribution
+
+The idea for this came from the youtube video [The Conway Multiverse](https://www.youtube.com/watch?v=QK_KZv-YyOc&pp=ygURY29ud2F5IG11bHRpdmVyc2U%3D) by user [carykh](https://www.youtube.com/@carykh)
