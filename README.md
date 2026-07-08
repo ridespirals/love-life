@@ -14,31 +14,48 @@ Requires [LÖVE 11.x](https://love2d.org/).
 
 ## Test
 
-Pure Lua tests for grid logic (no LÖVE required):
+Pure Lua tests for simulation logic (no LÖVE required):
 
 ```bash
 lua tests/run.lua
 ```
 
-Coverage today is `src/grid.lua`: B3/S23 birth/survival/death, toroidal neighbor wrap, simultaneous update, and blinker period-2 via `grid.step`.
+Coverage today is `src/grid.lua`: B3/S23 birth/survival/death, toroidal neighbor wrap, simultaneous update, and blinker period-2 via `grid.step`. Rulestring tests land in Milestone 2-A.
 
-## Milestone 1 (current)
+## Configuration
 
-- Configurable grid (`src/config.lua`: `rows`, `cols`, `tileSize`, `activeTheme`)
-- Themes: `classic`, `zenburn`, `solarized` (`src/themes.lua`)
-- Toroidal Conway B3/S23 with next-generation preview dots
-- Centered board in resizable window (space reserved for future bottom status bar)
+Edit `src/config.lua`:
+
+| Key | Purpose |
+|-----|---------|
+| `rows`, `cols`, `tileSize` | Board size and cell pixels |
+| `activeTheme` | `classic`, `zenburn`, or `solarized` |
+| `activeRule` | Rule preset: `conway` (default) or `ant_colony` — wired in M2-A |
+| `defaultPattern` | Pattern id to load on start — wired in M2-B |
+| `stepInterval` | Seconds between auto-steps when playing — used in M3 |
+| `statusBarHeight` | Bottom bar reserve (pixels) |
+
+See `PLAN.md` for the full implementation roadmap.
+
+## Status
+
+**Milestone 1 complete** — grid render, themes, toroidal B3/S23 preview, glider demo seed.
+
+**Next: Milestone 2-A** — configurable rulestrings (`src/rules.lua`).
+
+Planned after that: pattern loader (M2-B), read-only status bar (M2-C), playback (M3).
 
 ## Features
 
 1. Configurable board sizes
-2. Animations and Next Round previews
-3. Multiple color schemes
-4. Alternate rule strings
-  - Rule strings are `Bx/Sy` where `x` refers to the number of cells that allow a cell to be born, and `y` refers to the number of cells required for survival
-  - Classic Game of Life has the universe string `B3/S23`: a dead cell with exactly 3 neighbors is born next round, and a live cell with exactly 2 or 3 neighbors survives. A live cell with 0 or 1 neighbors dies of loneliness, and a live cell with 4 or more neighbors dies of overcrowding
-  - Another life string `B3/S234` is called the Ant Colony Life, as the board begins to resemble an ant farm: the edges gradually expand, while the center gradually settles down, resembling an ant colony
-5. Video export: gif or mp4 (or some kind of simple video) showing the evolution of the board over a specified number of generations
+2. Animations and next-generation preview dots
+3. Multiple color schemes (themes)
+4. Alternate rule strings (`Bx/Sy`)
+  - `B` digits: neighbor counts that birth a dead cell
+  - `S` digits: neighbor counts that let a live cell survive
+  - Classic: `B3/S23` — birth on 3; survive on 2 or 3
+  - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
+5. Video export (planned)
 
 ### Attribution
 
