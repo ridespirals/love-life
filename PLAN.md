@@ -4,8 +4,9 @@
 - **Branch:** `main`
 - **Version:** v1.0 (tagged releases)
 - **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 polish; release packaging CI
-- **Next:** Post-1.0 backlog (tile-size hotkeys, history, picker, export)
+- **Next:** Post-1.0 phased roadmap — see recommended order in PLAN.md (1a fullscreen → Phase 0 animation → Phase 1 shell → …)
 - Complete phases in order; each phase should leave the app runnable and tests green.
+- **Phase 0** and **Phase 1** can ship independently (parallel tracks); Phases 2–5 build on Phase 1.
 
 ## Goal
 Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, theme-driven rendering with next-generation preview markers, loadable initial patterns, configurable rulestrings, bottom status bar, and play/pause/step controls.
@@ -17,7 +18,8 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 | **M1** ✓ | — | Grid render, themes, preview dots, toroidal stepping foundation |
 | **M2** | A → B → C | Configurable rules, pattern loader, status bar stats display |
 | **M3** | A → B → C | Playback engine, controls/docs, RLE import |
-| **Future** | — | History stack, cell editing, runtime pickers, export |
+| **Post-1.0** | 0 → 5 | Step animation, settings UI shell, pickers, userspace, board drawing, grid modes |
+| **Deferred** | — | History stack, RLE export, import UI, video export |
 
 ## Execution Order
 
@@ -32,9 +34,19 @@ flowchart TD
   M3A[M3-A Playback engine]
   M3B[M3-B Controls + README]
   M3C[M3-C RLE import]
-  FUT[Future features]
+  P0[Phase 0 Step animation]
+  P1[Phase 1 UI shell]
+  P2[Phase 2 Rule/Theme pickers]
+  P3[Phase 3 Userspace save/load]
+  P4[Phase 4 Pattern picker + drawing]
+  P5[Phase 5 Grid settings pane]
+  DEF[Deferred features]
 
-  M1 --> M2A --> M2B --> M2C --> M3A --> M3B --> M3C --> FUT
+  M1 --> M2A --> M2B --> M2C --> M3A --> M3B --> M3C
+  M3C --> P0
+  M3C --> P1
+  P0 -.-> P1
+  P1 --> P2 --> P3 --> P4 --> P5 --> DEF
 ```
 
 ### Milestone 1 — Render baseline ✓
@@ -105,15 +117,390 @@ Pure Lua; no LÖVE changes required to finish this phase.
 - **Generation counter** ✓ — status bar shows `Gen: N`.
 - **Fast mode** ✓ — hold `f` for `Play +` label and `0.05` step interval via `playback.setStepInterval`.
 - **Restart control** ✓ — `r` key and status bar Restart button.
-- **Deferred:** `Shift+Up`/`Shift+Down` tile-size hotkeys (reuse same rebuild helper).
+- **Deferred (superseded by Phase 5):** `Shift+Up`/`Shift+Down` tile-size hotkeys — grid settings pane replaces ad-hoc hotkeys.
 
-### Future (planned, post-M3-C)
-- Step backward via generation **history stack** (needs `grid.clone` / snapshot helper)
-- Click-to-toggle cells
-- Pattern picker UI (cycle/load catalog at runtime)
-- Runtime rule / theme switching (keyboard/UI picker)
-- More built-in rule presets and themes
+### Post-1.0 Vision
+
+Turn the status bar from a read-only stats row into the **primary control surface**: clickable labels open docked panes; a master **Settings** button covers grid/display options. Users can pick built-ins, edit drafts in memory, and **Save** custom patterns, rules, and themes to a shareable userspace folder.
+
+**Generation step animation** (Phase 0) is a parallel polish track: it replaces static preview dots with a 3-step morph between generations and can ship independently of the settings UI.
+
+**Fullscreen** (F11 / Alt+Enter) is folded into Phase 1 alongside the UI shell — keyboard-only, no status bar button.
+
+```mermaid
+flowchart TB
+  statusBar[StatusBar clicks]
+  statusBar --> rulePane[Rule pane]
+  statusBar --> themePane[Theme pane]
+  statusBar --> patternPane[Pattern pane]
+  statusBar --> settingsPane[Settings pane]
+  rulePane --> draft[In-memory draft]
+  themePane --> draft
+  patternPane --> draft
+  boardDraw[Board click-draw] --> draft
+  draft -->|Save| userData[Save directory]
+  userData --> merge[Catalog merge on load]
+  merge --> sim[Active simulation]
+```
+
+#### Status bar UX (target layout)
+
+**Left (clickable stat chips):**
+
+| Chip | Opens |
+|------|--------|
+| `Rule: B3/S23` | Rule pane — preset list + custom `Bx/Sy` field + Apply / Save |
+| `Theme: solarized` | Theme pane — preset list + color fields + Apply / Save |
+| `Pattern: glider` | Pattern pane — catalog list + New / Edit / Save |
+| `Size: 40x60` | Settings pane — grid section (or deep-link from master button) |
+| `Gen: N` | Read-only (no pane) |
+
+**Right:** existing Play / Pause / Step / Restart + new **Settings** button (grid, tile size, auto-fit toggle, fullscreen hint).
+
+**Pane behavior:**
+- Docked **above** the status bar, grows upward into the viewport (reduces board draw area while open).
+- One pane open at a time; clicking the same chip or `Esc` closes it.
+- Theme-driven colors; reuse `src/ui/statusbar.lua` color helpers.
+
+#### Draft vs saved state
+
+New session object in `main.lua` (or `src/session.lua`):
+
+| Field | Purpose |
+|-------|---------|
+| `draftRule` | Unsaved custom rulestring / preset selection |
+| `draftTheme` | Unsaved color edits |
+| `draftPattern` | Cells drawn or edited, not yet saved |
+| `gridMode` | `"auto"` (default) or `"forced"` |
+| `forcedTileSize`, `forcedRows`, `forcedCols` | Only used when `gridMode == "forced"` |
+
+- **Apply** — use draft in simulation immediately (recompute preview; optional restart policy per pane).
+- **Save** — write to userspace; assign stable `id` (slug from name).
+- **Discard** — revert draft to last applied/saved state.
+
+Board drawing writes to `draftPattern` / live `world.current` while paused (never while playing).
+
+#### Userspace persistence
+
+All user-created assets live under the LÖVE save directory (shareable, outside the `.love` bundle):
+
+```
+<saveDirectory>/
+  patterns/<id>.lua      # { id, name, cells = {{col,row}, ...} }
+  rules/<id>.lua         # { id, name, rulestring = "B3/S23" }
+  themes/<id>.lua        # { name, alive, dead, grid, background } hex strings
+```
+
+New module: `src/userdata.lua`
+- `getBasePath()` → `love.filesystem.getSaveDirectory() .. "/..."`
+- `list(type)`, `load(type, id)`, `save(type, id, data)`, `delete(type, id)`
+- Pure-Lua serialization helpers (testable without LÖVE) + thin `love.filesystem` IO wrapper
+
+**Catalog merge:** extend `src/patterns.lua`, `src/rules.lua`, `src/themes.lua`:
+- Built-ins first, then user entries from save dir
+- `list()` returns merged ids; `get(id)` checks built-in → bundled RLE → user file
+
+#### Input and interaction rules
+
+- Panes capture mouse/keyboard while open (typing in rule field must not trigger play shortcuts).
+- `Esc` closes top pane.
+- Drawing/editing requires **paused** playback.
+- Resize restart policy:
+  - **Auto mode:** keep current restart-on-resize behavior.
+  - **Forced mode:** resize only recenters; changing grid fields restarts from active pattern/draft.
+
+#### Recommended implementation order
+
+**Do not parallelize Phase 0 and Phase 1 on the same branch** — both touch `main.lua`, `renderer.lua`, and playback timing.
+
+| Step | Phase | Rationale |
+|------|-------|-----------|
+| 1 | **1a — Fullscreen** | F11 / Alt+Enter only; ~30 min, ships immediately, no architectural debt |
+| 2 | **0 — Step animation** | Changes step commit contract; nail before UI shell and board input |
+| 3 | **1 — UI shell + `session.lua`** | Pane framework, clickable chips; centralize state before editors |
+| 4 | **2 — Rule + theme pickers** | Apply-only first; validates pane UX without disk I/O |
+| 5 | **3a — `userdata.lua`** | Persistence API + catalog merge + unit tests |
+| 6 | **3b — Save UI** | Save / Delete on rule + theme panes |
+| 7 | **4a — Pattern picker** | Catalog list + Load (no drawing yet) |
+| 8 | **4b — Board drawing** | Click-to-draw + draft + Save (needs idle animation + input routing) |
+| 9 | **5 — Grid settings** | Auto vs forced letterbox last; changes global resize policy |
+
+**Suggested release slices:**
+
+| Release | Contents |
+|---------|----------|
+| v1.1 | Fullscreen + Phase 0 animation |
+| v1.2 | Phase 1 shell + Phase 2 pickers (Apply only) |
+| v1.3 | Phase 3 persistence + Phase 4a pattern picker |
+| v1.4 | Phase 4b board drawing + Phase 5 grid settings |
+
+**Defer until stable:** history stack (needs Phase 0 commit model), RLE export for user patterns, import file picker UI.
+
+---
+
+### Phase 0 — Generation step animation (parallel polish)
+
+Can ship before UI phases — no pane/status-bar chip work required.
+
+#### Problem today
+
+`src/renderer.lua` draws **current** tiles and **preview dots** for cells where `current ~= next` at the same time. `src/playback.lua` calls `grid.step` immediately, swapping buffers with no visual transition.
+
+#### Target behavior
+
+Replace simultaneous current+preview with a **3-step animation cycle** on each generation advance (manual step or auto-play tick):
+
+| Step | Name | Visual |
+|------|------|--------|
+| 1 | **Rest** | Current generation only — full alive/dead tiles, no preview overlay |
+| 2 | **Anticipate** | Changing cells show growing markers: births = alive-colored dot on dead tile; deaths = dead-colored dot ("hole") on alive tile |
+| 3 | **Resolve** | Birth dots expand to full alive tiles; death "holes" shrink until the tile is empty dead — morph completes to `next` |
+
+After step 3 completes, commit `grid.step` + `grid.computeNext` and return to step 1 (rest on new generation).
+
+When **paused** between steps: stay on step 1 (rest) — no static preview dots; the next state is only revealed through the animation when stepping.
+
+```mermaid
+stateDiagram-v2
+  direction LR
+  Rest --> Anticipate: step triggered
+  Anticipate --> Resolve: phase timer
+  Resolve --> Commit: phase timer
+  Commit --> Rest: grid.step plus computeNext
+```
+
+#### Architecture
+
+**New module:** `src/step_animation.lua`
+
+| API | Role |
+|-----|------|
+| `create(config)` | Phase durations / easing from config |
+| `isIdle()` | True when resting on current gen (step 1) |
+| `isAnimating()` | True during steps 2–3 |
+| `begin(world)` | Start cycle using existing `world.current` + `world.next` (requires prior `computeNext`) |
+| `update(dt)` | Advance phase progress |
+| `getCellVisual(row, col)` | Returns draw hints: base color, overlay type, morph `t` in `[0,1]` |
+
+**Playback change:** `src/playback.lua` and `main.lua` must **defer** `grid.step` until animation finishes:
+
+```lua
+-- Today (immediate):
+advanceGeneration() → grid.step + generation++
+
+-- Target:
+onStepRequest() → stepAnimation.begin(world)   -- world.next already computed
+love.update     → stepAnimation.update(dt)
+onComplete      → grid.step + computeNext + generation++
+```
+
+Auto-play: `stepInterval` measures time **between rest states** (step 1 to step 1), so animation duration adds to perceived cycle length unless config splits "rest hold" vs "morph duration".
+
+**Renderer change:** `src/renderer.lua`
+- Remove static preview-dot block.
+- For each cell, call `step_animation.getCellVisual` (or pass animation state into draw):
+  - **Rest:** draw full tile from `current` only.
+  - **Anticipate:** unchanged tiles = full rect; birth = dead base + growing alive circle; death = alive base + growing dead circle (hole).
+  - **Resolve:** interpolate circle radius → tile half-size (birth) or alive rect inset → hole → gone (death).
+- Use existing `previewDotScale` / min/max radius as **starting** dot size at anticipate phase; full tile = `tileSize / 2`.
+
+**Config additions** in `src/config.lua`:
+
+| Key | Purpose |
+|-----|---------|
+| `stepAnimAnticipateSec` | Duration of step 2 (default ~0.08) |
+| `stepAnimResolveSec` | Duration of step 3 (default ~0.12) |
+| `stepAnimEnabled` | Toggle (default `true`; false = instant step, legacy feel) |
+
+Fast mode (`f` hold): scale animation durations down (e.g. 0.25×) alongside step interval.
+
+#### Files touched
+
+| File | Work |
+|------|------|
+| `src/step_animation.lua` | Phase state machine + per-cell visual math |
+| `src/renderer.lua` | Morph drawing; remove preview dots |
+| `src/playback.lua` | Optional hook: block auto-step while animating |
+| `main.lua` | Wire animation update; defer `advanceGeneration` |
+| `tests/step_animation_spec.lua` | Phase transitions, interpolation at t=0/1 |
+| Docs | README animation note; AGENTS replaces "preview dots while paused" with animation model |
+
+#### Edge cases
+
+- **Step during animation:** queue one step or ignore until idle (recommend: ignore / finish current morph).
+- **Restart / resize / pattern load:** cancel animation, reset to idle, show current grid.
+- **Rule change while paused:** recompute `next`, stay on rest (no preview until step).
+- **Unchanged cells:** full tile throughout all phases (no dot).
+
+**Checkpoint:** Manual step and auto-play both show 3-phase morph; paused board shows current gen only; fast mode speeds morph; tests green.
+
+---
+
+### Phase 1 — UI shell + fullscreen (foundation)
+
+**Delivers:** pane framework, clickable status bar regions, Settings button, fullscreen keys.
+
+| File | Work |
+|------|------|
+| `src/ui/pane.lua` | Pane manager: open/close, draw, hit-test, height |
+| `src/ui/statusbar.lua` | Stat chip hit regions; Settings button; delegate pane draw |
+| `main.lua` | Input routing; F11 + Alt+Enter fullscreen; pass `paneHeight` to renderer |
+| `src/renderer.lua` | Accept optional `paneHeight` to shrink viewport |
+| Docs | README controls |
+
+#### Fullscreen toggle
+
+Keyboard-only fullscreen toggle:
+- **F11** — toggle on/off
+- **Alt+Enter** — toggle on/off (check `return` key with Alt held)
+
+No status bar UI button (Settings pane may show a hint).
+
+```mermaid
+flowchart LR
+  keyPress["F11 or Alt+Enter"] --> toggleFS["love.window.setFullscreen"]
+  toggleFS --> loveResize["love.resize"]
+  loveResize --> rebuild["rebuildWorldForWindow"]
+  rebuild --> autoFit["layout.computeGridSize"]
+  rebuild --> restart["defaultPattern + gen 0"]
+```
+
+Toggle helper in `main.lua`:
+
+```lua
+local function toggleFullscreen()
+  local fullscreen, fstype = love.window.getFullscreen()
+  love.window.setFullscreen(not fullscreen, fstype or "desktop")
+end
+```
+
+Use `"desktop"` fullscreen mode (borderless desktop resolution; works well with resizable/auto-fit grid).
+
+**Tradeoff (unchanged):** toggling fullscreen restarts the simulation, same as manual window resize. On macOS, Option+Return may not map to Alt+Enter; F11 remains the primary cross-platform shortcut.
+
+No `conf.lua` change required — `resizable = true` already set.
+
+**Checkpoint:** panes open/close; fullscreen works; no functional editors yet (placeholder panes OK).
+
+---
+
+### Phase 2 — Runtime rule and theme pickers
+
+**Delivers:** click Rule / Theme chips → working panes with built-in lists.
+
+| File | Work |
+|------|------|
+| `src/ui/panes/rule_pane.lua` | Preset buttons, `Bx/Sy` text input, Apply |
+| `src/ui/panes/theme_pane.lua` | Preset buttons, hex color fields, Apply |
+| `main.lua` | Swap `activeRule` / `theme` on Apply; `grid.computeNext` |
+
+**Checkpoint:** switch conway ↔ ant_colony and themes without editing config file.
+
+---
+
+### Phase 3 — Userspace save/load for rules and themes
+
+**Delivers:** Save custom rule/theme to save directory; merged catalogs.
+
+| File | Work |
+|------|------|
+| `src/userdata.lua` | IO + serialization |
+| `src/rules.lua` / `src/themes.lua` | Load user presets |
+| Rule/Theme panes | Save / Delete buttons, name field |
+| `tests/userdata_spec.lua` | Round-trip serialize tests |
+
+**Checkpoint:** create custom theme, quit, relaunch, still listed.
+
+---
+
+### Phase 4 — Pattern picker + board drawing
+
+**Delivers:** pattern selection, click-to-draw starting state, draft pattern memory.
+
+| File | Work |
+|------|------|
+| `src/ui/panes/pattern_pane.lua` | Catalog list, Load, New (clear + draw mode) |
+| `src/input/board.lua` | `screenToCell` + toggle |
+| `src/patterns.lua` | `fromWorld`, `list` merge user patterns |
+| Pattern pane | Save to userspace as `.lua` |
+
+Board drawing (`src/input/board.lua`):
+- `screenToCell(x, y, layout)` — inverse of `src/renderer.lua` layout math
+- `toggleCell(world, row, col)` on left-click when pane closed or "draw mode" active
+- Only when `playback` paused and no pane consuming clicks
+
+Pattern export: `patterns.fromWorld(world)` → `{ cells = {{col,row}, ...} }` for draft/save.
+
+**Checkpoint:** draw shape on board, save as `my_pattern`, reload from list.
+
+---
+
+### Phase 5 — Grid settings pane (auto vs forced)
+
+**Delivers:** Settings pane for tile size, rows, cols, auto-fit toggle.
+
+Extend `src/layout.lua`:
+
+```lua
+-- auto: current behavior
+computeGridSize(windowW, windowH, tileSize, statusBarHeight)
+
+-- forced: user values; letterbox in viewport
+computeBoardLayout(windowW, windowH, rows, cols, tileSize, statusBarHeight, paneHeight)
+-- returns offsetX, offsetY (centered), same as renderer today
+```
+
+**Auto mode:** window resize → recompute rows/cols from `tileSize` (current `main.lua` `rebuildWorldForWindow`).
+
+**Forced mode:** resize only recenters/letterboxes; **does not** change rows/cols/tileSize. Changing forced values in Settings pane rebuilds grid (restart from selected pattern or current draft).
+
+Config additions in `src/config.lua`: `gridMode`, `forcedRows`, `forcedCols`, `forcedTileSize` (defaults mirror current hints).
+
+| File | Work |
+|------|------|
+| `src/ui/panes/settings_pane.lua` | Auto/forced toggle, numeric fields, Apply |
+| `src/layout.lua` | Forced layout path; letterbox centering |
+| `main.lua` | Split `rebuildWorldForWindow` vs `applyGridSettings` |
+
+**Checkpoint:** force 80×80 @ 8px tile, letterboxed; toggle back to auto-fit on resize.
+
+---
+
+### Post-1.0 testing strategy
+
+| Layer | Approach |
+|-------|----------|
+| `step_animation` phase machine + lerp | Pure Lua unit tests |
+| `userdata` serialize/parse | Pure Lua unit tests |
+| `layout` forced letterbox math | Extend `tests/layout_spec.lua` |
+| `patterns.fromWorld` | Unit test |
+| Pane hit regions | Extend `tests/statusbar_spec.lua` with mock geometry |
+| Full UI | Manual smoke per phase |
+| Fullscreen | Manual smoke — F11 toggle, grid auto-fit, playback after exit (no unit tests; `love.window` is LÖVE-only) |
+
+---
+
+### Explicitly deferred (post-1.0 roadmap)
+
+- Static preview dots (replaced by step animation in Phase 0)
+- RLE export for user patterns (start with `.lua`; RLE export later)
+- Import/share UI (file picker) — users can copy files manually from save dir
+- Step backward / history stack (`grid.clone`)
 - Video export (gif/mp4 or equivalent)
+- Custom app icon / code signing
+- Tile-size hotkeys (`Shift+Up`/`Shift+Down`) — superseded by Phase 5 settings pane
+- More built-in rule presets and themes (users can save custom via Phase 3)
+
+### Future backlog (superseded by post-1.0 phases)
+
+The items below remain tracked for history; implementation is covered by Phases 0–5 unless noted as deferred above.
+
+- ~~Step backward via generation **history stack**~~ — **deferred** (needs `grid.clone` / snapshot helper)
+- ~~Click-to-toggle cells~~ — **Phase 4** (board drawing)
+- ~~Pattern picker UI (cycle/load catalog at runtime)~~ — **Phase 4**
+- ~~Runtime rule / theme switching (keyboard/UI picker)~~ — **Phases 2–3**
+- ~~More built-in rule presets and themes~~ — **Phase 3** userspace + optional built-in expansion
+- ~~Video export (gif/mp4 or equivalent)~~ — **deferred**
 
 ## Planned Files
 
@@ -140,8 +527,19 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `tests/rle_spec.lua` | exists | M3-C ✓ |
 | `tests/layout_spec.lua` | exists | Post-M3 ✓ resize math |
 | `tests/playback_spec.lua` | exists | M3-A ✓ |
-| `tests/statusbar_spec.lua` | exists | Post-M3 ✓ layout/hit-test |
+| `tests/statusbar_spec.lua` | exists | Post-M3 ✓ layout/hit-test; Phase 1+ pane hit regions |
 | `tests/run.lua` | exists | M2-A/B + M3-C register specs |
+| `src/step_animation.lua` | planned | Phase 0 ✓ |
+| `tests/step_animation_spec.lua` | planned | Phase 0 ✓ |
+| `src/ui/pane.lua` | planned | Phase 1 ✓ |
+| `src/ui/panes/rule_pane.lua` | planned | Phase 2 ✓ |
+| `src/ui/panes/theme_pane.lua` | planned | Phase 2 ✓ |
+| `src/ui/panes/pattern_pane.lua` | planned | Phase 4 ✓ |
+| `src/ui/panes/settings_pane.lua` | planned | Phase 5 ✓ |
+| `src/userdata.lua` | planned | Phase 3 ✓ |
+| `tests/userdata_spec.lua` | planned | Phase 3 ✓ |
+| `src/input/board.lua` | planned | Phase 4 ✓ |
+| `src/session.lua` | optional | Phase 2+ draft/save session state |
 | `.github/workflows/test.yml` | exists | CI — Lua 5.4, `lua tests/run.lua` on push/PR |
 | `.github/workflows/release.yml` | exists | v1.0 — tag-triggered build + GitHub Release |
 
@@ -234,8 +632,8 @@ return {
 - State: `running` (bool), `stepInterval` (seconds), `accumulator` (dt).
 - **Play**: set `running = true`; `love.update` advances when accumulator ≥ `stepInterval`.
 - **Pause**: set `running = false`.
-- **Step forward**: single generation regardless of `running` — delegates to `grid.step(world, rules)`.
-- While paused, preview dots still reflect pending next generation.
+- **Step forward**: single generation regardless of `running` — delegates to `grid.step(world, rules)` (v1.0: immediate; **Phase 0**: deferred until animation completes).
+- While paused, preview dots reflect pending next generation (**v1.0**); **Phase 0** replaces static preview dots with 3-step morph on step only.
 - History push on forward step — **deferred** to Future history stack.
 
 ### Step backward (future — history stack)
@@ -292,7 +690,12 @@ return {
 | `statusBarHeight` | `28` | M1 ✓ |
 | `previewDotScale` | `0.18` | M1 ✓ |
 | `previewDotMinRadiusPx` | `2` | M1 ✓ |
-| `previewDotMaxRadiusPx` | `8` | M1 ✓ |
+| `previewDotMaxRadiusPx` | `8` | M1 ✓ (Phase 0 reuses as morph starting size) |
+| `stepAnimAnticipateSec` | `0.08` | Phase 0 |
+| `stepAnimResolveSec` | `0.12` | Phase 0 |
+| `stepAnimEnabled` | `true` | Phase 0 |
+| `gridMode` | `"auto"` | Phase 5 |
+| `forcedRows`, `forcedCols`, `forcedTileSize` | mirror hints | Phase 5 |
 | `activeRule` | `"conway"` | M2-A ✓ |
 | `defaultPattern` | `"glider"` | M2-B ✓ |
 | `stepInterval` | `0.10` | M2-C ✓ (display removed in post-M3; used by playback) |
@@ -356,6 +759,12 @@ return {
 | M2-C | Status bar shows rulestring, size, theme, generation |
 | M3-A | Generations advance on timer / step; preview dots while paused |
 | M3-B | Bar buttons + keys work; README accurate |
+| Phase 0 | 3-phase morph on step; paused board shows current gen only; tests green |
+| Phase 1 | Panes open/close; F11 fullscreen; placeholder panes OK |
+| Phase 2 | Switch rules/themes via panes without config edit |
+| Phase 3 | Custom theme persists across relaunch |
+| Phase 4 | Draw pattern, save, reload from list |
+| Phase 5 | Forced grid letterboxed; auto-fit on toggle back |
 
 ## Open Design Considerations
 - Pattern discovery strategy: keep `patterns.list()` as explicit curated ids, or move to dynamic directory discovery when catalog grows.
@@ -365,7 +774,7 @@ return {
 - Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
 
 ### M1 visual checklist (regression)
-- Expected rows/cols, aligned grid lines, theme colors, preview dots only on changes
+- Expected rows/cols, aligned grid lines, theme colors, preview dots only on changes (v1.0; Phase 0 replaces with step animation)
 - Preview dot scale/clamp, auto-fit dims on resize (restarts sim), toroidal wrap
 
 ## TODO Tracking
@@ -416,12 +825,27 @@ return {
 - [x] Extend tests for RLE loading path and register RLE spec in `tests/run.lua`
 
 ## Next Features (Do Not Delete, Mark Complete Later)
+
+### Post-1.0 phased roadmap (Phases 0–5)
+- [ ] **Phase 0** — Generation step animation (`src/step_animation.lua`; defer `grid.step`)
+- [ ] **Phase 1** — UI shell + fullscreen (pane manager, clickable chips, Settings button, F11/Alt+Enter)
+- [ ] **Phase 2** — Rule and theme pickers (docked panes, built-in Apply)
+- [ ] **Phase 3** — Userspace save/load (`src/userdata.lua`; merged catalogs)
+- [ ] **Phase 4** — Pattern picker + board drawing (draft patterns, click-to-draw)
+- [ ] **Phase 5** — Grid settings pane (auto vs forced, letterbox)
+
+### Deferred (not in Phases 0–5)
 - [ ] Step backward via generation history stack (`grid.clone`)
-- [ ] Add click-to-toggle cell state
-- [ ] Pattern picker UI (cycle/load catalog entries at runtime)
-- [x] Add `gosper_glider_gun` pattern (RLE, M3-C)
-- [ ] Add more built-in rule presets beyond `conway`, `ant_colony`
-- [ ] Add runtime rule switching (keyboard/UI picker)
-- [ ] Add more built-in themes beyond `classic`, `zenburn`, `solarized`
-- [ ] Add runtime theme switching (keyboard/UI picker)
+- [ ] RLE export for user patterns
+- [ ] Import/share UI (file picker)
 - [ ] Add export feature (gif/mp4 or equivalent)
+- [ ] Add `random_soup` — optional procedural seed
+
+### Superseded by post-1.0 phases (mark complete when phase ships)
+- [ ] Add click-to-toggle cell state → **Phase 4**
+- [ ] Pattern picker UI (cycle/load catalog entries at runtime) → **Phase 4**
+- [ ] Add runtime rule switching (keyboard/UI picker) → **Phases 2–3**
+- [ ] Add runtime theme switching (keyboard/UI picker) → **Phases 2–3**
+- [ ] Add more built-in rule presets beyond `conway`, `ant_colony` → **Phase 3** userspace
+- [ ] Add more built-in themes beyond `classic`, `zenburn`, `solarized` → **Phase 3** userspace
+- [x] Add `gosper_glider_gun` pattern (RLE, M3-C)

@@ -76,7 +76,18 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.0** — first tagged release with `.love` and platform packages via GitHub Actions.
 
-**Next:** post-1.0 backlog (tile-size hotkeys, history, picker, runtime switching, export).
+**Next:** post-1.0 phased roadmap — see [`PLAN.md`](PLAN.md) for full detail. Recommended build order: **1a fullscreen → Phase 0 → Phase 1 → Phases 2–5** (do not parallelize Phase 0 and Phase 1 on one branch).
+
+| Phase | Delivers |
+|-------|----------|
+| **0** | 3-step generation morph (replaces preview dots) |
+| **1** | Pane UI shell, clickable status bar, fullscreen (F11 / Alt+Enter) |
+| **2** | Rule and theme pickers |
+| **3** | Userspace save/load for custom rules and themes |
+| **4** | Pattern picker + click-to-draw board editing |
+| **5** | Grid settings (auto-fit vs forced size, letterbox) |
+
+Deferred: history stack (step backward), RLE export, import UI, video export.
 
 ## Status bar
 
@@ -95,6 +106,8 @@ See `PLAN.md` for the full implementation roadmap.
 - `q`: quit app
 - Status bar buttons: `Play`, `Pause`, `Step`, `Restart` (mouse click)
 
+**Planned (Phase 1):** `F11` and `Alt+Enter` toggle fullscreen. Toggling fullscreen restarts the simulation (same as window resize).
+
 Resizing the window recomputes grid dimensions to fill the viewport and restarts the simulation from `defaultPattern` (generation resets to 0, playback pauses).
 
 ## RLE Support
@@ -109,14 +122,15 @@ Resizing the window recomputes grid dimensions to fill the viewport and restarts
 ## Features
 
 1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on load and resize)
-2. Animations and next-generation preview dots
+2. Next-generation preview dots (v1.0); **Phase 0** replaces with step animation morph
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)
   - `B` digits: neighbor counts that birth a dead cell
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. Video export (planned)
+5. In-game settings UI, pattern editor, and userspace save/load (Phases 1–5 — see `PLAN.md`)
+6. Video export (deferred)
 
 ### Attribution
 
