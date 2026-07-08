@@ -3,7 +3,7 @@
 ## Plan Status
 - **Branch:** `main`
 - **Done:** Milestone 1 (render baseline + grid tests)
-- **Next:** Milestone 2-A — rulestrings (`src/rules.lua`, wire `grid.computeNext`)
+- **Next:** Milestone 2-B — patterns (`patterns/`, `src/patterns.lua`, remove `seedGlider`)
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -106,15 +106,15 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `conf.lua` | exists | — |
 | `src/config.lua` | exists | M2-A `activeRule`; M2-B `defaultPattern`; M2-C `stepInterval` |
 | `src/themes.lua` | exists | — |
-| `src/grid.lua` | exists | M2-A rules param; M2-B remove `seedGlider` |
+| `src/grid.lua` | exists | M2-A ✓ rules param; M2-B remove `seedGlider` |
 | `src/renderer.lua` | exists | — |
-| `src/rules.lua` | **todo** | M2-A |
+| `src/rules.lua` | exists | M2-A ✓ |
 | `src/patterns.lua` | **todo** | M2-B |
 | `patterns/*.lua` | **todo** | M2-B |
 | `src/ui/statusbar.lua` | **todo** | M2-C display; M3-B controls |
 | `src/playback.lua` | **todo** | M3-A |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
-| `tests/rules_spec.lua` | **todo** | M2-A |
+| `tests/rules_spec.lua` | exists | M2-A ✓ |
 | `tests/run.lua` | exists | M2-A register `rules_spec` |
 
 ## Design Decisions (locked before implementation)
@@ -257,7 +257,7 @@ return {
 | `previewDotScale` | `0.18` | M1 ✓ |
 | `previewDotMinRadiusPx` | `2` | M1 ✓ |
 | `previewDotMaxRadiusPx` | `8` | M1 ✓ |
-| `activeRule` | `"conway"` | M2-A |
+| `activeRule` | `"conway"` | M2-A ✓ |
 | `defaultPattern` | `"glider"` | M2-B |
 | `stepInterval` | `0.15` | M2-C |
 
@@ -322,12 +322,12 @@ return {
 - [x] Wire load/draw lifecycle and resizable window defaults
 - [x] Add plain Lua unit tests for `src/grid.lua` (`tests/run.lua`)
 
-### Milestone 2-A — Rulestrings
-- [ ] Add `src/rules.lua` — `Bx/Sy` parser and presets (`conway`, `ant_colony`)
-- [ ] Add `tests/rules_spec.lua`; register in `tests/run.lua`
-- [ ] Add `activeRule` to `src/config.lua`
-- [ ] Refactor `grid.computeNext(world, rules)` and `grid.step(world, rules)`
-- [ ] Update `tests/grid_spec.lua` for explicit rules argument
+### Milestone 2-A — Rulestrings ✓
+- [x] Add `src/rules.lua` — `Bx/Sy` parser and presets (`conway`, `ant_colony`)
+- [x] Add `tests/rules_spec.lua`; register in `tests/run.lua`
+- [x] Add `activeRule` to `src/config.lua`
+- [x] Refactor `grid.computeNext(world, rules)` and `grid.step(world, rules)`
+- [x] Update `tests/grid_spec.lua` for explicit rules argument
 
 ### Milestone 2-B — Patterns
 - [ ] Add `defaultPattern` to `src/config.lua`

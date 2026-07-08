@@ -59,24 +59,24 @@ function M.countNeighbors(world, row, col)
   return count
 end
 
-function M.computeNext(world)
+function M.computeNext(world, rules)
   for row = 1, world.rows do
     for col = 1, world.cols do
       local alive = world.current[row][col]
       local neighbors = M.countNeighbors(world, row, col)
 
       if alive then
-        world.next[row][col] = neighbors == 2 or neighbors == 3
+        world.next[row][col] = rules.survival[neighbors] == true
       else
-        world.next[row][col] = neighbors == 3
+        world.next[row][col] = rules.birth[neighbors] == true
       end
     end
   end
 end
 
-function M.step(world)
+function M.step(world, rules)
   world.current, world.next = world.next, world.current
-  M.computeNext(world)
+  M.computeNext(world, rules)
 end
 
 function M.isAlive(world, row, col)
