@@ -2,6 +2,23 @@
 
 Conway's Game of Life in Lua LÖVE
 
+## Run
+
+From the repo root:
+
+```bash
+love .
+```
+
+Requires [LÖVE 11.x](https://love2d.org/).
+
+## Milestone 1 (current)
+
+- Configurable grid (`src/config.lua`: `rows`, `cols`, `tileSize`, `activeTheme`)
+- Themes: `classic`, `zenburn`, `solarized` (`src/themes.lua`)
+- Toroidal Conway B3/S23 with next-generation preview dots
+- Centered board in resizable window (space reserved for future bottom status bar)
+
 ## Features
 
 1. Configurable board sizes

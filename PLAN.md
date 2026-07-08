@@ -1,7 +1,7 @@
 # PLAN
 
 ## Plan Status
-- Current stage: approved planning, implementation not started.
+- Current stage: **Milestone 1 complete** on branch `milestone-1`.
 - Source plan: configurable grid renderer with next-state preview, themes, patterns, status bar, and playback controls.
 - Implementation split into milestones (see below); complete in order.
 
@@ -264,11 +264,11 @@ return {
 ## TODO Tracking
 
 ### Milestone 1
-- [ ] Create minimal LÖVE entry files and module layout (`main.lua`, `conf.lua`, `src/*`)
-- [ ] Add `src/themes.lua` with named theme registry (`classic`, `zenburn`, `solarized`)
-- [ ] Implement world/grid model with toroidal B3/S23 `computeNextState`
-- [ ] Render theme-driven fills, preview center dots, and grid lines (centered above future status bar area)
-- [ ] Wire load/draw lifecycle and resizable window defaults
+- [x] Create minimal LÖVE entry files and module layout (`main.lua`, `conf.lua`, `src/*`)
+- [x] Add `src/themes.lua` with named theme registry (`classic`, `zenburn`, `solarized`)
+- [x] Implement world/grid model with toroidal B3/S23 `computeNextState`
+- [x] Render theme-driven fills, preview center dots, and grid lines (centered above future status bar area)
+- [x] Wire load/draw lifecycle and resizable window defaults
 
 ### Milestone 2
 - [ ] Add `patterns/*.lua` catalog and `src/patterns.lua` loader

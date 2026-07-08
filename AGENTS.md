@@ -3,7 +3,8 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- Current phase: initial rendering baseline (before full simulation loop).
+- Current phase: Milestone 1 complete (render baseline); Milestone 2 next (patterns + status bar).
+- Active branch: `milestone-1`
 
 ## Product Direction
 - Build a configurable board of square tiles representing world state.
