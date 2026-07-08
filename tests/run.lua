@@ -8,6 +8,7 @@ package.path = table.concat({
 
 local specs = {
   "tests/grid_spec.lua",
+  "tests/layout_spec.lua",
   "tests/patterns_spec.lua",
   "tests/playback_spec.lua",
   "tests/rle_spec.lua",

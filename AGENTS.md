@@ -3,7 +3,7 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Milestone 3-C complete (RLE import); next up is future backlog prioritization.
+- **Current phase:** Milestone 3-C complete (RLE import); post-M3 auto-fit grid on resize; next up is future backlog prioritization.
 - **Active branch:** `main`
 
 ## Execution Order
@@ -23,6 +23,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 
 ## Product Direction
 - Build a configurable board of square tiles representing world state.
+- Grid `rows`/`cols` **auto-fit** the window at load and on resize (see `src/layout.lua`); config values are starting hints for initial window sizing.
 - Cell states: alive, dead.
 - Toroidal universe (edges wrap).
 - Visuals use named **themes** (colors only, not sizes).
@@ -55,6 +56,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 - **M3-B** ✓: status bar play/pause/step controls + keyboard shortcuts/docs.
 - **M3-C** ✓: RLE parser and file resolution in `src/patterns.lua` (`.lua` first, then `.rle`).
 - `stepInterval` = seconds between auto-generations when playing.
+- **Resize:** `love.resize` rebuilds the grid to fill the viewport and restarts from `defaultPattern` (same reset semantics as Restart).
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
 ## Next-State Preview Requirement
@@ -79,7 +81,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 ## Planned Runtime/Code Shape
 - `conf.lua`: window/app configuration (resizable).
 - `main.lua`: LÖVE entry, input, lifecycle.
-- `src/config.lua`: board dimensions, theme, `activeRule`, `defaultPattern`, `stepInterval`, status bar height.
+- `src/config.lua`: board dimensions (runtime auto-fit), theme, `activeRule`, `defaultPattern`, `stepInterval`, status bar height.
 - `src/themes.lua`: named theme registry.
 - `src/rules.lua`: named rulestring presets and `Bx/Sy` parser.
 - `src/grid.lua`: world buffers, toroidal neighbor logic, `computeNext(world, rules)`, `step(world, rules)`.
@@ -88,13 +90,14 @@ See `PLAN.md` for checkpoints and file-level detail.
 - `src/renderer.lua`: theme-driven board render (viewport above status bar).
 - `src/ui/statusbar.lua`: bottom stats + playback controls (**M2-C** display, **M3-B** controls).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**).
+- `src/layout.lua`: viewport-to-grid sizing (`computeGridSize`).
 - `patterns/`: one file per initial state (`.lua` or `.rle`).
 - `README.md`: usage and scope docs.
 - `tests/`: plain Lua unit tests (`lua tests/run.lua`).
 
 ## Testing
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
-- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/ui/statusbar.lua`, `src/playback.lua` — rules parser/presets, toroidal stepping, Lua/RLE pattern loading, status bar controls, playback stepping.
+- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/ui/statusbar.lua`, `src/playback.lua`, `src/layout.lua` — rules parser/presets, toroidal stepping, Lua/RLE pattern loading, status bar controls, playback stepping, resize sizing math.
 - **M3-C** ✓: `tests/rle_spec.lua` + expanded `tests/patterns_spec.lua` — parser coverage and `.rle` load path.
 - Defer renderer/LÖVE integration tests until playback UI exists.
 

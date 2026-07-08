@@ -1,4 +1,5 @@
 local config = {
+  -- Starting hints for conf.lua window size; overridden at runtime by auto-fit.
   rows = 40,
   cols = 60,
   tileSize = 12,

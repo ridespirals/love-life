@@ -6,6 +6,7 @@ local patterns = require("src.patterns")
 local playback = require("src.playback")
 local renderer = require("src.renderer")
 local statusbar = require("src.ui.statusbar")
+local layout = require("src.layout")
 
 local world
 local theme
@@ -44,15 +45,31 @@ local function setFastMode(enabled)
   applyStepInterval()
 end
 
-function love.load()
+local function rebuildWorldForWindow()
+  local windowWidth, windowHeight = love.graphics.getDimensions()
+  config.rows, config.cols = layout.computeGridSize(
+    windowWidth,
+    windowHeight,
+    config.tileSize,
+    config.statusBarHeight
+  )
   world = grid.create(config.rows, config.cols)
-  activeRules = rules.get(config.activeRule)
   patterns.apply(world, config.defaultPattern)
   grid.computeNext(world, activeRules)
+  playback.restart(playbackState)
+  generation = 0
+end
+
+function love.load()
+  activeRules = rules.get(config.activeRule)
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
   fastMode = false
-  generation = 0
+  rebuildWorldForWindow()
+end
+
+function love.resize()
+  rebuildWorldForWindow()
 end
 
 function love.update(dt)

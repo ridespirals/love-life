@@ -20,7 +20,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, and `src/playback.lua` — B3/S23 simulation behavior, toroidal wrap, rulestring parsing, Lua/RLE pattern loading, and playback timer state transitions.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, and `src/layout.lua` — B3/S23 simulation behavior, toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state transitions, and auto-fit resize math.
 
 ## Configuration
 
@@ -28,7 +28,7 @@ Edit `src/config.lua`:
 
 | Key | Purpose |
 |-----|---------|
-| `rows`, `cols`, `tileSize` | Board size and cell pixels |
+| `rows`, `cols`, `tileSize` | Cell pixels (`tileSize`) and starting grid hints; `rows`/`cols` are recomputed at runtime to fill the window |
 | `activeTheme` | `classic`, `zenburn`, or `solarized` |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
@@ -45,7 +45,9 @@ See `PLAN.md` for the full implementation roadmap.
 
 **Milestone 3-A/B/C complete** — playback engine, status bar controls, and RLE import are wired.
 
-**Next:** prioritize future features (history, picker, runtime switching, export).
+**Post-M3 polish** — grid auto-fits the window on load and resize (restarts from `defaultPattern`).
+
+**Next:** prioritize future features (tile-size hotkeys, history, picker, runtime switching, export).
 
 ## Controls
 
@@ -58,6 +60,8 @@ See `PLAN.md` for the full implementation roadmap.
 - `q`: quit app
 - Status bar buttons: `Play`, `Pause`, `Step`, `Restart` (mouse click)
 
+Resizing the window recomputes grid dimensions to fill the viewport and restarts the simulation from `defaultPattern` (generation resets to 0, playback pauses).
+
 ## RLE Support
 
 - `defaultPattern` now resolves in order:
@@ -69,7 +73,7 @@ See `PLAN.md` for the full implementation roadmap.
 
 ## Features
 
-1. Configurable board sizes
+1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on resize)
 2. Animations and next-generation preview dots
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)

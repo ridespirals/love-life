@@ -2,8 +2,8 @@
 
 ## Plan Status
 - **Branch:** `main`
-- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C
-- **Next:** Post-M3 polish and future backlog (M1-M3-C complete)
+- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 auto-fit grid on resize
+- **Next:** Future backlog (tile-size hotkeys, history, picker, export)
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -99,6 +99,10 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 **Checkpoint:** `lua tests/run.lua` green; existing Lua patterns still load; `.rle` patterns load by `defaultPattern` id.
 
+### Post-M3 polish ✓
+- **Auto-fit grid on resize** ✓ — `src/layout.lua` computes `rows`/`cols` from window size and `tileSize`; `love.resize` rebuilds world and restarts from `defaultPattern` (generation and playback reset).
+- **Deferred:** `Shift+Up`/`Shift+Down` tile-size hotkeys (reuse same rebuild helper).
+
 ### Future (planned, post-M3-C)
 - Step backward via generation **history stack** (needs `grid.clone` / snapshot helper)
 - Click-to-toggle cells
@@ -124,10 +128,12 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `patterns/*.rle` | exists (`pulsar`, `gosper_glider_gun`, `lifeview`) | M3-C ✓ |
 | `src/ui/statusbar.lua` | exists | M2-C ✓ display; M3-B controls |
 | `src/playback.lua` | exists | M3-A ✓ |
+| `src/layout.lua` | exists | Post-M3 ✓ auto-fit sizing |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
 | `tests/patterns_spec.lua` | exists | M2-B ✓; M3-C ✓ RLE load path |
 | `tests/rle_spec.lua` | exists | M3-C ✓ |
+| `tests/layout_spec.lua` | exists | Post-M3 ✓ resize math |
 | `tests/run.lua` | exists | M2-A/B + M3-C register specs |
 
 ## Design Decisions (locked before implementation)
@@ -137,10 +143,11 @@ Pure Lua; no LÖVE changes required to finish this phase.
 - Neighbor lookup in `grid.lua` must use modular arithmetic on row/col indices.
 
 ### Window layout
-- **Resizable window** with the board **centered** in the viewport.
+- **Resizable window** with the board **centered** in the viewport above the status bar.
+- **Auto-fit grid:** at load and on every resize, `rows` and `cols` are recomputed as `floor(viewport / tileSize)` (minimum `1×1`), where viewport height excludes `statusBarHeight`.
 - Board pixel size = `cols * tileSize` × `rows * tileSize`.
 - Renderer computes board offset from `love.graphics.getDimensions()` so centering survives resize.
-- `love.resize` should trigger redraw (no sim logic needed in baseline).
+- **Resize restarts simulation:** rebuild world, reapply `defaultPattern`, reset generation and playback (tradeoff: no cell-state preservation on resize).
 
 ### Coordinate conventions
 - **1-based** row/col indexing in Lua tables (idiomatic Lua).
