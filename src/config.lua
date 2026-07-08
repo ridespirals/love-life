@@ -1,5 +1,6 @@
 local config = {
-  -- Starting hints for conf.lua window size; overridden at runtime by auto-fit.
+  -- Starting hints for conf.lua window size (also duplicated in conf.lua because
+  -- fused builds cannot dofile inside .love); overridden at runtime by auto-fit.
   -- App startup pattern is defaultPattern below; patterns.lua uses "glider" as get() fallback only.
   rows = 40,
   cols = 60,
