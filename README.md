@@ -20,7 +20,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua` and `src/rules.lua` — B3/S23 birth/survival/death, toroidal wrap, rulestring parsing, presets, blinker period-2 via `grid.step`.
+Coverage: `src/grid.lua`, `src/rules.lua`, and `src/patterns.lua` — B3/S23 birth/survival/death, toroidal wrap, rulestring parsing, presets, core pattern loading/centering, blinker period-2 via `grid.step`.
 
 ## Configuration
 
@@ -31,7 +31,7 @@ Edit `src/config.lua`:
 | `rows`, `cols`, `tileSize` | Board size and cell pixels |
 | `activeTheme` | `classic`, `zenburn`, or `solarized` |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
-| `defaultPattern` | Pattern id to load on start — wired in M2-B |
+| `defaultPattern` | Pattern id to load on start (`glider`, `blinker`, `beacon`) |
 | `stepInterval` | Seconds between auto-steps when playing — used in M3 |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
 
@@ -41,9 +41,9 @@ See `PLAN.md` for the full implementation roadmap.
 
 **Milestone 1 complete** — grid render, themes, toroidal B3/S23 preview, glider demo seed.
 
-**Milestone 2-A complete** — configurable rulestrings (`src/rules.lua`, `activeRule` in config).
+**Milestone 2-A/B/C complete** — configurable rulestrings, pattern loader, and read-only status bar (`src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua`).
 
-**Next: Milestone 2-B** — pattern loader (`patterns/`, `defaultPattern`).
+**Next: Milestone 3-A** — playback engine (`love.update` stepping).
 
 ## Features
 

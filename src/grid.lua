@@ -83,26 +83,4 @@ function M.isAlive(world, row, col)
   return world.current[row][col]
 end
 
--- Glider offsets from placement origin (col, row), 0-based deltas.
-local gliderCells = {
-  { 1, 0 },
-  { 2, 1 },
-  { 0, 2 },
-  { 1, 2 },
-  { 2, 2 },
-}
-
-function M.seedGlider(world)
-  M.clear(world)
-
-  local originCol = math.floor((world.cols - 3) / 2) + 1
-  local originRow = math.floor((world.rows - 3) / 2) + 1
-
-  for _, cell in ipairs(gliderCells) do
-    local col = wrap(originCol + cell[1], world.cols)
-    local row = wrap(originRow + cell[2], world.rows)
-    world.current[row][col] = true
-  end
-end
-
 return M

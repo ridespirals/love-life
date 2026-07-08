@@ -3,7 +3,7 @@
 ## Plan Status
 - **Branch:** `main`
 - **Done:** Milestone 1 (render baseline + grid tests)
-- **Next:** Milestone 2-B — patterns (`patterns/`, `src/patterns.lua`, remove `seedGlider`)
+- **Next:** Milestone 3-A — playback engine
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -52,7 +52,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 **Checkpoint:** `lua tests/run.lua` green; swapping `activeRule` to `ant_colony` changes simulation (config-only check until status bar).
 
-### Milestone 2-B — Patterns
+### Milestone 2-B — Patterns ✓
 1. Add `defaultPattern` to `src/config.lua` (default `"glider"`)
 2. Add `patterns/glider.lua`, `patterns/blinker.lua`, `patterns/beacon.lua` (core catalog)
 3. Add `src/patterns.lua` — `list`, `get`, `apply` (centered placement on world)
@@ -68,7 +68,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 **Checkpoint:** `love .` loads glider (or other `defaultPattern`) from `patterns/`; no `seedGlider` in codebase.
 
-### Milestone 2-C — Status bar (read-only)
+### Milestone 2-C — Status bar (read-only) ✓
 1. Add `stepInterval` to `src/config.lua` (default `0.15`; display only until M3)
 2. Add `src/ui/statusbar.lua` — draw resolved rulestring, `rows×cols`, theme name, step interval
 3. Wire `main.lua` `love.draw`: renderer above, status bar at bottom
@@ -106,16 +106,17 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `conf.lua` | exists | — |
 | `src/config.lua` | exists | M2-A `activeRule`; M2-B `defaultPattern`; M2-C `stepInterval` |
 | `src/themes.lua` | exists | — |
-| `src/grid.lua` | exists | M2-A ✓ rules param; M2-B remove `seedGlider` |
+| `src/grid.lua` | exists | M2-A ✓ rules param; M2-B ✓ removed `seedGlider` |
 | `src/renderer.lua` | exists | — |
 | `src/rules.lua` | exists | M2-A ✓ |
-| `src/patterns.lua` | **todo** | M2-B |
-| `patterns/*.lua` | **todo** | M2-B |
+| `src/patterns.lua` | exists | M2-B ✓ |
+| `patterns/*.lua` | exists (core) | M2-B ✓ |
 | `src/ui/statusbar.lua` | **todo** | M2-C display; M3-B controls |
 | `src/playback.lua` | **todo** | M3-A |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
-| `tests/run.lua` | exists | M2-A register `rules_spec` |
+| `tests/patterns_spec.lua` | exists | M2-B ✓ |
+| `tests/run.lua` | exists | M2-A/B register specs |
 
 ## Design Decisions (locked before implementation)
 
@@ -258,7 +259,7 @@ return {
 | `previewDotMinRadiusPx` | `2` | M1 ✓ |
 | `previewDotMaxRadiusPx` | `8` | M1 ✓ |
 | `activeRule` | `"conway"` | M2-A ✓ |
-| `defaultPattern` | `"glider"` | M2-B |
+| `defaultPattern` | `"glider"` | M2-B ✓ |
 | `stepInterval` | `0.15` | M2-C |
 
 ### `src/rules.lua` (M2-A)
@@ -277,7 +278,6 @@ return {
   - `computeNext(world, rules)`
   - `step(world, rules)`
   - `isAlive(world, row, col)`
-- `seedGlider(world)` — **temporary M1 shim**; remove in M2-B.
 
 ### `src/renderer.lua`
 - Accept active theme + size config + layout (board area excludes status bar).
@@ -329,18 +329,18 @@ return {
 - [x] Refactor `grid.computeNext(world, rules)` and `grid.step(world, rules)`
 - [x] Update `tests/grid_spec.lua` for explicit rules argument
 
-### Milestone 2-B — Patterns
-- [ ] Add `defaultPattern` to `src/config.lua`
-- [ ] Add core `patterns/*.lua` (`glider`, `blinker`, `beacon`)
-- [ ] Add `src/patterns.lua` loader (`list`, `get`, `apply`)
-- [ ] Wire `main.lua` to load `defaultPattern` with active rules
-- [ ] Remove `grid.seedGlider`
+### Milestone 2-B — Patterns ✓
+- [x] Add `defaultPattern` to `src/config.lua`
+- [x] Add core `patterns/*.lua` (`glider`, `blinker`, `beacon`)
+- [x] Add `src/patterns.lua` loader (`list`, `get`, `apply`)
+- [x] Wire `main.lua` to load `defaultPattern` with active rules
+- [x] Remove `grid.seedGlider`
 - [ ] Add extended patterns (`pulsar`, `random_soup`) — optional same PR or follow-up
 
-### Milestone 2-C — Status bar (read-only)
-- [ ] Add `stepInterval` to `src/config.lua`
-- [ ] Add `src/ui/statusbar.lua` (display-only stats row)
-- [ ] Wire status bar in `main.lua` `love.draw`
+### Milestone 2-C — Status bar (read-only) ✓
+- [x] Add `stepInterval` to `src/config.lua`
+- [x] Add `src/ui/statusbar.lua` (display-only stats row)
+- [x] Wire status bar in `main.lua` `love.draw`
 
 ### Milestone 3-A — Playback engine
 - [ ] Add `src/playback.lua` — play/pause/step-forward state machine
