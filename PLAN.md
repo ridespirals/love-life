@@ -75,14 +75,14 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 **Checkpoint:** Bottom bar visible with live config values; board still centered above reserved area.
 
-### Milestone 3-A — Playback engine
+### Milestone 3-A — Playback engine ✓
 1. Add `src/playback.lua` — `running`, `accumulator`, `play` / `pause` / `stepForward` wrapping `grid.step`
 2. Wire `love.update` — auto-advance when `accumulator ≥ stepInterval`
 3. Resolve active rules once in `love.load`; pass to `computeNext` / `step` / playback
 
 **Checkpoint:** Keyboard-only smoke test (temporary keys in `main.lua` or love.conf) — play/pause/step advances generations; preview dots update while paused.
 
-### Milestone 3-B — Status bar controls + docs
+### Milestone 3-B — Status bar controls + docs ✓
 1. Add play / pause / step buttons to `src/ui/statusbar.lua`
 2. Wire mouse + keyboard shortcuts in `main.lua`
 3. Update `README.md` — config keys, patterns, controls, rulestring presets
@@ -354,9 +354,9 @@ return {
 - [x] Wire `stepInterval` auto-advance in `love.update`
 - [x] Pass resolved rules through playback → `grid.step`
 
-### Milestone 3-B — Controls + docs
-- [ ] Status bar play/pause/step buttons and keyboard shortcuts
-- [ ] Update `README.md` (config, patterns, controls, rulestrings)
+### Milestone 3-B — Controls + docs ✓
+- [x] Status bar play/pause/step buttons and keyboard shortcuts
+- [x] Update `README.md` (config, patterns, controls, rulestrings)
 
 ## Next Features (Do Not Delete, Mark Complete Later)
 - [ ] RLE (`.rle`) pattern import

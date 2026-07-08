@@ -3,7 +3,7 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Milestone 3-B next (controls + docs).
+- **Current phase:** Milestone 3-C complete (RLE import); next up is future backlog prioritization.
 - **Active branch:** `main`
 
 ## Execution Order
@@ -16,7 +16,7 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **M2-B** ✓ | `patterns/`, loader, remove `seedGlider` |
 | **M2-C** ✓ | Read-only status bar |
 | **M3-A** ✓ | `src/playback.lua`, `love.update` |
-| **M3-B** | Status bar controls, README |
+| **M3-B** ✓ | Status bar controls, README |
 
 See `PLAN.md` for checkpoints and file-level detail.
 
@@ -51,7 +51,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 ## Status bar and playback
 - **M2-C** ✓: bottom status bar shows rulestring, `rows×cols`, theme, step interval (read-only).
 - **M3-A** ✓: playback state + `love.update` auto-step. Temporary keyboard controls in `main.lua` (`space` toggle, `s` play, `p` pause, `n` step).
-- **M3-B:** status bar play/pause/step controls + finalized keyboard shortcuts/docs.
+- **M3-B** ✓: status bar play/pause/step controls + keyboard shortcuts/docs.
 - `stepInterval` = seconds between auto-generations when playing.
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 

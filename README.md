@@ -45,14 +45,16 @@ See `PLAN.md` for the full implementation roadmap.
 
 **Milestone 3-A complete** — playback engine wired in `love.update` (`src/playback.lua`).
 
-**Next: Milestone 3-B** — status bar controls and final control docs.
+**Next:** prioritize future features (history, picker, runtime switching, export).
 
-## Temporary Controls (M3-A)
+## Controls
 
 - `space`: toggle play/pause
 - `s`: play
 - `p`: pause
-- `n`: step forward one generation
+- `n` or `Right Arrow`: step forward one generation
+- `q`: quit app
+- Status bar buttons: `Play`, `Pause`, `Step` (mouse click)
 
 ## Features
 

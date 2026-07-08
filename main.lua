@@ -12,6 +12,12 @@ local theme
 local activeRules
 local playbackState
 
+local function stepForward()
+  playback.stepForward(playbackState, function()
+    grid.step(world, activeRules)
+  end)
+end
+
 function love.load()
   world = grid.create(config.rows, config.cols)
   activeRules = rules.get(config.activeRule)
@@ -41,10 +47,23 @@ function love.keypressed(key)
   elseif key == "s" then
     playback.play(playbackState)
   elseif key == "n" or key == "right" then
-    playback.stepForward(playbackState, function()
-      grid.step(world, activeRules)
-    end)
+    stepForward()
   elseif key == "q" then
     love.event.quit()
+  end
+end
+
+function love.mousepressed(x, y, button)
+  if button ~= 1 then
+    return
+  end
+
+  local hit = statusbar.hitTestButton(config, x, y)
+  if hit == "play" then
+    playback.play(playbackState)
+  elseif hit == "pause" then
+    playback.pause(playbackState)
+  elseif hit == "step" then
+    stepForward()
   end
 end
