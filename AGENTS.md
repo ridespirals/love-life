@@ -14,6 +14,17 @@
 - Built-in themes: `classic`, `zenburn`, `solarized`.
 - Default active theme: `classic`.
 
+## Rulestrings
+- Life rulestrings use the form `Bx/Sy`:
+  - `B` digits = neighbor counts that birth a dead cell (exact match).
+  - `S` digits = neighbor counts that let a live cell survive (exact match).
+- Named **rule presets** in `src/rules.lua`, selected by `activeRule` in config (like themes).
+- Built-in presets:
+  - `conway` — `B3/S23` (default): dead cell with exactly 3 live neighbors is born; live cell with 2 or 3 neighbors survives.
+  - `ant_colony` — `B3/S234`: same birth rule; live cells survive on 2, 3, or 4 neighbors (Ant Colony Life).
+- Status bar shows the resolved rulestring (e.g. `B3/S23`).
+- Milestone 2: parser + wire to `grid.computeNext`; unit tests in `tests/rules_spec.lua`.
+
 ## Patterns (initial states)
 - Curated patterns live in `patterns/*.lua` (repo-native format).
 - RLE import planned as follow-up for community patterns.
@@ -40,9 +51,10 @@
   - defaults: `previewDotScale=0.18`, `previewDotMinRadiusPx=2`, `previewDotMaxRadiusPx=8`
 
 ## Conway Rules Reference
+- Default preset `conway` (`B3/S23`); alternate preset `ant_colony` (`B3/S234`) planned for Milestone 2.
 - Universe: 2D square grid with **toroidal wrap** at edges.
 - Neighborhood: Moore neighborhood (8 neighbors).
-- B3/S23:
+- Conway (`B3/S23`):
   - live cell with <2 neighbors dies
   - live cell with 2 or 3 survives
   - live cell with >3 dies
@@ -52,8 +64,9 @@
 ## Planned Runtime/Code Shape
 - `conf.lua`: window/app configuration (resizable).
 - `main.lua`: LÖVE entry, input, lifecycle.
-- `src/config.lua`: board dimensions, theme, pattern id, step interval, status bar height.
+- `src/config.lua`: board dimensions, theme, **activeRule**, pattern id, step interval, status bar height.
 - `src/themes.lua`: named theme registry.
+- `src/rules.lua`: named rulestring presets and `Bx/Sy` parser (Milestone 2).
 - `src/grid.lua`: world buffers, toroidal neighbor logic, next-state computation, `step`.
 - `src/patterns.lua`: load/apply `patterns/*.lua` (RLE later).
 - `src/renderer.lua`: theme-driven board render (viewport above status bar).

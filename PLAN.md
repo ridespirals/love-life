@@ -1,7 +1,7 @@
 # PLAN
 
 ## Plan Status
-- Current stage: **Milestone 1 complete** on branch `milestone-1`.
+- Current stage: **Milestone 1 complete** on branch `main`.
 - Source plan: configurable grid renderer with next-state preview, themes, patterns, status bar, and playback controls.
 - Implementation split into milestones (see below); complete in order.
 
@@ -17,7 +17,8 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 ### Milestone 2 — Patterns + status bar (read-only)
 - Repo pattern files in `patterns/` (Lua format).
 - Pattern loader + apply-to-world (centered placement).
-- Bottom status bar displays: rulestring, rows×cols, theme, step interval (display only).
+- **Rulestrings**: named rule presets in config (`conway`, `ant_colony`); parser wired to `computeNext`.
+- Bottom status bar displays: active rulestring, rows×cols, theme, step interval (display only).
 
 ### Milestone 3 — Playback controls
 - Play / pause / step forward.
@@ -27,7 +28,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 ### Future (planned, not Milestone 1–3)
 - RLE (`.rle`) pattern import
 - Step backward via generation **history stack**
-- Click-to-toggle cells, rulestring parser (`Bx/Sy`), theme hotkeys, video export
+- Click-to-toggle cells, theme hotkeys, video export
 
 ## Scope (Milestone 1)
 - Implement rendering-only board visualization.
@@ -44,6 +45,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 - Add `src/grid.lua`
 - Add `src/renderer.lua`
 - Add `src/ui/statusbar.lua` (Milestone 2+)
+- Add `src/rules.lua` (Milestone 2)
 - Add `src/patterns.lua` (Milestone 2+)
 - Add `patterns/*.lua` (Milestone 2+)
 - Add `src/playback.lua` (Milestone 3+)
@@ -141,9 +143,32 @@ return {
 - Step back pops history → restore `current` → recompute `next`.
 - Memory cost: `O(historyDepth × rows × cols)`; cap depth in config later.
 
-### Rule engine (baseline vs future)
-- Baseline hard-codes **B3/S23** in `computeNextState`.
-- Stub a `rules` module shape early for future `Bx/Sy` parsing (README goal), but do not implement parser in baseline.
+### Rule engine and rulestrings (Milestone 2)
+- Life **rulestrings** have the form `Bx/Sy`:
+  - `B` digits = neighbor counts that **birth** a dead cell (exact match).
+  - `S` digits = neighbor counts that let a **live** cell survive (exact match).
+  - Any other neighbor count kills a live cell or leaves a dead cell dead.
+- Example: `B3/S23` (classic Conway) — a dead cell with exactly 3 live neighbors is born; a live cell with exactly 2 or 3 live neighbors survives.
+- Example: `B3/S234` (**Ant Colony**) — same birth rule; live cells survive on 2, 3, or 4 neighbors (less die-off at the edges, more stable interior).
+- **Milestone 1** hard-coded B3/S23 in `computeNext` (Conway only).
+- **Milestone 2** replaces hard-coding with a `src/rules.lua` module:
+  - Named presets (like themes), selected by `activeRule` in config.
+  - `parse(rulestring)` → `{ birth = set, survival = set }` (validate `Bx/Sy` format).
+  - `get(name)` — resolve preset by name (fallback to default if missing).
+  - `list()` — optional, for future UI rule picker.
+  - `computeNext(world, rules)` or pass parsed rules into existing `grid.computeNext`.
+- Built-in presets (initial set):
+
+| name | rulestring | notes |
+|------|------------|-------|
+| `conway` | `B3/S23` | classic Conway's Game of Life (default) |
+| `ant_colony` | `B3/S234` | Ant Colony Life — expanding edges, settling center |
+
+- Config keys:
+  - `activeRule` — string name, default `"conway"`
+  - (derived) active rulestring shown in status bar via `rules.get(activeRule).rulestring`
+- Status bar displays the resolved rulestring (e.g. `B3/S23`), not just the preset id.
+- Unit tests: extend `tests/` with `rules_spec.lua` (parse valid/invalid strings, Ant Colony survival on 4 neighbors).
 
 ### README correction note
 - README birth rule text is wrong: classic Life births on **exactly 3** neighbors, not 2. Survival is 2 **or** 3. Fix when touching README.
@@ -192,14 +217,22 @@ return {
   - `rows`, `cols`
   - `tileSize`
   - `activeTheme` (string name, default `"classic"`)
+  - `activeRule` (string name, default `"conway"` → `B3/S23`)
   - `defaultPattern` (string id, default `"glider"`)
-  - `rulestring` (display default `"B3/S23"` until parser exists)
   - `stepInterval` (seconds, default e.g. `0.15`)
   - `statusBarHeight` (pixels, default e.g. `28`)
   - preview marker **sizing** (not part of theme):
     - `previewDotScale` (default `0.18`)
     - `previewDotMinRadiusPx` (default `2`)
     - `previewDotMaxRadiusPx` (default `8`)
+
+### `src/rules.lua`
+- Export:
+  - `rules` — map of name → `{ name, rulestring, birth, survival }`
+  - `get(name)` — resolve preset (fallback to `conway`)
+  - `parse(rulestring)` — `Bx/Sy` → birth/survival sets
+  - `list()` — optional, for future UI rule picker
+- Shipped presets: `conway` (`B3/S23`), `ant_colony` (`B3/S234`).
 
 ### `src/grid.lua`
 - Own board state as a 2D structure (`true` = alive, `false` = dead).
@@ -208,7 +241,7 @@ return {
   - `create(rows, cols, defaultAlive)`
   - `setAlive(grid, row, col, alive)`
   - `clone(grid)` or `createLike(grid)`
-  - `computeNextState(current, nextState)` using Conway B3/S23
+  - `computeNextState(current, nextState, rules)` using active rulestring presets
   - optional `seedDemoPattern(grid)`
 
 ### `src/renderer.lua`
@@ -261,6 +294,7 @@ return {
   - changing `activeTheme` swaps colors without affecting dot size math
   - resizing window re-centers board without changing cell layout
   - toroidal wrap: patterns crossing an edge behave correctly (e.g. glider wraps)
+  - changing `activeRule` applies correct birth/survival sets (`conway` vs `ant_colony`)
 
 ## TODO Tracking
 
@@ -273,9 +307,13 @@ return {
 - [x] Add plain Lua unit tests for `src/grid.lua` (`tests/run.lua`)
 
 ### Milestone 2
+- [ ] Add `src/rules.lua` — `Bx/Sy` parser and named presets (`conway`, `ant_colony`)
+- [ ] Add `activeRule` to `src/config.lua` (default `"conway"`)
+- [ ] Wire parsed rules into `grid.computeNext` (replace hard-coded B3/S23)
+- [ ] Add `tests/rules_spec.lua` for parser and preset resolution
 - [ ] Add `patterns/*.lua` catalog and `src/patterns.lua` loader
 - [ ] Apply centered pattern to world on load (`defaultPattern` config)
-- [ ] Add `src/ui/statusbar.lua` — read-only stats row at bottom
+- [ ] Add `src/ui/statusbar.lua` — read-only stats row at bottom (show resolved rulestring)
 
 ### Milestone 3
 - [ ] Add `src/playback.lua` — play/pause/step-forward state machine
@@ -288,7 +326,8 @@ return {
 - [ ] Step backward via generation history stack
 - [ ] Add click-to-toggle cell state
 - [ ] Pattern picker UI (cycle/load catalog entries at runtime)
-- [ ] Add alternate rulestring parser (`Bx/Sy`) wired to simulation
+- [ ] Add more built-in rule presets beyond `conway`, `ant_colony`
+- [ ] Add runtime rule switching (keyboard/UI picker)
 - [ ] Add more built-in themes beyond `classic`, `zenburn`, `solarized`
 - [ ] Add runtime theme switching (keyboard/UI picker)
 - [ ] Add export feature (gif/mp4 or equivalent)
