@@ -74,6 +74,12 @@ test("stepForward advances and resets accumulator", function()
   assert.equal(state.accumulator, 0)
 end)
 
+test("setStepInterval updates playback timing", function()
+  local state = playback.create(0.2)
+  playback.setStepInterval(state, 0.35)
+  assert.equal(state.stepInterval, 0.35)
+end)
+
 test("restart pauses and resets accumulator", function()
   local state = playback.create(0.1)
   playback.play(state)

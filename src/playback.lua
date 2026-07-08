@@ -30,6 +30,10 @@ function M.restart(state)
   state.accumulator = 0
 end
 
+function M.setStepInterval(state, stepInterval)
+  state.stepInterval = stepInterval
+end
+
 function M.update(state, dt, advance)
   if not state.running then
     return

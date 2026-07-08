@@ -12,6 +12,8 @@ local theme
 local activeRules
 local playbackState
 local generation = 0
+local fastMode = false
+local FAST_STEP_INTERVAL = 0.05
 
 local function advanceGeneration()
   grid.step(world, activeRules)
@@ -29,6 +31,19 @@ local function restartWorld()
   generation = 0
 end
 
+local function applyStepInterval()
+  local stepInterval = config.stepInterval
+  if fastMode then
+    stepInterval = FAST_STEP_INTERVAL
+  end
+  playback.setStepInterval(playbackState, stepInterval)
+end
+
+local function setFastMode(enabled)
+  fastMode = enabled
+  applyStepInterval()
+end
+
 function love.load()
   world = grid.create(config.rows, config.cols)
   activeRules = rules.get(config.activeRule)
@@ -36,6 +51,7 @@ function love.load()
   grid.computeNext(world, activeRules)
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
+  fastMode = false
   generation = 0
 end
 
@@ -46,7 +62,7 @@ end
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
   renderer.draw(world, theme, config)
-  statusbar.draw(world, theme, config, activeRules, generation)
+  statusbar.draw(world, theme, config, activeRules, generation, fastMode)
 end
 
 function love.keypressed(key)
@@ -60,8 +76,16 @@ function love.keypressed(key)
     stepForward()
   elseif key == "r" then
     restartWorld()
+  elseif key == "f" then
+    setFastMode(true)
   elseif key == "q" then
     love.event.quit()
+  end
+end
+
+function love.keyreleased(key)
+  if key == "f" then
+    setFastMode(false)
   end
 end
 

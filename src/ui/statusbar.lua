@@ -15,7 +15,7 @@ local function contains(rect, x, y)
   return x >= rect.x and x <= rect.x + rect.w and y >= rect.y and y <= rect.y + rect.h
 end
 
-function M.getButtons(config)
+function M.getButtons(config, fastMode)
   local width, height = love.graphics.getDimensions()
   local barTop = height - config.statusBarHeight
   local buttonHeight = config.statusBarHeight - 8
@@ -26,9 +26,14 @@ function M.getButtons(config)
 
   local buttons = {}
   for _, spec in ipairs(buttonSpecs) do
+    local label = spec.label
+    if fastMode and spec.id == "play" then
+      label = "Play +"
+    end
+
     buttons[#buttons + 1] = {
       id = spec.id,
-      label = spec.label,
+      label = label,
       x = x,
       y = y,
       w = buttonWidth,
@@ -40,7 +45,7 @@ function M.getButtons(config)
   return buttons
 end
 
-function M.draw(world, theme, config, activeRules, generation)
+function M.draw(world, theme, config, activeRules, generation, fastMode)
   local width, height = love.graphics.getDimensions()
   local barTop = height - config.statusBarHeight
 
@@ -51,19 +56,18 @@ function M.draw(world, theme, config, activeRules, generation)
   love.graphics.line(0, barTop + 0.5, width, barTop + 0.5)
 
   local text = string.format(
-    "Rule: %s   Size: %dx%d   Theme: %s   Gen: %d   Step: %.2fs",
+    "Rule: %s   Size: %dx%d   Theme: %s   Gen: %d",
     activeRules.rulestring,
     world.rows,
     world.cols,
     theme.name,
-    generation,
-    config.stepInterval
+    generation
   )
 
   setColor(theme.alive, 1)
   love.graphics.print(text, 10, barTop + math.floor((config.statusBarHeight - 12) / 2))
 
-  local buttons = M.getButtons(config)
+  local buttons = M.getButtons(config, fastMode)
   for _, button in ipairs(buttons) do
     setColor(theme.grid, 1)
     love.graphics.rectangle("line", button.x + 0.5, button.y + 0.5, button.w, button.h)
@@ -73,7 +77,7 @@ function M.draw(world, theme, config, activeRules, generation)
 end
 
 function M.hitTestButton(config, x, y)
-  for _, button in ipairs(M.getButtons(config)) do
+  for _, button in ipairs(M.getButtons(config, false)) do
     if contains(button, x, y) then
       return button.id
     end

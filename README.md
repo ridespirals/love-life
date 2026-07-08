@@ -32,7 +32,7 @@ Edit `src/config.lua`:
 | `activeTheme` | `classic`, `zenburn`, or `solarized` |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
-| `stepInterval` | Displayed in status bar now; used for auto-steps in M3 |
+| `stepInterval` | Default auto-step interval (`0.10`) |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
 
 See `PLAN.md` for the full implementation roadmap.
@@ -54,6 +54,7 @@ See `PLAN.md` for the full implementation roadmap.
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation
 - `r`: restart (reload `defaultPattern`, pause playback)
+- Hold `f`: temporary fast mode (`Play +`, uses `0.05` while held)
 - `q`: quit app
 - Status bar buttons: `Play`, `Pause`, `Step`, `Restart` (mouse click)
 
