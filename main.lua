@@ -11,11 +11,22 @@ local world
 local theme
 local activeRules
 local playbackState
+local generation = 0
+
+local function advanceGeneration()
+  grid.step(world, activeRules)
+  generation = generation + 1
+end
 
 local function stepForward()
-  playback.stepForward(playbackState, function()
-    grid.step(world, activeRules)
-  end)
+  playback.stepForward(playbackState, advanceGeneration)
+end
+
+local function restartWorld()
+  patterns.apply(world, config.defaultPattern)
+  grid.computeNext(world, activeRules)
+  playback.restart(playbackState)
+  generation = 0
 end
 
 function love.load()
@@ -25,18 +36,17 @@ function love.load()
   grid.computeNext(world, activeRules)
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
+  generation = 0
 end
 
 function love.update(dt)
-  playback.update(playbackState, dt, function()
-    grid.step(world, activeRules)
-  end)
+  playback.update(playbackState, dt, advanceGeneration)
 end
 
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
   renderer.draw(world, theme, config)
-  statusbar.draw(world, theme, config, activeRules)
+  statusbar.draw(world, theme, config, activeRules, generation)
 end
 
 function love.keypressed(key)
@@ -48,6 +58,8 @@ function love.keypressed(key)
     playback.play(playbackState)
   elseif key == "n" or key == "right" then
     stepForward()
+  elseif key == "r" then
+    restartWorld()
   elseif key == "q" then
     love.event.quit()
   end
@@ -65,5 +77,7 @@ function love.mousepressed(x, y, button)
     playback.pause(playbackState)
   elseif hit == "step" then
     stepForward()
+  elseif hit == "restart" then
+    restartWorld()
   end
 end

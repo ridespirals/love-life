@@ -8,6 +8,7 @@ local buttonSpecs = {
   { id = "play", label = "Play" },
   { id = "pause", label = "Pause" },
   { id = "step", label = "Step" },
+  { id = "restart", label = "Restart" },
 }
 
 local function contains(rect, x, y)
@@ -18,7 +19,7 @@ function M.getButtons(config)
   local width, height = love.graphics.getDimensions()
   local barTop = height - config.statusBarHeight
   local buttonHeight = config.statusBarHeight - 8
-  local buttonWidth = 52
+  local buttonWidth = 60
   local gap = 8
   local x = width - 10 - (#buttonSpecs * buttonWidth) - ((#buttonSpecs - 1) * gap)
   local y = barTop + 4
@@ -39,7 +40,7 @@ function M.getButtons(config)
   return buttons
 end
 
-function M.draw(world, theme, config, activeRules)
+function M.draw(world, theme, config, activeRules, generation)
   local width, height = love.graphics.getDimensions()
   local barTop = height - config.statusBarHeight
 
@@ -50,11 +51,12 @@ function M.draw(world, theme, config, activeRules)
   love.graphics.line(0, barTop + 0.5, width, barTop + 0.5)
 
   local text = string.format(
-    "Rule: %s   Size: %dx%d   Theme: %s   Step: %.2fs",
+    "Rule: %s   Size: %dx%d   Theme: %s   Gen: %d   Step: %.2fs",
     activeRules.rulestring,
     world.rows,
     world.cols,
     theme.name,
+    generation,
     config.stepInterval
   )
 

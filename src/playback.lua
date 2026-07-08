@@ -25,6 +25,11 @@ function M.stepForward(state, advance)
   state.accumulator = 0
 end
 
+function M.restart(state)
+  state.running = false
+  state.accumulator = 0
+end
+
 function M.update(state, dt, advance)
   if not state.running then
     return

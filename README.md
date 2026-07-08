@@ -53,8 +53,9 @@ See `PLAN.md` for the full implementation roadmap.
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation
+- `r`: restart (reload `defaultPattern`, pause playback)
 - `q`: quit app
-- Status bar buttons: `Play`, `Pause`, `Step` (mouse click)
+- Status bar buttons: `Play`, `Pause`, `Step`, `Restart` (mouse click)
 
 ## RLE Support
 

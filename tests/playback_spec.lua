@@ -73,3 +73,13 @@ test("stepForward advances and resets accumulator", function()
   assert.equal(steps, 1)
   assert.equal(state.accumulator, 0)
 end)
+
+test("restart pauses and resets accumulator", function()
+  local state = playback.create(0.1)
+  playback.play(state)
+  state.accumulator = 0.09
+
+  playback.restart(state)
+  assert.isFalse(state.running)
+  assert.equal(state.accumulator, 0)
+end)
