@@ -90,7 +90,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 
 ## Testing
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
-- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua` — Conway/Ant Colony rules, toroidal wrap, parser/presets, core pattern loader.
+- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua` — Conway/Ant Colony rules, toroidal wrap, parser/presets, core pattern loader, read-only status bar.
 - **M2-A** ✓: `tests/rules_spec.lua` — parser, presets, Ant Colony behavior.
 - Defer renderer/LÖVE integration tests until playback UI exists.
 

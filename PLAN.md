@@ -13,7 +13,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 
 | Milestone | Phases | Delivers |
 |-----------|--------|----------|
-| **M1** ✓ | — | Grid render, themes, preview dots, toroidal B3/S23 (hard-coded), glider seed |
+| **M1** ✓ | — | Grid render, themes, preview dots, toroidal stepping foundation |
 | **M2** | A → B → C | Configurable rules, pattern loader, read-only status bar |
 | **M3** | A → B | Playback engine, interactive status bar, README controls |
 | **Future** | — | RLE, history stack, cell editing, runtime pickers, export |
@@ -41,7 +41,7 @@ flowchart TD
 - `grid.computeNext` hard-codes B3/S23 until M2-A.
 - No playback UI (static preview only).
 
-### Milestone 2-A — Rulestrings
+### Milestone 2-A — Rulestrings ✓
 Pure Lua; no LÖVE changes required to finish this phase.
 
 1. Add `src/rules.lua` — `parse(rulestring)`, presets `conway` / `ant_colony`, `get`, `list`
@@ -111,7 +111,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `src/rules.lua` | exists | M2-A ✓ |
 | `src/patterns.lua` | exists | M2-B ✓ |
 | `patterns/*.lua` | exists (core) | M2-B ✓ |
-| `src/ui/statusbar.lua` | **todo** | M2-C display; M3-B controls |
+| `src/ui/statusbar.lua` | exists | M2-C ✓ display; M3-B controls |
 | `src/playback.lua` | **todo** | M3-A |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
@@ -260,7 +260,7 @@ return {
 | `previewDotMaxRadiusPx` | `8` | M1 ✓ |
 | `activeRule` | `"conway"` | M2-A ✓ |
 | `defaultPattern` | `"glider"` | M2-B ✓ |
-| `stepInterval` | `0.15` | M2-C |
+| `stepInterval` | `0.15` | M2-C ✓ |
 
 ### `src/rules.lua` (M2-A)
 - Export:
@@ -296,7 +296,7 @@ return {
 ## Validation
 
 ### Always
-- `lua tests/run.lua` — grid + rules unit tests (no LÖVE)
+- `lua tests/run.lua` — grid + rules + patterns unit tests (no LÖVE)
 - `love .` — visual smoke test
 
 ### Per phase
@@ -307,6 +307,13 @@ return {
 | M2-C | Status bar shows rulestring, size, theme, interval |
 | M3-A | Generations advance on timer / step; preview dots while paused |
 | M3-B | Bar buttons + keys work; README accurate |
+
+## Open Design Considerations
+- Pattern discovery strategy: keep `patterns.list()` as explicit curated ids, or move to dynamic directory discovery when catalog grows.
+- Pattern fallback UX: current loader falls back silently to `glider`; decide whether to log/warn in-app for unknown `defaultPattern`.
+- Status bar text scaling: long strings can clip on small windows; decide whether to truncate, reduce font size, or wrap.
+- Playback timer semantics: decide if changing `stepInterval` while running should take effect immediately or on the next cycle.
+- Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
 
 ### M1 visual checklist (regression)
 - Expected rows/cols, aligned grid lines, theme colors, preview dots only on changes
