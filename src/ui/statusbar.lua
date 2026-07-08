@@ -45,7 +45,7 @@ function M.getButtons(config, fastMode)
   return buttons
 end
 
-function M.draw(world, theme, config, activeRules, generation, fastMode)
+function M.draw(world, theme, config, activeRule, generation, fastMode)
   local width, height = love.graphics.getDimensions()
   local barTop = height - config.statusBarHeight
 
@@ -57,7 +57,7 @@ function M.draw(world, theme, config, activeRules, generation, fastMode)
 
   local text = string.format(
     "Rule: %s   Size: %dx%d   Theme: %s   Gen: %d",
-    activeRules.rulestring,
+    activeRule.rulestring,
     world.rows,
     world.cols,
     theme.name,
@@ -76,8 +76,8 @@ function M.draw(world, theme, config, activeRules, generation, fastMode)
   end
 end
 
-function M.hitTestButton(config, x, y)
-  for _, button in ipairs(M.getButtons(config, false)) do
+function M.hitTestButton(config, x, y, fastMode)
+  for _, button in ipairs(M.getButtons(config, fastMode)) do
     if contains(button, x, y) then
       return button.id
     end

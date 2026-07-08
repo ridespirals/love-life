@@ -1,12 +1,6 @@
 local assert = require("tests.assert")
 local layout = require("src.layout")
-
-local function test(name, fn)
-  local ok, err = pcall(fn)
-  if not ok then
-    error(string.format("%s: %s", name, err), 0)
-  end
-end
+local test = require("tests.spec_helper").test
 
 test("computeGridSize fits rows and cols from viewport", function()
   local rows, cols = layout.computeGridSize(720, 508, 12, 28)

@@ -1,27 +1,10 @@
 local assert = require("tests.assert")
 local grid = require("src.grid")
 local rules = require("src.rules")
+local test = require("tests.spec_helper").test
+local aliveCount = require("tests.spec_helper").aliveCount
 
 local conway = rules.get("conway")
-
-local function test(name, fn)
-  local ok, err = pcall(fn)
-  if not ok then
-    error(string.format("%s: %s", name, err), 0)
-  end
-end
-
-local function aliveCount(world)
-  local count = 0
-  for row = 1, world.rows do
-    for col = 1, world.cols do
-      if world.current[row][col] then
-        count = count + 1
-      end
-    end
-  end
-  return count
-end
 
 test("empty board stays empty after computeNext", function()
   local world = grid.create(3, 3)
@@ -69,6 +52,12 @@ test("toroidal wrap counts vertical edge neighbors", function()
   local world = grid.create(3, 3)
   grid.setAlive(world, 3, 1, true)
   assert.equal(grid.countNeighbors(world, 1, 1), 1)
+end)
+
+test("toroidal wrap counts horizontal edge neighbors", function()
+  local world = grid.create(3, 3)
+  grid.setAlive(world, 2, 3, true)
+  assert.equal(grid.countNeighbors(world, 2, 1), 1)
 end)
 
 test("blinker oscillates with period two", function()

@@ -1,5 +1,6 @@
 local config = {
   -- Starting hints for conf.lua window size; overridden at runtime by auto-fit.
+  -- App startup pattern is defaultPattern below; patterns.lua uses "glider" as get() fallback only.
   rows = 40,
   cols = 60,
   tileSize = 12,

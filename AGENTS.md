@@ -3,7 +3,7 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Milestone 3-C complete (RLE import); post-M3 auto-fit grid on resize; next up is future backlog prioritization.
+- **Current phase:** Milestone 3-C complete (RLE import); post-M3 polish (auto-fit, generation counter, fast mode, Restart); next up is future backlog prioritization.
 - **Active branch:** `main`
 
 ## Execution Order
@@ -14,7 +14,7 @@ Complete phases in order; each leaves the app runnable and tests green.
 | M1 ✓ | Render baseline, grid tests |
 | **M2-A** ✓ | `src/rules.lua`, wire `grid.computeNext(world, rules)` |
 | **M2-B** ✓ | `patterns/`, loader, remove `seedGlider` |
-| **M2-C** ✓ | Read-only status bar |
+| **M2-C** ✓ | Status bar stats display |
 | **M3-A** ✓ | `src/playback.lua`, `love.update` |
 | **M3-B** ✓ | Status bar controls, README |
 | **M3-C** ✓ | RLE parser + `.rle` pattern resolution |
@@ -51,11 +51,12 @@ See `PLAN.md` for checkpoints and file-level detail.
   - Deferred: random_soup
 
 ## Status bar and playback
-- **M2-C** ✓: bottom status bar shows rulestring, `rows×cols`, theme, step interval (read-only).
-- **M3-A** ✓: playback state + `love.update` auto-step. Temporary keyboard controls in `main.lua` (`space` toggle, `s` play, `p` pause, `n` step).
-- **M3-B** ✓: status bar play/pause/step controls + keyboard shortcuts/docs.
+- **M2-C** ✓: bottom status bar shows rulestring, `rows×cols`, theme, and generation counter (`Gen: N`).
+- **M3-A** ✓: playback state + `love.update` auto-step. Keyboard controls in `main.lua` (`space` toggle, `s` play, `p` pause, `n` step, `r` restart).
+- **M3-B** ✓: status bar Play/Pause/Step/Restart buttons + keyboard shortcuts/docs.
 - **M3-C** ✓: RLE parser and file resolution in `src/patterns.lua` (`.lua` first, then `.rle`).
-- `stepInterval` = seconds between auto-generations when playing.
+- **Fast mode:** hold `f` → Play button shows `Play +`, step interval `0.05` via `playback.setStepInterval`.
+- `stepInterval` = seconds between auto-generations when playing (config default `0.10`; not shown on status bar).
 - **Resize:** `love.resize` rebuilds the grid to fill the viewport and restarts from `defaultPattern` (same reset semantics as Restart).
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
@@ -91,6 +92,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 - `src/ui/statusbar.lua`: bottom stats + playback controls (**M2-C** display, **M3-B** controls).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**).
 - `src/layout.lua`: viewport-to-grid sizing (`computeGridSize`).
+- `src/util.lua`: shared helpers (`wrap`).
 - `patterns/`: one file per initial state (`.lua` or `.rle`).
 - `README.md`: usage and scope docs.
 - `tests/`: plain Lua unit tests (`lua tests/run.lua`).
@@ -98,9 +100,9 @@ See `PLAN.md` for checkpoints and file-level detail.
 ## Testing
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
-- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/ui/statusbar.lua`, `src/playback.lua`, `src/layout.lua` — rules parser/presets, toroidal stepping, Lua/RLE pattern loading, status bar controls, playback stepping, resize sizing math.
-- **M3-C** ✓: `tests/rle_spec.lua` + expanded `tests/patterns_spec.lua` — parser coverage and `.rle` load path.
-- Defer renderer/LÖVE integration tests until playback UI exists.
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`.
+- **Covered modules:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/ui/statusbar.lua`.
+- Defer renderer/LÖVE integration tests.
 
 ## Working Agreement For This Repo
 - Keep this `AGENTS.md` updated with active context, constraints, and decisions.

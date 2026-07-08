@@ -1,13 +1,10 @@
 local assert = require("tests.assert")
 local grid = require("src.grid")
 local patterns = require("src.patterns")
-
-local function test(name, fn)
-  local ok, err = pcall(fn)
-  if not ok then
-    error(string.format("%s: %s", name, err), 0)
-  end
-end
+local specHelper = require("tests.spec_helper")
+local test = specHelper.test
+local aliveCount = specHelper.aliveCount
+local withLoveMock = specHelper.withLoveMock
 
 test("list returns catalog ids including rle assets", function()
   assert.equal(
@@ -22,32 +19,22 @@ test("get falls back to glider for unknown pattern", function()
 end)
 
 test("get loads rle pattern through love.filesystem", function()
-  local previousLove = _G.love
-  local ok, err = pcall(function()
-    _G.love = {
-      filesystem = {
-        getInfo = function(path, kind)
-          assert.equal(path, "patterns/test_rle.rle")
-          assert.equal(kind, "file")
-          return { type = "file" }
-        end,
-        read = function(path)
-          assert.equal(path, "patterns/test_rle.rle")
-          return "x = 3, y = 3, rule = B3/S23\nbob$2bo$3o!"
-        end,
-      },
-    }
-
+  withLoveMock({
+    getInfo = function(path, kind)
+      assert.equal(path, "patterns/test_rle.rle")
+      assert.equal(kind, "file")
+      return { type = "file" }
+    end,
+    read = function(path)
+      assert.equal(path, "patterns/test_rle.rle")
+      return "x = 3, y = 3, rule = B3/S23\nbob$2bo$3o!"
+    end,
+  }, function()
     local pattern = patterns.get("test_rle")
     assert.equal(pattern.id, "test_rle")
     assert.equal(pattern.rulestring, "B3/S23")
     assert.equal(#pattern.cells, 5)
   end)
-
-  _G.love = previousLove
-  if not ok then
-    error(err, 0)
-  end
 end)
 
 test("apply centers glider pattern on board", function()
@@ -61,38 +48,39 @@ test("apply centers glider pattern on board", function()
   assert.isTrue(grid.isAlive(world, 5, 5))
 end)
 
-test("apply loads and centers pulsar from rle file", function()
-  local previousLove = _G.love
-  local ok, err = pcall(function()
-    _G.love = {
-      filesystem = {
-        getInfo = function(path, kind)
-          local file = io.open(path, "r")
-          if file then
-            file:close()
-            return { type = kind or "file" }
-          end
-          return nil
-        end,
-        read = function(path)
-          local file = _G.assert(io.open(path, "r"))
-          local text = file:read("*a")
-          file:close()
-          return text
-        end,
-      },
-    }
+test("stamp with empty cells clears board", function()
+  local world = grid.create(5, 5)
+  grid.setAlive(world, 2, 2, true)
+  patterns.stamp(world, { id = "empty", name = "Empty", cells = {} })
+  assert.equal(aliveCount(world), 0)
+end)
 
+test("apply loads and centers pulsar from rle file", function()
+  withLoveMock({
+    getInfo = function(path, kind)
+      local file = io.open(path, "r")
+      if file then
+        file:close()
+        return { type = kind or "file" }
+      end
+      return nil
+    end,
+    read = function(path)
+      local file = _G.assert(io.open(path, "r"))
+      local text = file:read("*a")
+      file:close()
+      return text
+    end,
+  }, function()
     local world = grid.create(40, 60)
     patterns.apply(world, "pulsar")
 
-    local aliveCount = 0
+    local count = aliveCount(world)
     local minRow, maxRow = world.rows, 1
     local minCol, maxCol = world.cols, 1
     for row = 1, world.rows do
       for col = 1, world.cols do
         if grid.isAlive(world, row, col) then
-          aliveCount = aliveCount + 1
           if row < minRow then minRow = row end
           if row > maxRow then maxRow = row end
           if col < minCol then minCol = col end
@@ -101,13 +89,8 @@ test("apply loads and centers pulsar from rle file", function()
       end
     end
 
-    assert.isTrue(aliveCount > 20)
+    assert.isTrue(count > 20)
     assert.isTrue(math.abs((minRow - 1) - (world.rows - maxRow)) <= 1)
     assert.isTrue(math.abs((minCol - 1) - (world.cols - maxCol)) <= 1)
   end)
-
-  _G.love = previousLove
-  if not ok then
-    error(err, 0)
-  end
 end)

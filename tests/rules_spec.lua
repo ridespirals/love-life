@@ -1,13 +1,6 @@
 local assert = require("tests.assert")
-local grid = require("src.grid")
 local rules = require("src.rules")
-
-local function test(name, fn)
-  local ok, err = pcall(fn)
-  if not ok then
-    error(string.format("%s: %s", name, err), 0)
-  end
-end
+local test = require("tests.spec_helper").test
 
 test("parse B3/S23 yields birth on 3 and survival on 2 or 3", function()
   local parsed = rules.parse("B3/S23")
@@ -52,6 +45,7 @@ test("list returns sorted preset names", function()
 end)
 
 test("conway kills live cell with four neighbors", function()
+  local grid = require("src.grid")
   local world = grid.create(3, 3)
   local conway = rules.get("conway")
 
@@ -66,6 +60,7 @@ test("conway kills live cell with four neighbors", function()
 end)
 
 test("ant colony survives live cell with four neighbors", function()
+  local grid = require("src.grid")
   local world = grid.create(3, 3)
   local antColony = rules.get("ant_colony")
 

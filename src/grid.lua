@@ -1,8 +1,6 @@
-local M = {}
+local util = require("src.util")
 
-local function wrap(index, size)
-  return ((index - 1) % size) + 1
-end
+local M = {}
 
 function M.create(rows, cols)
   local current = {}
@@ -47,8 +45,8 @@ function M.countNeighbors(world, row, col)
   for dRow = -1, 1 do
     for dCol = -1, 1 do
       if dRow ~= 0 or dCol ~= 0 then
-        local neighborRow = wrap(row + dRow, world.rows)
-        local neighborCol = wrap(col + dCol, world.cols)
+        local neighborRow = util.wrap(row + dRow, world.rows)
+        local neighborCol = util.wrap(col + dCol, world.cols)
         if world.current[neighborRow][neighborCol] then
           count = count + 1
         end

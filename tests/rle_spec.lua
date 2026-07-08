@@ -1,12 +1,6 @@
 local assert = require("tests.assert")
 local rle = require("src.patterns.rle")
-
-local function test(name, fn)
-  local ok, err = pcall(fn)
-  if not ok then
-    error(string.format("%s: %s", name, err), 0)
-  end
-end
+local test = require("tests.spec_helper").test
 
 local function hasCell(cells, col, row)
   for _, cell in ipairs(cells) do

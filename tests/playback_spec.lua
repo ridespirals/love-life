@@ -1,12 +1,6 @@
 local assert = require("tests.assert")
 local playback = require("src.playback")
-
-local function test(name, fn)
-  local ok, err = pcall(fn)
-  if not ok then
-    error(string.format("%s: %s", name, err), 0)
-  end
-end
+local test = require("tests.spec_helper").test
 
 test("create initializes paused state", function()
   local state = playback.create(0.2)
@@ -20,6 +14,14 @@ test("play and pause toggle running flag", function()
   playback.play(state)
   assert.isTrue(state.running)
   playback.pause(state)
+  assert.isFalse(state.running)
+end)
+
+test("toggle flips running state", function()
+  local state = playback.create(0.2)
+  playback.toggle(state)
+  assert.isTrue(state.running)
+  playback.toggle(state)
   assert.isFalse(state.running)
 end)
 

@@ -10,26 +10,19 @@ local layout = require("src.layout")
 
 local world
 local theme
-local activeRules
+local activeRule
 local playbackState
 local generation = 0
 local fastMode = false
 local FAST_STEP_INTERVAL = 0.05
 
 local function advanceGeneration()
-  grid.step(world, activeRules)
+  grid.step(world, activeRule)
   generation = generation + 1
 end
 
 local function stepForward()
   playback.stepForward(playbackState, advanceGeneration)
-end
-
-local function restartWorld()
-  patterns.apply(world, config.defaultPattern)
-  grid.computeNext(world, activeRules)
-  playback.restart(playbackState)
-  generation = 0
 end
 
 local function applyStepInterval()
@@ -45,23 +38,34 @@ local function setFastMode(enabled)
   applyStepInterval()
 end
 
-local function rebuildWorldForWindow()
-  local windowWidth, windowHeight = love.graphics.getDimensions()
-  config.rows, config.cols = layout.computeGridSize(
-    windowWidth,
-    windowHeight,
-    config.tileSize,
-    config.statusBarHeight
-  )
-  world = grid.create(config.rows, config.cols)
+local function resetSimulation(opts)
+  if opts and opts.resize then
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    config.rows, config.cols = layout.computeGridSize(
+      windowWidth,
+      windowHeight,
+      config.tileSize,
+      config.statusBarHeight
+    )
+    world = grid.create(config.rows, config.cols)
+  end
+
   patterns.apply(world, config.defaultPattern)
-  grid.computeNext(world, activeRules)
+  grid.computeNext(world, activeRule)
   playback.restart(playbackState)
   generation = 0
 end
 
+local function restartWorld()
+  resetSimulation()
+end
+
+local function rebuildWorldForWindow()
+  resetSimulation({ resize = true })
+end
+
 function love.load()
-  activeRules = rules.get(config.activeRule)
+  activeRule = rules.get(config.activeRule)
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
   fastMode = false
@@ -79,7 +83,7 @@ end
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
   renderer.draw(world, theme, config)
-  statusbar.draw(world, theme, config, activeRules, generation, fastMode)
+  statusbar.draw(world, theme, config, activeRule, generation, fastMode)
 end
 
 function love.keypressed(key)
@@ -111,7 +115,7 @@ function love.mousepressed(x, y, button)
     return
   end
 
-  local hit = statusbar.hitTestButton(config, x, y)
+  local hit = statusbar.hitTestButton(config, x, y, fastMode)
   if hit == "play" then
     playback.play(playbackState)
   elseif hit == "pause" then

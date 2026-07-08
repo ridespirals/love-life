@@ -14,7 +14,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 | Milestone | Phases | Delivers |
 |-----------|--------|----------|
 | **M1** ✓ | — | Grid render, themes, preview dots, toroidal stepping foundation |
-| **M2** | A → B → C | Configurable rules, pattern loader, read-only status bar |
+| **M2** | A → B → C | Configurable rules, pattern loader, status bar stats display |
 | **M3** | A → B → C | Playback engine, controls/docs, RLE import |
 | **Future** | — | History stack, cell editing, runtime pickers, export |
 
@@ -61,7 +61,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 5. Remove `grid.seedGlider` (logic moves to `patterns/glider.lua`)
 
 **Extended catalog** (same phase or immediately after core works):
-- `patterns/pulsar.lua` (needs board ≥ 13×13; current 40×60 is fine)
+- `patterns/pulsar.rle` (needs board ≥ 13×13; current 40×60 is fine)
 - `patterns/random_soup.lua` (smoke test; good with `ant_colony`)
 
 **Deferred catalog** (Future / when needed):
@@ -100,7 +100,10 @@ Pure Lua; no LÖVE changes required to finish this phase.
 **Checkpoint:** `lua tests/run.lua` green; existing Lua patterns still load; `.rle` patterns load by `defaultPattern` id.
 
 ### Post-M3 polish ✓
-- **Auto-fit grid on resize** ✓ — `src/layout.lua` computes `rows`/`cols` from window size and `tileSize`; `love.resize` rebuilds world and restarts from `defaultPattern` (generation and playback reset).
+- **Auto-fit grid on load and resize** ✓ — `src/layout.lua` computes `rows`/`cols` from window size and `tileSize`; `love.load` and `love.resize` rebuild world and restart from `defaultPattern` (generation and playback reset).
+- **Generation counter** ✓ — status bar shows `Gen: N`.
+- **Fast mode** ✓ — hold `f` for `Play +` label and `0.05` step interval via `playback.setStepInterval`.
+- **Restart control** ✓ — `r` key and status bar Restart button.
 - **Deferred:** `Shift+Up`/`Shift+Down` tile-size hotkeys (reuse same rebuild helper).
 
 ### Future (planned, post-M3-C)
@@ -129,12 +132,16 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `src/ui/statusbar.lua` | exists | M2-C ✓ display; M3-B controls |
 | `src/playback.lua` | exists | M3-A ✓ |
 | `src/layout.lua` | exists | Post-M3 ✓ auto-fit sizing |
+| `src/util.lua` | exists | Post-M3 ✓ shared `wrap` helper |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
 | `tests/patterns_spec.lua` | exists | M2-B ✓; M3-C ✓ RLE load path |
 | `tests/rle_spec.lua` | exists | M3-C ✓ |
 | `tests/layout_spec.lua` | exists | Post-M3 ✓ resize math |
+| `tests/playback_spec.lua` | exists | M3-A ✓ |
+| `tests/statusbar_spec.lua` | exists | Post-M3 ✓ layout/hit-test |
 | `tests/run.lua` | exists | M2-A/B + M3-C register specs |
+| `.github/workflows/test.yml` | exists | CI — Lua 5.4, `lua tests/run.lua` on push/PR |
 
 ## Design Decisions (locked before implementation)
 
@@ -213,10 +220,12 @@ return {
   - resolved rulestring (e.g. `B3/S23`)
   - board size (`rows×cols`)
   - active theme name
-  - step interval (seconds between auto-steps)
+  - generation counter (`Gen: N`) — replaced planned step-interval display
 - **Milestone 3-B** (interactive): add controls
   - Play / Pause
   - Step forward (advance one generation)
+  - Restart (reload `defaultPattern`, reset generation)
+- **Post-M3:** fast mode (`f` hold) changes Play label to `Play +` and step interval to `0.05`
 - Text/button hit areas in `src/ui/statusbar.lua`; input wired in `main.lua`.
 
 ### Playback (Milestone 3)
@@ -284,7 +293,7 @@ return {
 | `previewDotMaxRadiusPx` | `8` | M1 ✓ |
 | `activeRule` | `"conway"` | M2-A ✓ |
 | `defaultPattern` | `"glider"` | M2-B ✓ |
-| `stepInterval` | `0.15` | M2-C ✓ |
+| `stepInterval` | `0.10` | M2-C ✓ (display removed in post-M3; used by playback) |
 
 ### `src/rules.lua` (M2-A)
 - Export:
@@ -317,6 +326,13 @@ return {
 ### `conf.lua`
 - Resizable window; initial size from board + status bar reserve + margin.
 
+## CI
+
+- Workflow: `.github/workflows/test.yml`
+- Trigger: push to `main`, all pull requests
+- Runner: `ubuntu-latest`, Lua 5.4 via `leafo/gh-actions-lua`
+- Command: `lua tests/run.lua`
+
 ## Validation
 
 ### Always
@@ -328,7 +344,7 @@ return {
 |-------|--------|
 | M2-A | Tests green; `activeRule = "ant_colony"` changes survival (e.g. 4 neighbors) |
 | M2-B | `defaultPattern` loads from `patterns/`; `seedGlider` removed |
-| M2-C | Status bar shows rulestring, size, theme, interval |
+| M2-C | Status bar shows rulestring, size, theme, generation |
 | M3-A | Generations advance on timer / step; preview dots while paused |
 | M3-B | Bar buttons + keys work; README accurate |
 
@@ -336,12 +352,12 @@ return {
 - Pattern discovery strategy: keep `patterns.list()` as explicit curated ids, or move to dynamic directory discovery when catalog grows.
 - Pattern fallback UX: current loader falls back silently to `glider`; decide whether to log/warn in-app for unknown `defaultPattern`.
 - Status bar text scaling: long strings can clip on small windows; decide whether to truncate, reduce font size, or wrap.
-- Playback timer semantics: decide if changing `stepInterval` while running should take effect immediately or on the next cycle.
+- Playback timer semantics: fast mode already changes `stepInterval` at runtime via `playback.setStepInterval` while held; decide if other runtime interval changes should reset accumulator.
 - Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
 
 ### M1 visual checklist (regression)
 - Expected rows/cols, aligned grid lines, theme colors, preview dots only on changes
-- Preview dot scale/clamp, resize re-centers board, toroidal wrap
+- Preview dot scale/clamp, auto-fit dims on resize (restarts sim), toroidal wrap
 
 ## TODO Tracking
 
@@ -366,7 +382,8 @@ return {
 - [x] Add `src/patterns.lua` loader (`list`, `get`, `apply`)
 - [x] Wire `main.lua` to load `defaultPattern` with active rules
 - [x] Remove `grid.seedGlider`
-- [ ] Add extended patterns (`pulsar`, `random_soup`) — optional same PR or follow-up
+- [x] Add extended pattern `pulsar` (via RLE in M3-C)
+- [ ] Add `random_soup` — optional procedural seed
 
 ### Milestone 2-C — Status bar (read-only) ✓
 - [x] Add `stepInterval` to `src/config.lua`
@@ -393,7 +410,7 @@ return {
 - [ ] Step backward via generation history stack (`grid.clone`)
 - [ ] Add click-to-toggle cell state
 - [ ] Pattern picker UI (cycle/load catalog entries at runtime)
-- [ ] Add `gosper_glider_gun` pattern
+- [x] Add `gosper_glider_gun` pattern (RLE, M3-C)
 - [ ] Add more built-in rule presets beyond `conway`, `ant_colony`
 - [ ] Add runtime rule switching (keyboard/UI picker)
 - [ ] Add more built-in themes beyond `classic`, `zenburn`, `solarized`

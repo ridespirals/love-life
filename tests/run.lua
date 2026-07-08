@@ -13,6 +13,7 @@ local specs = {
   "tests/playback_spec.lua",
   "tests/rle_spec.lua",
   "tests/rules_spec.lua",
+  "tests/statusbar_spec.lua",
 }
 
 local passed = 0

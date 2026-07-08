@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/ridespirals/love-life/actions/workflows/test.yml/badge.svg)](https://github.com/ridespirals/love-life/actions/workflows/test.yml)
 
-Conway's Game of Life in Lua LÖVE
+Cellular Automata in Lua LÖVE
 
 ## Run
 
@@ -22,13 +22,13 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, and `src/layout.lua` — B3/S23 simulation behavior, toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state transitions, and auto-fit resize math.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, and `src/ui/statusbar.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, and status bar layout.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
 ## Configuration
 
-Edit `src/config.lua`:
+Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-editable; shipped defaults may differ from examples below):
 
 | Key | Purpose |
 |-----|---------|
@@ -38,20 +38,29 @@ Edit `src/config.lua`:
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
 | `stepInterval` | Default auto-step interval (`0.10`) |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
+| `previewDotScale` | Preview dot radius as fraction of tile size |
+| `previewDotMinRadiusPx` | Minimum preview dot radius (pixels) |
+| `previewDotMaxRadiusPx` | Maximum preview dot radius (pixels) |
 
 See `PLAN.md` for the full implementation roadmap.
 
 ## Status
 
-**Milestone 1 complete** — grid render, themes, toroidal B3/S23 preview foundation.
+**Milestone 1 complete** — grid render, themes, configurable rules, and next-generation preview foundation.
 
-**Milestone 2-A/B/C complete** — configurable rulestrings, pattern loader, and read-only status bar (`src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua`).
+**Milestone 2-A/B/C complete** — rulestring presets, pattern loader, and status bar stats display (`src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua`).
 
-**Milestone 3-A/B/C complete** — playback engine, status bar controls, and RLE import are wired.
+**Milestone 3-A/B/C complete** — playback engine, interactive status bar controls, and RLE import are wired.
 
-**Post-M3 polish** — grid auto-fits the window on load and resize (restarts from `defaultPattern`).
+**Post-M3 polish** — auto-fit grid on load and resize; generation counter on status bar; fast mode (`f` hold); Restart control.
 
 **Next:** prioritize future features (tile-size hotkeys, history, picker, runtime switching, export).
+
+## Status bar
+
+**Display:** `Rule`, `Size` (`rows×cols`), `Theme`, `Gen` (generation counter).
+
+**Buttons:** `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held.
 
 ## Controls
 
@@ -77,7 +86,7 @@ Resizing the window recomputes grid dimensions to fill the viewport and restarts
 
 ## Features
 
-1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on resize)
+1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on load and resize)
 2. Animations and next-generation preview dots
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)
