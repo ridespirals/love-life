@@ -249,6 +249,7 @@ return {
 
 ## Validation
 - Run `love .` from repo root.
+- Run `lua tests/run.lua` for grid unit tests (no LÖVE required).
 - Verify:
   - expected rows/cols
   - aligned grid lines
@@ -269,6 +270,7 @@ return {
 - [x] Implement world/grid model with toroidal B3/S23 `computeNextState`
 - [x] Render theme-driven fills, preview center dots, and grid lines (centered above future status bar area)
 - [x] Wire load/draw lifecycle and resizable window defaults
+- [x] Add plain Lua unit tests for `src/grid.lua` (`tests/run.lua`)
 
 ### Milestone 2
 - [ ] Add `patterns/*.lua` catalog and `src/patterns.lua` loader
@@ -279,7 +281,7 @@ return {
 - [ ] Add `src/playback.lua` — play/pause/step-forward state machine
 - [ ] Wire `stepInterval` auto-advance in `love.update`
 - [ ] Status bar play/pause/step buttons and keyboard shortcuts
-- [ ] Update README (run instructions, patterns, controls, fix B3/S23 birth rule text)
+- [ ] Update README (patterns, controls)
 
 ## Next Features (Do Not Delete, Mark Complete Later)
 - [ ] RLE (`.rle`) pattern import

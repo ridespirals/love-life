@@ -4,7 +4,7 @@
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
 - Current phase: Milestone 1 complete (render baseline); Milestone 2 next (patterns + status bar).
-- Active branch: `milestone-1`
+- Active branch: `main`
 
 ## Product Direction
 - Build a configurable board of square tiles representing world state.
@@ -54,13 +54,19 @@
 - `main.lua`: LÖVE entry, input, lifecycle.
 - `src/config.lua`: board dimensions, theme, pattern id, step interval, status bar height.
 - `src/themes.lua`: named theme registry.
-- `src/grid.lua`: world buffers, toroidal neighbor logic, next-state computation.
+- `src/grid.lua`: world buffers, toroidal neighbor logic, next-state computation, `step`.
 - `src/patterns.lua`: load/apply `patterns/*.lua` (RLE later).
 - `src/renderer.lua`: theme-driven board render (viewport above status bar).
 - `src/ui/statusbar.lua`: bottom stats + playback controls.
 - `src/playback.lua`: play/pause/step-forward state (Milestone 3).
 - `patterns/`: one Lua file per initial state.
 - `README.md`: usage and scope docs.
+- `tests/`: plain Lua unit tests (`lua tests/run.lua`); grid logic only for now.
+
+## Testing
+- Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
+- Scope: `src/grid.lua` — Conway rules, toroidal wrap, `computeNext` does not mutate `current`, `step` advances one generation.
+- Defer renderer/LÖVE integration tests until playback UI exists.
 
 ## Working Agreement For This Repo
 - Keep this `AGENTS.md` updated with active context, constraints, and decisions.

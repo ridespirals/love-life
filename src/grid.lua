@@ -74,6 +74,15 @@ function M.computeNext(world)
   end
 end
 
+function M.step(world)
+  world.current, world.next = world.next, world.current
+  M.computeNext(world)
+end
+
+function M.isAlive(world, row, col)
+  return world.current[row][col]
+end
+
 -- Glider offsets from placement origin (col, row), 0-based deltas.
 local gliderCells = {
   { 1, 0 },
