@@ -3,7 +3,7 @@
 ## Plan Status
 - **Branch:** `main`
 - **Done:** Milestone 1 (render baseline + grid tests)
-- **Next:** Milestone 3-A — playback engine
+- **Next:** Milestone 3-B — status bar controls + docs
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -112,7 +112,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `src/patterns.lua` | exists | M2-B ✓ |
 | `patterns/*.lua` | exists (core) | M2-B ✓ |
 | `src/ui/statusbar.lua` | exists | M2-C ✓ display; M3-B controls |
-| `src/playback.lua` | **todo** | M3-A |
+| `src/playback.lua` | exists | M3-A ✓ |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
 | `tests/patterns_spec.lua` | exists | M2-B ✓ |
@@ -349,10 +349,10 @@ return {
 - [x] Add `src/ui/statusbar.lua` (display-only stats row)
 - [x] Wire status bar in `main.lua` `love.draw`
 
-### Milestone 3-A — Playback engine
-- [ ] Add `src/playback.lua` — play/pause/step-forward state machine
-- [ ] Wire `stepInterval` auto-advance in `love.update`
-- [ ] Pass resolved rules through playback → `grid.step`
+### Milestone 3-A — Playback engine ✓
+- [x] Add `src/playback.lua` — play/pause/step-forward state machine
+- [x] Wire `stepInterval` auto-advance in `love.update`
+- [x] Pass resolved rules through playback → `grid.step`
 
 ### Milestone 3-B — Controls + docs
 - [ ] Status bar play/pause/step buttons and keyboard shortcuts

@@ -20,7 +20,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, and `src/patterns.lua` — B3/S23 birth/survival/death, toroidal wrap, rulestring parsing, presets, core pattern loading/centering, blinker period-2 via `grid.step`.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, and `src/playback.lua` — B3/S23 birth/survival/death, toroidal wrap, rulestring parsing, presets, core pattern loading/centering, and playback timer state transitions.
 
 ## Configuration
 
@@ -43,7 +43,16 @@ See `PLAN.md` for the full implementation roadmap.
 
 **Milestone 2-A/B/C complete** — configurable rulestrings, pattern loader, and read-only status bar (`src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua`).
 
-**Next: Milestone 3-A** — playback engine (`love.update` stepping).
+**Milestone 3-A complete** — playback engine wired in `love.update` (`src/playback.lua`).
+
+**Next: Milestone 3-B** — status bar controls and final control docs.
+
+## Temporary Controls (M3-A)
+
+- `space`: toggle play/pause
+- `s`: play
+- `p`: pause
+- `n`: step forward one generation
 
 ## Features
 
