@@ -1,5 +1,7 @@
 # Love Life
 
+[![Tests](https://github.com/ridespirals/love-life/actions/workflows/test.yml/badge.svg)](https://github.com/ridespirals/love-life/actions/workflows/test.yml)
+
 Conway's Game of Life in Lua LÖVE
 
 ## Run
@@ -21,6 +23,8 @@ lua tests/run.lua
 ```
 
 Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, and `src/layout.lua` — B3/S23 simulation behavior, toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state transitions, and auto-fit resize math.
+
+CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
 ## Configuration
 

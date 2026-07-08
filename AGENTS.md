@@ -97,6 +97,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 
 ## Testing
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
+- GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/ui/statusbar.lua`, `src/playback.lua`, `src/layout.lua` — rules parser/presets, toroidal stepping, Lua/RLE pattern loading, status bar controls, playback stepping, resize sizing math.
 - **M3-C** ✓: `tests/rle_spec.lua` + expanded `tests/patterns_spec.lua` — parser coverage and `.rle` load path.
 - Defer renderer/LÖVE integration tests until playback UI exists.
