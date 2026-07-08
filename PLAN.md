@@ -2,8 +2,9 @@
 
 ## Plan Status
 - **Branch:** `main`
-- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 auto-fit grid on resize
-- **Next:** Future backlog (tile-size hotkeys, history, picker, export)
+- **Version:** v1.0 (tagged releases)
+- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 polish; release packaging CI
+- **Next:** Post-1.0 backlog (tile-size hotkeys, history, picker, export)
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -142,6 +143,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `tests/statusbar_spec.lua` | exists | Post-M3 ✓ layout/hit-test |
 | `tests/run.lua` | exists | M2-A/B + M3-C register specs |
 | `.github/workflows/test.yml` | exists | CI — Lua 5.4, `lua tests/run.lua` on push/PR |
+| `.github/workflows/release.yml` | exists | v1.0 — tag-triggered build + GitHub Release |
 
 ## Design Decisions (locked before implementation)
 
@@ -328,10 +330,17 @@ return {
 
 ## CI
 
+### Tests
 - Workflow: `.github/workflows/test.yml`
 - Trigger: push to `main`, all pull requests
 - Runner: `ubuntu-latest`, Lua 5.4 via `leafo/gh-actions-lua`
 - Command: `lua tests/run.lua`
+
+### Release
+- Workflow: `.github/workflows/release.yml`
+- Trigger: push tag `v*` (e.g. `v1.0.0`)
+- Steps: run tests → stage game files (`main.lua`, `conf.lua`, `src/`, `patterns/`, `LICENSE`) → [nhartland/love-build](https://github.com/marketplace/actions/love-build) (LÖVE 11.5) → [softprops/action-gh-release](https://github.com/softprops/action-gh-release)
+- Artifacts: `love-life.love`, Windows 32/64 zips, macOS `.app` zip, Linux x86_64 AppImage zip
 
 ## Validation
 

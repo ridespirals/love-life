@@ -3,7 +3,7 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Milestone 3-C complete (RLE import); post-M3 polish (auto-fit, generation counter, fast mode, Restart); next up is future backlog prioritization.
+- **Current phase:** v1.0 shipped; post-1.0 backlog (tile-size hotkeys, history, picker, export).
 - **Active branch:** `main`
 
 ## Execution Order
@@ -100,6 +100,7 @@ See `PLAN.md` for checkpoints and file-level detail.
 ## Testing
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
+- **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
 - **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`.
 - **Covered modules:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/ui/statusbar.lua`.
 - Defer renderer/LÖVE integration tests.

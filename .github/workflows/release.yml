@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: leafo/gh-actions-lua@v11
+        with:
+          luaVersion: "5.4"
+
+      - name: Run unit tests
+        run: lua tests/run.lua
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage game files
+        run: |
+          mkdir -p staging
+          cp main.lua conf.lua LICENSE staging/
+          cp -r src patterns staging/
+
+      - name: Build LÖVE packages
+        id: love-build
+        uses: nhartland/love-build@v1
+        with:
+          app_name: love-life
+          love_version: "11.5"
+          source_dir: ./staging
+          result_dir: release
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true

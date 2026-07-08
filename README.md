@@ -14,6 +14,26 @@ love .
 
 Requires [LÖVE 11.x](https://love2d.org/).
 
+## Releases
+
+Pre-built downloads are published on [GitHub Releases](https://github.com/ridespirals/love-life/releases).
+
+| Asset | How to run |
+|-------|------------|
+| `love-life.love` | `love love-life.love` (requires LÖVE 11.x installed) |
+| `love-life_win32.zip` / `love-life_win64.zip` | Unzip and run `love-life.exe` |
+| `love-life_macos.zip` | Unzip and open `love-life.app` |
+| `love-life_linux_x86_64.zip` | Unzip and run `love-life-x86_64.AppImage` |
+
+**Maintainers:** after merging to `main`, tag and push to trigger the release workflow:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+CI runs tests, builds packages via [`.github/workflows/release.yml`](.github/workflows/release.yml), and publishes assets with [action-gh-release](https://github.com/softprops/action-gh-release).
+
 ## Test
 
 Pure Lua tests for simulation logic (no LÖVE required):
@@ -54,7 +74,9 @@ See `PLAN.md` for the full implementation roadmap.
 
 **Post-M3 polish** — auto-fit grid on load and resize; generation counter on status bar; fast mode (`f` hold); Restart control.
 
-**Next:** prioritize future features (tile-size hotkeys, history, picker, runtime switching, export).
+**v1.0** — first tagged release with `.love` and platform packages via GitHub Actions.
+
+**Next:** post-1.0 backlog (tile-size hotkeys, history, picker, runtime switching, export).
 
 ## Status bar
 
