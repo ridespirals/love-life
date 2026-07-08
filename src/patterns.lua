@@ -1,4 +1,5 @@
 local grid = require("src.grid")
+local rle = require("src.patterns.rle")
 
 local M = {}
 
@@ -24,11 +25,35 @@ local function getBounds(cells)
   return minCol, maxCol, minRow, maxRow
 end
 
+local function loadRlePattern(id)
+  if not (love and love.filesystem and love.filesystem.getInfo and love.filesystem.read) then
+    return nil
+  end
+
+  local path = "patterns/" .. id .. ".rle"
+  if not love.filesystem.getInfo(path, "file") then
+    return nil
+  end
+
+  local text = love.filesystem.read(path)
+  local pattern = rle.parse(text)
+  pattern.id = id
+  if not pattern.name or pattern.name == "" then
+    pattern.name = id
+  end
+  return pattern
+end
+
 function M.get(id)
   local moduleId = id or defaultPattern
   local ok, pattern = pcall(require, "patterns." .. moduleId)
   if ok then
     return pattern
+  end
+
+  local rlePattern = loadRlePattern(moduleId)
+  if rlePattern then
+    return rlePattern
   end
 
   return require("patterns." .. defaultPattern)
@@ -39,11 +64,13 @@ function M.list()
     "glider",
     "blinker",
     "beacon",
+    "pulsar",
+    "gosper_glider_gun",
+    "lifeview",
   }
 end
 
-function M.apply(world, patternId)
-  local pattern = M.get(patternId)
+function M.stamp(world, pattern)
   local minCol, maxCol, minRow, maxRow = getBounds(pattern.cells)
   local width = maxCol - minCol + 1
   local height = maxRow - minRow + 1
@@ -58,6 +85,10 @@ function M.apply(world, patternId)
     local row = wrap(originRow + cell[2], world.rows)
     grid.setAlive(world, row, col, true)
   end
+end
+
+function M.apply(world, patternId)
+  M.stamp(world, M.get(patternId))
 end
 
 return M

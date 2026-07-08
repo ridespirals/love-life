@@ -20,7 +20,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, and `src/playback.lua` — B3/S23 birth/survival/death, toroidal wrap, rulestring parsing, presets, core pattern loading/centering, and playback timer state transitions.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, and `src/playback.lua` — B3/S23 simulation behavior, toroidal wrap, rulestring parsing, Lua/RLE pattern loading, and playback timer state transitions.
 
 ## Configuration
 
@@ -31,7 +31,7 @@ Edit `src/config.lua`:
 | `rows`, `cols`, `tileSize` | Board size and cell pixels |
 | `activeTheme` | `classic`, `zenburn`, or `solarized` |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
-| `defaultPattern` | Pattern id to load on start (`glider`, `blinker`, `beacon`) |
+| `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
 | `stepInterval` | Displayed in status bar now; used for auto-steps in M3 |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
 
@@ -43,7 +43,7 @@ See `PLAN.md` for the full implementation roadmap.
 
 **Milestone 2-A/B/C complete** — configurable rulestrings, pattern loader, and read-only status bar (`src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua`).
 
-**Milestone 3-A complete** — playback engine wired in `love.update` (`src/playback.lua`).
+**Milestone 3-A/B/C complete** — playback engine, status bar controls, and RLE import are wired.
 
 **Next:** prioritize future features (history, picker, runtime switching, export).
 
@@ -55,6 +55,15 @@ See `PLAN.md` for the full implementation roadmap.
 - `n` or `Right Arrow`: step forward one generation
 - `q`: quit app
 - Status bar buttons: `Play`, `Pause`, `Step` (mouse click)
+
+## RLE Support
+
+- `defaultPattern` now resolves in order:
+  1. `patterns/<id>.lua`
+  2. `patterns/<id>.rle`
+  3. fallback to `glider`
+- Shipped `.rle` assets include `pulsar`, `gosper_glider_gun`, and `lifeview`.
+- RLE `rule = ...` headers are parsed, but simulation still uses `activeRule` from config.
 
 ## Features
 

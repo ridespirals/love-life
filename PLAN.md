@@ -2,8 +2,8 @@
 
 ## Plan Status
 - **Branch:** `main`
-- **Done:** Milestone 1 (render baseline + grid tests)
-- **Next:** Milestone 3-B — status bar controls + docs
+- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C
+- **Next:** Post-M3 polish and future backlog (M1-M3-C complete)
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -15,8 +15,8 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 |-----------|--------|----------|
 | **M1** ✓ | — | Grid render, themes, preview dots, toroidal stepping foundation |
 | **M2** | A → B → C | Configurable rules, pattern loader, read-only status bar |
-| **M3** | A → B | Playback engine, interactive status bar, README controls |
-| **Future** | — | RLE, history stack, cell editing, runtime pickers, export |
+| **M3** | A → B → C | Playback engine, controls/docs, RLE import |
+| **Future** | — | History stack, cell editing, runtime pickers, export |
 
 ## Execution Order
 
@@ -30,9 +30,10 @@ flowchart TD
   M2C[M2-C Status bar read-only]
   M3A[M3-A Playback engine]
   M3B[M3-B Controls + README]
+  M3C[M3-C RLE import]
   FUT[Future features]
 
-  M1 --> M2A --> M2B --> M2C --> M3A --> M3B --> FUT
+  M1 --> M2A --> M2B --> M2C --> M3A --> M3B --> M3C --> FUT
 ```
 
 ### Milestone 1 — Render baseline ✓
@@ -64,7 +65,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 - `patterns/random_soup.lua` (smoke test; good with `ant_colony`)
 
 **Deferred catalog** (Future / when needed):
-- `gosper_glider_gun` — large; add when board sizing story is settled
+- `random_soup` — optional procedural seed for smoke tests
 
 **Checkpoint:** `love .` loads glider (or other `defaultPattern`) from `patterns/`; no `seedGlider` in codebase.
 
@@ -89,8 +90,16 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 **Checkpoint:** Full playable app; README matches behavior.
 
-### Future (planned, not M1–M3)
-- RLE (`.rle`) pattern import
+### Milestone 3-C — RLE import ✓
+1. Refactor `src/patterns.lua` with shared `stamp(world, pattern)` for all formats
+2. Add `src/patterns/rle.lua` parser (`x/y/rule` header, run counts, `$`, `!`, comments)
+3. Extend pattern resolution to load `patterns/<id>.rle` through `love.filesystem.read`
+4. Add shipped `.rle` assets (`pulsar`, `gosper_glider_gun`, `lifeview`)
+5. Add parser and integration tests (`tests/rle_spec.lua`, expanded `patterns_spec`)
+
+**Checkpoint:** `lua tests/run.lua` green; existing Lua patterns still load; `.rle` patterns load by `defaultPattern` id.
+
+### Future (planned, post-M3-C)
 - Step backward via generation **history stack** (needs `grid.clone` / snapshot helper)
 - Click-to-toggle cells
 - Pattern picker UI (cycle/load catalog at runtime)
@@ -109,14 +118,17 @@ Pure Lua; no LÖVE changes required to finish this phase.
 | `src/grid.lua` | exists | M2-A ✓ rules param; M2-B ✓ removed `seedGlider` |
 | `src/renderer.lua` | exists | — |
 | `src/rules.lua` | exists | M2-A ✓ |
-| `src/patterns.lua` | exists | M2-B ✓ |
+| `src/patterns.lua` | exists | M2-B ✓; M3-C ✓ shared stamp + RLE resolution |
+| `src/patterns/rle.lua` | exists | M3-C ✓ |
 | `patterns/*.lua` | exists (core) | M2-B ✓ |
+| `patterns/*.rle` | exists (`pulsar`, `gosper_glider_gun`, `lifeview`) | M3-C ✓ |
 | `src/ui/statusbar.lua` | exists | M2-C ✓ display; M3-B controls |
 | `src/playback.lua` | exists | M3-A ✓ |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
-| `tests/patterns_spec.lua` | exists | M2-B ✓ |
-| `tests/run.lua` | exists | M2-A/B register specs |
+| `tests/patterns_spec.lua` | exists | M2-B ✓; M3-C ✓ RLE load path |
+| `tests/rle_spec.lua` | exists | M3-C ✓ |
+| `tests/run.lua` | exists | M2-A/B + M3-C register specs |
 
 ## Design Decisions (locked before implementation)
 
@@ -174,13 +186,18 @@ return {
 | Tier | Patterns | When |
 |------|----------|------|
 | Core (M2-B) | `glider`, `blinker`, `beacon` | Required for phase complete |
-| Extended (M2-B+) | `pulsar`, `random_soup` | After loader works |
-| Deferred (Future) | `gosper_glider_gun` | Large board / sizing story |
+| Extended (M3-C) | `pulsar.rle`, `gosper_glider_gun.rle`, `lifeview.rle` | Loaded via RLE parser |
+| Deferred (Future) | `random_soup` | Optional procedural seed |
 
-#### RLE import (future, after Lua patterns)
-- Support standard Life **RLE** (`.rle`) for community patterns.
-- Keep parser in `src/patterns/rle.lua` or extend `src/patterns.lua`.
-- Lua patterns remain the source of truth for shipped demos.
+#### RLE import (M3-C implementation)
+- Supports standard Life **RLE** (`.rle`) for shipped and community patterns.
+- Parser lives in `src/patterns/rle.lua` and returns normalized `{ id, name, rulestring, cells }`.
+- `src/patterns.lua` resolves ids in order: Lua module → `.rle` file → fallback `glider`.
+- RLE `rule = ...` is parsed and exposed, but simulation rule selection still uses config `activeRule`.
+- Deferred RLE features:
+  - honoring `#P` offsets
+  - multiple patterns per file
+  - runtime file picker / import UI
 
 ### Status bar (bottom)
 - Fixed-height bar at **bottom** of window (`statusBarHeight` in config, not in theme).
@@ -358,8 +375,14 @@ return {
 - [x] Status bar play/pause/step buttons and keyboard shortcuts
 - [x] Update `README.md` (config, patterns, controls, rulestrings)
 
+### Milestone 3-C — RLE import ✓
+- [x] Extract shared `patterns.stamp(world, pattern)` and keep Lua pattern path intact
+- [x] Add `src/patterns/rle.lua` parser and `tests/rle_spec.lua`
+- [x] Extend `patterns.get` to resolve `patterns/<id>.rle` via `love.filesystem.read`
+- [x] Add shipped `patterns/pulsar.rle`, `patterns/gosper_glider_gun.rle`, and `patterns/lifeview.rle`
+- [x] Extend tests for RLE loading path and register RLE spec in `tests/run.lua`
+
 ## Next Features (Do Not Delete, Mark Complete Later)
-- [ ] RLE (`.rle`) pattern import
 - [ ] Step backward via generation history stack (`grid.clone`)
 - [ ] Add click-to-toggle cell state
 - [ ] Pattern picker UI (cycle/load catalog entries at runtime)

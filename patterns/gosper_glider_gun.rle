@@ -1,0 +1,5 @@
+#N Gosper glider gun
+#C Emits a glider every 30 generations.
+x = 36, y = 9, rule = B3/S23
+24bo11b$22bobo11b$12bo10bobo12b$11bo11bo2bo11b$2bo8bo12bo11b$2b
+o9bo11bo2bo11b$11bo10bobo12b$12bo10bobo11b$24bo11b!

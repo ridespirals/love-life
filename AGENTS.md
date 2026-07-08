@@ -17,6 +17,7 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **M2-C** ✓ | Read-only status bar |
 | **M3-A** ✓ | `src/playback.lua`, `love.update` |
 | **M3-B** ✓ | Status bar controls, README |
+| **M3-C** ✓ | RLE parser + `.rle` pattern resolution |
 
 See `PLAN.md` for checkpoints and file-level detail.
 
@@ -41,17 +42,18 @@ See `PLAN.md` for checkpoints and file-level detail.
 
 ## Patterns (initial states)
 - Curated patterns live in `patterns/*.lua` (repo-native format).
-- RLE import planned as follow-up for community patterns.
+- RLE import is supported in `patterns/*.rle` (M3-C).
 - Default load pattern: `glider` (configurable via `defaultPattern`).
 - **M2-B** ✓ catalog tiers:
-  - Core: glider, blinker, beacon
-  - Extended: pulsar, random_soup
-  - Deferred: gosper_glider_gun (large board)
+  - Core (Lua): glider, blinker, beacon
+  - Extended (RLE): pulsar, gosper_glider_gun, lifeview
+  - Deferred: random_soup
 
 ## Status bar and playback
 - **M2-C** ✓: bottom status bar shows rulestring, `rows×cols`, theme, step interval (read-only).
 - **M3-A** ✓: playback state + `love.update` auto-step. Temporary keyboard controls in `main.lua` (`space` toggle, `s` play, `p` pause, `n` step).
 - **M3-B** ✓: status bar play/pause/step controls + keyboard shortcuts/docs.
+- **M3-C** ✓: RLE parser and file resolution in `src/patterns.lua` (`.lua` first, then `.rle`).
 - `stepInterval` = seconds between auto-generations when playing.
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
@@ -81,18 +83,19 @@ See `PLAN.md` for checkpoints and file-level detail.
 - `src/themes.lua`: named theme registry.
 - `src/rules.lua`: named rulestring presets and `Bx/Sy` parser.
 - `src/grid.lua`: world buffers, toroidal neighbor logic, `computeNext(world, rules)`, `step(world, rules)`.
-- `src/patterns.lua`: load/apply `patterns/*.lua`.
+- `src/patterns.lua`: load/apply patterns from `patterns/*.lua` and `patterns/*.rle`.
+- `src/patterns/rle.lua`: RLE parser (`x/y/rule` header, run counts, `$`, `!`).
 - `src/renderer.lua`: theme-driven board render (viewport above status bar).
 - `src/ui/statusbar.lua`: bottom stats + playback controls (**M2-C** display, **M3-B** controls).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**).
-- `patterns/`: one Lua file per initial state.
+- `patterns/`: one file per initial state (`.lua` or `.rle`).
 - `README.md`: usage and scope docs.
 - `tests/`: plain Lua unit tests (`lua tests/run.lua`).
 
 ## Testing
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
-- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/ui/statusbar.lua`, `src/playback.lua` — Conway/Ant Colony rules, toroidal wrap, parser/presets, core pattern loader, read-only status bar, playback stepping.
-- **M2-A** ✓: `tests/rules_spec.lua` — parser, presets, Ant Colony behavior.
+- **Today:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/ui/statusbar.lua`, `src/playback.lua` — rules parser/presets, toroidal stepping, Lua/RLE pattern loading, status bar controls, playback stepping.
+- **M3-C** ✓: `tests/rle_spec.lua` + expanded `tests/patterns_spec.lua` — parser coverage and `.rle` load path.
 - Defer renderer/LÖVE integration tests until playback UI exists.
 
 ## Working Agreement For This Repo
