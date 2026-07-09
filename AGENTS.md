@@ -8,7 +8,7 @@
 - **Last merge:** PR #1 `square-step-animation` — square preview→commit morph, idle next-state markers, pseudo-3D alive tiles.
 
 ## Handoff (start here after restart)
-- **Run:** `lua tests/run.lua` (10 specs) · `love .` (visual smoke)
+- **Run:** `lua tests/run.lua` (11 specs) · `love .` (visual smoke)
 - **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
 - **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — preset buttons, text/hex fields, Apply; `src/ui/pane_widgets.lua` shared controls.
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
@@ -140,7 +140,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 ||||||| parent of c86ce9d (Add Phase 2 rule and theme pickers with in-game Apply.)
 - **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`; **Phase 3+** `userdata_spec`.
 =======
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`; **Phase 3+** `userdata_spec`.
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `themes_spec`; **Phase 3+** `userdata_spec`.
 >>>>>>> c86ce9d (Add Phase 2 rule and theme pickers with in-game Apply.)
 - **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
