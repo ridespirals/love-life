@@ -16,6 +16,13 @@ local function lerpColor(color, target, amount)
   }
 end
 
+local function colorToHex(color)
+  local function byte(channel)
+    return string.format("%02x", math.floor(channel * 255 + 0.5))
+  end
+  return "#" .. byte(color[1]) .. byte(color[2]) .. byte(color[3])
+end
+
 local function withBackground(theme)
   if not theme.background then
     theme.background = { theme.dead[1], theme.dead[2], theme.dead[3] }
@@ -75,6 +82,54 @@ local skipped = {
 local defaultTheme = "classic"
 
 local M = {}
+
+function M.toHex(color)
+  return colorToHex(color)
+end
+
+function M.colorFromHex(hex)
+  if not hex or hex == "" or #hex < 7 then
+    return nil
+  end
+  local ok, color = pcall(hexToColor, hex)
+  if ok then
+    return color
+  end
+end
+
+function M.colorsToHex(theme)
+  local hex = {
+    alive = colorToHex(theme.alive),
+    dead = colorToHex(theme.dead),
+    grid = colorToHex(theme.grid),
+    background = colorToHex(theme.background),
+  }
+  if theme.accent then
+    hex.accent = colorToHex(theme.accent)
+  end
+  return hex
+end
+
+function M.build(opts)
+  local built = {
+    name = opts.name or "custom",
+    alive = hexToColor(opts.alive),
+    dead = hexToColor(opts.dead),
+    grid = hexToColor(opts.grid),
+    background = hexToColor(opts.background),
+  }
+  if opts.accent then
+    built.accent = hexToColor(opts.accent)
+  end
+  return withBackground(built)
+end
+
+function M.tryBuild(opts)
+  local ok, built = pcall(M.build, opts)
+  if ok then
+    return built
+  end
+end
 
 function M.get(name)
   return themes[name] or themes[defaultTheme]

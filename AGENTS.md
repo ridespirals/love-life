@@ -3,17 +3,18 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Phase 1 ✓ on `main`; **Phase 2** (rule/theme pickers) is next. v1.1.0 tagged (fullscreen + step animation).
-- **Active branch:** `main` (after `vim-theme-extrapolation` merge); rebase `phase-2-rule-theme` onto `main` for Phase 2 UI work
-- **Last merge:** PR #1 `square-step-animation` — square preview→commit morph, idle next-state markers, pseudo-3D alive tiles.
+- **Current phase:** Phase 2 ✓ on `phase-2-rule-theme` (rebased on `main` with vim themes); **Phase 3** (userspace save/load) is next. v1.1.0 tagged (fullscreen + step animation).
+- **Active branch:** `phase-2-rule-theme`
+- **Last merge:** PR #2 `phase-1-statusbar` (pane manager + chips). `main` also has two direct post-merge commits importing 21 vim-derived themes with `accent` shadows (not yet PR-reviewed); this branch is rebased on top of both.
 
 ## Handoff (start here after restart)
-- **Run:** `lua tests/run.lua` (10 specs) · `love .` (visual smoke)
+- **Run:** `lua tests/run.lua` (11 specs) · `love .` (visual smoke)
 - **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
+- **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — preset buttons, text/hex fields, Apply; theme pane shows live **color swatches** beside each draft field (preset click or hex edit, before Apply); `src/ui/pane_widgets.lua` shared controls including `layoutGrid` (wraps preset buttons so the 21-theme catalog doesn't overflow the pane).
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
-- **Phase 2 scope:** Rule and theme pickers with Apply in `src/ui/panes/*.lua`. See PLAN.md Phase 2 section.
+- **Phase 3 scope:** Userspace save/load in `src/userdata.lua`. See PLAN.md Phase 3 section.
 - **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.
 
 ## Execution Order
@@ -30,12 +31,12 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **M3-C** ✓ | RLE parser + `.rle` pattern resolution |
 | **Phase 0** ✓ | Generation step animation (square preview → commit morph) |
 | **Phase 1** ✓ | UI shell (pane manager, clickable chips, Settings button) |
-| **Phase 2** | Rule and theme pickers (docked panes) |
+| **Phase 2** ✓ | Rule and theme pickers (docked panes, Apply) |
 | **Phase 3** | Userspace save/load (`src/userdata.lua`) |
 | **Phase 4** | Pattern picker + board drawing |
 | **Phase 5** | Grid settings (auto vs forced, letterbox) |
 
-Phase 0 ✓ · Phase 1 ✓. **Next:** Phase 2 (rule/theme pickers with Apply). Phases 3–5 build on Phase 2. See PLAN.md for release slices.
+Phase 0 ✓ · Phase 1 ✓ · Phase 2 ✓. **Next:** Phase 3 (userspace save/load). Phases 4–5 build on Phase 3. See PLAN.md for release slices.
 
 See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 
@@ -54,6 +55,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - **Grid modes:** `"auto"` (current resize behavior) or `"forced"` (fixed rows/cols/tileSize with letterbox centering).
 - **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto-fit + pattern restart).
 - Board drawing and editing require paused playback.
+- **Playback continuity:** opening a pane does **not** pause the simulation. Theme **Apply** is a live visual swap while play continues. Rule **Apply** pauses and recomputes next-state preview (cells preserved). Pattern **Apply** (Phase 4) and grid **Apply** (Phase 5) pause and reload the board. Only block playback **keyboard** shortcuts while a pane has focus—not the timer in `love.update`.
 
 ## Rulestrings
 - Life rulestrings use the form `Bx/Sy`:
@@ -83,6 +85,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - **Fast mode:** hold `f` → Play button shows `Play +`, step interval `0.05` via `playback.setStepInterval`.
 - `stepInterval` = seconds between auto-generations when playing (config default `0.10`; not shown on status bar).
 - **Resize:** `love.resize` rebuilds the grid to fill the viewport and restarts from `defaultPattern` (same reset semantics as Restart).
+- **Panes open:** playback timer keeps running; only keyboard shortcuts are blocked. Theme Apply does not pause. Rule Apply pauses and recomputes `next` under the new rulestring.
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
 ## Step Animation (Phase 0 ✓)
@@ -132,7 +135,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `themes_spec`, `session` (via pane); **Phase 3+** `userdata_spec`.
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `themes_spec`; **Phase 3+** `userdata_spec`.
 - **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 

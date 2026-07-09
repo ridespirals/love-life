@@ -1,0 +1,5 @@
+#!/bin/sh
+# Run the unit test suite. Named "check" (not "test") because `test` is a
+# shell builtin and would always shadow a same-named script on $PATH.
+# Bare `check` works inside this repo via direnv (see .envrc).
+exec lua tests/run.lua

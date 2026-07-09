@@ -14,6 +14,8 @@ love .
 
 Requires [LÖVE 11.x](https://love2d.org/).
 
+**Optional shortcut:** with [direnv](https://direnv.net/) installed and hooked into your shell (`eval "$(direnv hook zsh)"` / `bash`), running `direnv allow` once in this repo puts `bin/` on your `$PATH` while you're inside it. Then plain `run` and `check` work as one-word commands (see [`.envrc`](.envrc), `bin/run`, `bin/check`). `check` is used instead of `test` because `test` is a shell builtin that would always shadow a same-named script. This is purely a local convenience — `love .` and `lua tests/run.lua` always work without it.
+
 ## Releases
 
 Pre-built downloads are published on [GitHub Releases](https://github.com/ridespirals/love-life/releases).
@@ -41,6 +43,8 @@ Pure Lua tests for simulation logic (no LÖVE required):
 ```bash
 lua tests/run.lua
 ```
+
+Or, with direnv set up (see [Run](#run) above): `check`.
 
 Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, and `src/themes.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar layout, and theme registry.
 
@@ -90,9 +94,9 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.1.0** — square preview→commit step animation, idle next-state markers, pseudo-3D alive tiles; fullscreen (F11 / Alt+Enter).
 
-**v1.2 (in progress)** — Phase 1 settings UI shell (clickable chips, docked panes).
+**v1.2 (in progress)** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (Apply).
 
-**Next:** Phase 2 rule/theme pickers — see [`PLAN.md`](PLAN.md).
+**Next:** Phase 3 userspace save/load — see [`PLAN.md`](PLAN.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -102,11 +106,15 @@ Deferred: history stack (step backward), RLE export, import UI, **pattern groupi
 
 **Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play).
 
-While a pane is open, playback keyboard shortcuts are disabled; press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
+While a pane is open, playback **keyboard** shortcuts are disabled; the simulation **keeps running** if it was already playing. Text input works in Rule/Theme fields. Press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
+
+**Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept).
+
+**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`). A **swatch** beside each field previews the draft color live (preset click or valid 7-char hex); **Apply** commits the theme (live swap while playback continues). Leave `accent` blank to fall back to plain shadow shading.
 
 ## Controls
 
-- `space`: toggle play/pause (disabled while a pane is open)
+- `space`: toggle play/pause (disabled while a pane is open — mouse Play/Pause still work)
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation

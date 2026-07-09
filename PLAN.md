@@ -1,10 +1,10 @@
 # PLAN
 
 ## Plan Status
-- **Branch:** `main`
-- **Version:** v1.1.0 tagged; Phase 1 ✓; Phase 2 not started
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, **Phase 0**, **Phase 1** (UI shell)
-- **Next:** Phase 2 rule/theme pickers → Phases 3–5
+- **Branch:** `phase-2-rule-theme`
+- **Version:** v1.1.0 tagged; Phase 2 ✓
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, **Phase 0**, **Phase 1** (UI shell), **Phase 2** (rule/theme pickers)
+- **Next:** Phase 3 userspace save/load → Phases 4–5
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -149,7 +149,7 @@ flowchart TB
 | Chip | Opens |
 |------|--------|
 | `Rule: B3/S23` | Rule pane — preset list + custom `Bx/Sy` field + Apply / Save |
-| `Theme: solarized` | Theme pane — preset list + color fields + Apply / Save |
+| `Theme: solarized` | Theme pane — preset list + hex fields + live swatches + Apply / Save |
 | `Pattern: glider` | Pattern pane — catalog list + New / Edit / Save |
 | `Size: 40x60` | Settings pane — grid section (or deep-link from master button) |
 | `Gen: N` | Read-only (no pane) |
@@ -174,7 +174,16 @@ New session object in `main.lua` (or `src/session.lua`):
 | `gridMode` | `"auto"` (default) or `"forced"` |
 | `forcedTileSize`, `forcedRows`, `forcedCols` | Only used when `gridMode == "forced"` |
 
-- **Apply** — use draft in simulation immediately (recompute preview; optional restart policy per pane).
+- **Apply** — use draft in simulation immediately. **Per-pane playback policy** (preserve running sim when possible):
+
+| Pane | On Apply |
+|------|----------|
+| Theme | Live color swap; **playback continues** |
+| Rule | **Pause**; cancel in-flight step animation; swap rule; `grid.computeNext` (board cells preserved) |
+| Pattern (Phase 4) | **Pause**; reload pattern onto board; reset generation |
+| Grid settings (Phase 5) | **Pause**; rebuild grid; reload active pattern |
+
+Opening a pane never pauses playback. Panes block playback **keyboard** shortcuts only—not the `love.update` timer.
 - **Save** — write to userspace; assign stable `id` (slug from name).
 - **Discard** — revert draft to last applied/saved state.
 
@@ -202,7 +211,7 @@ New module: `src/userdata.lua`
 
 #### Input and interaction rules
 
-- Panes capture mouse/keyboard while open (typing in rule field must not trigger play shortcuts).
+- Panes capture mouse/keyboard while open (typing in rule field must not trigger play shortcuts). **Do not** auto-pause playback when a pane opens.
 - `Esc` closes top pane.
 - Drawing/editing requires **paused** playback.
 - Resize restart policy:
@@ -211,7 +220,7 @@ New module: `src/userdata.lua`
 
 #### Recommended implementation order
 
-Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. **Start Phase 2 next.**
+Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 ✓ on `phase-2-rule-theme`. **Start Phase 3 next.**
 
 | Step | Phase | Rationale |
 |------|-------|-----------|
@@ -322,17 +331,25 @@ No `conf.lua` change required — `resizable = true` already set.
 
 ---
 
-### Phase 2 — Runtime rule and theme pickers
+### Phase 2 — Runtime rule and theme pickers ✓
 
 **Delivers:** click Rule / Theme chips → working panes with built-in lists.
 
 | File | Work |
 |------|------|
-| `src/ui/panes/rule_pane.lua` | Preset buttons, `Bx/Sy` text input, Apply |
-| `src/ui/panes/theme_pane.lua` | Preset buttons, hex color fields, Apply |
-| `main.lua` | Swap `activeRule` / `theme` on Apply; `grid.computeNext` |
+| `src/ui/panes/rule_pane.lua` | Preset buttons, `Bx/Sy` text input, Apply ✓ |
+| `src/ui/panes/theme_pane.lua` | Preset buttons, hex fields + live swatches, Apply ✓ |
+| `src/ui/pane_widgets.lua` | Shared button/field/swatch draw + `layoutGrid` ✓ |
+| `main.lua` | Swap `activeRule` / `theme` on Apply; `grid.computeNext` ✓ |
 
-**Checkpoint:** switch conway ↔ ant_colony and themes without editing config file.
+**Checkpoint:** switch conway ↔ ant_colony and themes without editing config file. ✓
+
+**Post-checkpoint fixes (after theme catalog grew to 21 presets):**
+- Theme pane's editable fields initially omitted `accent` — added as a 5th (optional) field; blank clears accent on Apply.
+- Preset buttons in a single row overflowed with 21 themes — `pane_widgets.layoutGrid` wraps preset rows at a bounded width.
+- Side-by-side label/field rows had vertical misalignment — labels now center on the input row.
+- **Draft color preview:** swatch column beside each hex field updates live on preset click or valid hex entry (no Apply needed); `themes.colorFromHex` parses draft values for swatch fill.
+- Regression coverage in `tests/phase2_spec.lua` and `tests/themes_spec.lua`.
 
 ---
 
@@ -346,6 +363,8 @@ No `conf.lua` change required — `resizable = true` already set.
 | `src/rules.lua` / `src/themes.lua` | Load user presets |
 | Rule/Theme panes | Save / Delete buttons, name field |
 | `tests/userdata_spec.lua` | Round-trip serialize tests |
+
+**Watch for:** `rule_pane.lua` still lays out preset buttons in a single unwrapped row (fine for 2 built-ins). If user-saved rules grow the catalog, switch it to `pane_widgets.layoutGrid` the same way `theme_pane.lua` does (see Phase 2 post-checkpoint fixes).
 
 **Checkpoint:** create custom theme, quit, relaunch, still listed.
 
@@ -499,8 +518,10 @@ The items below remain tracked for history; implementation is covered by Phases 
 | `src/step_animation.lua` | planned | Phase 0 ✓ |
 | `tests/step_animation_spec.lua` | planned | Phase 0 ✓ |
 | `src/ui/pane.lua` | planned | Phase 1 ✓ |
-| `src/ui/panes/rule_pane.lua` | planned | Phase 2 ✓ |
-| `src/ui/panes/theme_pane.lua` | planned | Phase 2 ✓ |
+| `src/ui/panes/rule_pane.lua` | exists | Phase 2 ✓ |
+| `src/ui/panes/theme_pane.lua` | exists | Phase 2 ✓ |
+| `src/ui/pane_widgets.lua` | exists | Phase 2 ✓ |
+| `tests/phase2_spec.lua` | exists | Phase 2 ✓ |
 | `src/ui/panes/pattern_pane.lua` | planned | Phase 4 ✓ |
 | `src/ui/panes/settings_pane.lua` | planned | Phase 5 ✓ |
 | `src/userdata.lua` | planned | Phase 3 ✓ |
@@ -646,7 +667,7 @@ return {
 | `solarized` | `#fdf6e3` | `#002b36` | `#073642` | `#2AA198` |
 
 #### `src/themes.lua`
-- Export: `get(name)`, `list()`, `next(name)`, `prev(name)`, `skipped()`, `extrusionShadow(theme, face, alive)`
+- Export: `get(name)`, `list()`, `next(name)`, `prev(name)`, `skipped()`, `colorFromHex(hex)`, `extrusionShadow(theme, face, alive)`
 
 ### `src/config.lua`
 - Central constants:
@@ -734,7 +755,7 @@ return {
 | M3-B | Bar buttons + keys work; README accurate |
 | Phase 0 ✓ | Square preview→commit morph; idle next-state markers; pseudo-3D alive tiles; tests green |
 | Phase 1 ✓ | Panes open/close; clickable chips; Settings button |
-| Phase 2 | Switch rules/themes via panes without config edit |
+| Phase 2 ✓ | Switch rules/themes via panes without config edit |
 | Phase 3 | Custom theme persists across relaunch |
 | Phase 4 | Draw pattern, save, reload from list |
 | Phase 5 | Forced grid letterboxed; auto-fit on toggle back |
@@ -801,8 +822,8 @@ return {
 
 ### Post-1.0 phased roadmap (Phases 0–5)
 - [x] **Phase 0** — Generation step animation (`src/step_animation.lua`; defer `grid.step`)
-- [ ] **Phase 1** — UI shell (pane manager, clickable chips, Settings button; fullscreen keys done in 1a)
-- [ ] **Phase 2** — Rule and theme pickers (docked panes, built-in Apply)
+- [x] **Phase 1** — UI shell (pane manager, clickable chips, Settings button; fullscreen keys done in 1a)
+- [x] **Phase 2** — Rule and theme pickers (docked panes, built-in Apply)
 - [ ] **Phase 3** — Userspace save/load (`src/userdata.lua`; merged catalogs)
 - [ ] **Phase 4** — Pattern picker + board drawing (draft patterns, click-to-draw)
 - [ ] **Phase 5** — Grid settings pane (auto vs forced, letterbox)

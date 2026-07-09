@@ -8,6 +8,8 @@ local renderer = require("src.renderer")
 local statusbar = require("src.ui.statusbar")
 local pane = require("src.ui.pane")
 local session = require("src.session")
+local rule_pane = require("src.ui.panes.rule_pane")
+local theme_pane = require("src.ui.panes.theme_pane")
 local layout = require("src.layout")
 local stepAnimation = require("src.step_animation")
 
@@ -24,6 +26,48 @@ local paneState
 local sessionState
 local FAST_STEP_INTERVAL = 0.05
 local FAST_ANIM_SPEED_MULTIPLIER = 4
+
+local function syncDraftForPane(id)
+  if id == "rule" then
+    session.resetRuleDraft(sessionState, activeRule)
+  elseif id == "theme" then
+    session.resetThemeDraft(sessionState, theme, themes)
+  end
+end
+
+local function applyRuleDraft()
+  local rule = rule_pane.apply(sessionState)
+  if not rule then
+    return
+  end
+
+  -- Apply policy: pause and recompute next state; board cells preserved (see AGENTS.md).
+  playback.pause(playbackState)
+  stepAnimation.cancel(animState)
+  activeRule = rule
+  sessionState.appliedRuleId = rule.name
+  grid.computeNext(world, activeRule)
+  pane.close(paneState)
+end
+
+local function applyThemeDraft()
+  local nextTheme = theme_pane.apply(sessionState)
+  if not nextTheme then
+    return
+  end
+
+  -- Apply policy: live swap; playback continues (see AGENTS.md).
+  theme = nextTheme
+  sessionState.appliedThemeId = nextTheme.name
+  pane.close(paneState)
+end
+
+local function togglePane(id, anchor)
+  if paneState.openId ~= id then
+    syncDraftForPane(id)
+  end
+  pane.toggle(paneState, id, anchor)
+end
 
 local function canRequestStep()
   return stepAnimation.isIdle(animState)
@@ -153,7 +197,7 @@ function love.draw()
     fastMode,
     paneState
   )
-  pane.draw(paneState, theme, config)
+  pane.draw(paneState, theme, config, sessionState)
   if pane.isOpen(paneState) then
     statusbar.drawOpenerLabel(
       world,
@@ -168,10 +212,6 @@ function love.draw()
   end
 end
 
-local function paneBlocksPlaybackKeys()
-  return pane.capturesInput(paneState)
-end
-
 function love.keypressed(key)
   if key == "escape" then
     if pane.isOpen(paneState) then
@@ -180,8 +220,13 @@ function love.keypressed(key)
     end
   end
 
-  if paneBlocksPlaybackKeys() and key ~= "q" then
-    return
+  if pane.isOpen(paneState) then
+    if pane.keypressed(paneState, sessionState, key) then
+      return
+    end
+    if key ~= "q" then
+      return
+    end
   end
 
   if key == "space" then
@@ -213,6 +258,12 @@ function love.keyreleased(key)
   end
 end
 
+function love.textinput(text)
+  if pane.isOpen(paneState) then
+    pane.textinput(paneState, sessionState, text)
+  end
+end
+
 function love.mousepressed(x, y, button)
   if button ~= 1 then
     return
@@ -234,17 +285,23 @@ function love.mousepressed(x, y, button)
     y
   )
   if chipPane then
-    pane.toggle(paneState, chipPane, chipAnchor)
+    togglePane(chipPane, chipAnchor)
     return
   end
 
   local hit = statusbar.hitTestButton(config, x, y, fastMode)
   if hit == "settings" then
-    pane.toggle(paneState, "settings", statusbar.getButton(config, fastMode, "settings"))
+    togglePane("settings", statusbar.getButton(config, fastMode, "settings"))
     return
   end
 
   if pane.hitTestPane(config, paneState, x, y) then
+    local action = pane.mousepressed(paneState, sessionState, x, y, theme, config)
+    if action == "apply_rule" then
+      applyRuleDraft()
+    elseif action == "apply_theme" then
+      applyThemeDraft()
+    end
     return
   end
 

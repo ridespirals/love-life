@@ -27,6 +27,13 @@ test("get returns theme with color channels and vim accent", function()
   assert.equal(#theme.accent, 3)
 end)
 
+test("colorFromHex parses valid hex and rejects incomplete input", function()
+  local red = themes.colorFromHex("#ff0000")
+  assert.equal(themes.toHex(red), "#ff0000")
+  assert.equal(themes.colorFromHex("#ff"), nil)
+  assert.equal(themes.colorFromHex(""), nil)
+end)
+
 test("extrusionShadow uses accent when present", function()
   local theme = themes.get("monokai")
   local tinted = themes.extrusionShadow(theme, theme.alive, true)
