@@ -42,7 +42,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, and `src/ui/statusbar.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, and status bar layout.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, and `src/ui/statusbar.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, and status bar layout.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -52,15 +52,19 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 
 | Key | Purpose |
 |-----|---------|
-| `rows`, `cols`, `tileSize` | Cell pixels (`tileSize`) and starting grid hints; `rows`/`cols` are recomputed at runtime to fill the window |
+| `rows`, `cols`, `tileSize` | Cell pixels (`tileSize`) and starting grid hints; `rows`/`cols` are recomputed at runtime to fill the window (shipped `tileSize`: `24`) |
 | `activeTheme` | `classic`, `zenburn`, or `solarized` |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
 | `stepInterval` | Default auto-step interval (`0.10`) |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
-| `previewDotScale` | Preview dot radius as fraction of tile size |
-| `previewDotMinRadiusPx` | Minimum preview dot radius (pixels) |
-| `previewDotMaxRadiusPx` | Maximum preview dot radius (pixels) |
+| `stepAnimEnabled` | Enable step morph animation (`true`) |
+| `stepAnimPreviewSec` | Preview-marker phase duration (seconds; default `0.08`) |
+| `stepAnimCommitSec` | Square grow/shrink commit phase (seconds; default `0.12`) |
+| `previewDotScale` | Preview square size as fraction of tile face (default `0.15`) |
+| `previewDotMinPx` | Minimum preview square side length in pixels (default `4`) |
+| `tileDepthAlivePx` | Pseudo-3D extrusion depth for alive tiles in pixels (default `3`; `0` disables) |
+| `tileDepthDeadPx` | Pseudo-3D extrusion for dead tiles (default `0` = flat) |
 
 See `PLAN.md` for the full implementation roadmap.
 
@@ -76,18 +80,11 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.0** — first tagged release with `.love` and platform packages via GitHub Actions.
 
-**Next:** post-1.0 phased roadmap — see [`PLAN.md`](PLAN.md) for full detail. Recommended build order: **1a fullscreen → Phase 0 → Phase 1 → Phases 2–5** (do not parallelize Phase 0 and Phase 1 on one branch).
+**v1.1 (in progress)** — square preview → commit step animation, idle next-state markers, pseudo-3D alive tiles.
 
-| Phase | Delivers |
-|-------|----------|
-| **0** | 3-step generation morph (replaces preview dots) |
-| **1** | Pane UI shell, clickable status bar, fullscreen (F11 / Alt+Enter) |
-| **2** | Rule and theme pickers |
-| **3** | Userspace save/load for custom rules and themes |
-| **4** | Pattern picker + click-to-draw board editing |
-| **5** | Grid settings (auto-fit vs forced size, letterbox) |
+**Next:** Phase 1 settings UI shell — see [`PLAN.md`](PLAN.md).
 
-Deferred: history stack (step backward), RLE export, import UI, video export.
+Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
 ## Status bar
 
@@ -115,13 +112,13 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   1. `patterns/<id>.lua`
   2. `patterns/<id>.rle`
   3. fallback to `glider`
-- Shipped `.rle` assets include `pulsar`, `gosper_glider_gun`, and `lifeview`.
+- Shipped patterns: 3 Lua (`glider`, `blinker`, `beacon`) and 16 `.rle` assets (spaceships, oscillators, guns/rakes, methuselahs, etc.). Set `defaultPattern` to any catalog id from `patterns.list()`.
 - RLE `rule = ...` headers are parsed, but simulation still uses `activeRule` from config.
 
 ## Features
 
 1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on load and resize)
-2. Next-generation preview dots (v1.0); **Phase 0** replaces with step animation morph
+2. **Step animation** — idle preview dots for next state; on step, square preview → commit morph with pseudo-3D tiles
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)
   - `B` digits: neighbor counts that birth a dead cell

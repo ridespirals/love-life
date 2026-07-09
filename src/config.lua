@@ -4,15 +4,19 @@ local config = {
   -- App startup pattern is defaultPattern below; patterns.lua uses "glider" as get() fallback only.
   rows = 40,
   cols = 60,
-  tileSize = 12,
+  tileSize = 24,
   activeTheme = "solarized",
   activeRule = "conway",
   defaultPattern = "lifeview",
   stepInterval = 0.10,
   statusBarHeight = 28,
-  previewDotScale = 0.18,
-  previewDotMinRadiusPx = 2,
-  previewDotMaxRadiusPx = 8,
+  stepAnimEnabled = true,
+  stepAnimPreviewSec = 0.08,
+  stepAnimCommitSec = 0.12,
+  previewDotScale = 0.15,
+  previewDotMinPx = 4,
+  tileDepthAlivePx = 3,
+  tileDepthDeadPx = 0,
 }
 
 return config

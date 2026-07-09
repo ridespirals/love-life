@@ -3,7 +3,7 @@ function love.conf(t)
   -- a fused .love/.app; see src/config.lua for runtime settings).
   local rows = 40
   local cols = 60
-  local tileSize = 12
+  local tileSize = 24
   local statusBarHeight = 28
   local margin = 40
   local boardWidth = cols * tileSize

@@ -64,12 +64,25 @@ end
 
 function M.list()
   return {
-    "glider",
-    "blinker",
+    "backrake_1",
     "beacon",
-    "pulsar",
+    "blinker",
+    "bomber",
+    "circle_of_fire",
+    "copperhead",
+    "cottonmouth",
+    "diamond",
+    "fireship",
+    "glider",
     "gosper_glider_gun",
     "lifeview",
+    "loafer",
+    "moose_antlers",
+    "noahs_ark",
+    "pulsar",
+    "pulsar_on_pentadecathlon_i",
+    "sidecar",
+    "still_life_tagalong",
   }
 end
 
