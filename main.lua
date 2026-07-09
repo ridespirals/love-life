@@ -22,9 +22,6 @@ local fastKeyboard = false
 local fastPlayMouse = false
 local paneState
 local sessionState
-local activeThemeId
-local themeReviewAutoCycle = false
-local themeReviewTimer = 0
 local FAST_STEP_INTERVAL = 0.05
 local FAST_ANIM_SPEED_MULTIPLIER = 4
 
@@ -112,33 +109,9 @@ local function toggleFullscreen()
   love.window.setFullscreen(not fullscreen, fstype or "desktop")
 end
 
-local function applyTheme(themeId)
-  activeThemeId = themeId
-  theme = themes.get(themeId)
-  if sessionState then
-    sessionState.appliedThemeId = themeId
-  end
-end
-
-local function stepTheme(direction)
-  local nextId
-  if direction < 0 then
-    nextId = themes.prev(activeThemeId)
-  else
-    nextId = themes.next(activeThemeId)
-  end
-  applyTheme(nextId)
-  themeReviewTimer = 0
-end
-
-local function toggleThemeReviewAutoCycle()
-  themeReviewAutoCycle = not themeReviewAutoCycle
-end
-
 function love.load()
   activeRule = rules.get(config.activeRule)
-  themeReviewAutoCycle = config.themeReviewAutoCycle
-  themeReviewTimer = 0
+  theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
   animState = stepAnimation.create(config)
   sessionState = session.create({
@@ -146,7 +119,6 @@ function love.load()
     themeId = config.activeTheme,
     patternId = config.defaultPattern,
   })
-  applyTheme(config.activeTheme)
   paneState = pane.create()
   fastMode = false
   applyAnimSpeed()
@@ -165,13 +137,6 @@ function love.update(dt)
 
   if stepAnimation.isIdle(animState) then
     playback.update(playbackState, dt, requestStep)
-  end
-
-  if themeReviewAutoCycle then
-    themeReviewTimer = themeReviewTimer + dt
-    if themeReviewTimer >= config.themeReviewCycleSec then
-      stepTheme(1)
-    end
   end
 end
 
@@ -199,18 +164,6 @@ function love.draw()
       sessionState.appliedPatternId,
       fastMode,
       paneState.anchor
-    )
-  end
-
-  if themeReviewAutoCycle then
-    love.graphics.setColor(theme.alive[1], theme.alive[2], theme.alive[3], 0.92)
-    love.graphics.print(
-      string.format(
-        "Theme review: auto every %.0fs  [ prev  ] next  c stop",
-        config.themeReviewCycleSec
-      ),
-      10,
-      10
     )
   end
 end
@@ -248,12 +201,6 @@ function love.keypressed(key)
     toggleFullscreen()
   elseif key == "return" and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
     toggleFullscreen()
-  elseif key == "rightbracket" or key == "]" then
-    stepTheme(1)
-  elseif key == "leftbracket" or key == "[" then
-    stepTheme(-1)
-  elseif key == "c" then
-    toggleThemeReviewAutoCycle()
   elseif key == "q" then
     love.event.quit()
   end

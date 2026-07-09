@@ -1,3 +1,5 @@
+local config = require("src.config")
+
 local function hexToColor(hex)
   hex = hex:gsub("#", "")
   local r = tonumber(hex:sub(1, 2), 16) / 255
@@ -70,9 +72,6 @@ local skipped = {
   { name = "benokai", reason = "duplicate of monokai palette" },
 }
 
-local ACCENT_BLEND_ALIVE = 0.72
-local ACCENT_BLEND_DEAD = 0.42
-
 local defaultTheme = "classic"
 
 local M = {}
@@ -96,7 +95,11 @@ end
 
 function M.extrusionShadow(theme, face, alive)
   if theme.accent then
-    return lerpColor(face, theme.accent, alive and ACCENT_BLEND_ALIVE or ACCENT_BLEND_DEAD)
+    return lerpColor(
+      face,
+      theme.accent,
+      alive and config.accentBlendAlive or config.accentBlendDead
+    )
   end
   return lerpColor(face, { 0, 0, 0 }, alive and 0.35 or 0.2)
 end

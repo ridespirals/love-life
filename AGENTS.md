@@ -4,11 +4,11 @@
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
 - **Current phase:** Phase 1 ✓ on `main`; **Phase 2** (rule/theme pickers) is next. v1.1.0 tagged (fullscreen + step animation).
-- **Active branch:** `main`
+- **Active branch:** `main` (after `vim-theme-extrapolation` merge); rebase `phase-2-rule-theme` onto `main` for Phase 2 UI work
 - **Last merge:** PR #1 `square-step-animation` — square preview→commit morph, idle next-state markers, pseudo-3D alive tiles.
 
 ## Handoff (start here after restart)
-- **Run:** `lua tests/run.lua` (9 specs) · `love .` (visual smoke)
+- **Run:** `lua tests/run.lua` (10 specs) · `love .` (visual smoke)
 - **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
@@ -45,7 +45,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Cell states: alive, dead.
 - Toroidal universe (edges wrap).
 - Visuals use named **themes** (colors only, not sizes).
-- Built-in themes: `classic`, `zenburn`, `solarized`.
+- Built-in themes: 21 presets in `src/themes.lua` (`classic`, `zenburn`, `solarized`, plus vim-derived schemes such as `monokai`, `gruvbox`, `dracula`, `nord`, …). Each theme has `alive`, `dead`, `grid`, `background`, and optional `accent` (vim syntax hue for pseudo-3D extrusion shadows).
 - Default active theme: `classic`.
 
 ## Post-1.0 Product Direction
@@ -132,7 +132,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`; **Phase 3+** `userdata_spec`.
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `themes_spec`, `session` (via pane); **Phase 3+** `userdata_spec`.
 - **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 

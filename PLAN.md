@@ -634,18 +634,19 @@ return {
 ### Themes (named color schemes)
 - A theme is a named table of **colors only** — no sizes, spacing, or layout.
 - Themes are registered in `src/themes.lua` and selected by name from config.
-- Baseline ships three built-in themes: `classic`, `zenburn`, `solarized`.
-- Renderer and preview markers read all draw colors from the active theme.
+- **21 built-in themes:** original three (`classic`, `zenburn`, `solarized`) plus vim-derived presets (`monokai`, `gruvbox`, `dracula`, `nord`, `onedark`, `tomorrow_night`, `oceanic_next`, `synthwave`, …). Use `themes.list()` for the full sorted catalog.
+- Each theme defines `alive`, `dead`, `grid`, `background` (defaults to `dead`), and optional `accent` — a signature syntax color from the vim palette, blended into pseudo-3D extrusion shadows (`config.accentBlendAlive` / `accentBlendDead`).
+- Renderer and preview markers read draw colors from the active theme.
 
-#### Built-in themes
-| name | alive | dead | grid | background |
-|------|-------|------|------|------------|
-| `classic` | white `#FFFFFF` | black `#000000` | gray `#808080` | `#000000` (same as dead) |
-| `zenburn` | `#DCDCCC` | `#3F3F3F` | white `#FFFFFF` | `#3F3F3F` (same as dead) |
-| `solarized` | `#fdf6e3` | `#002b36` | `#073642` | `#002b36` (same as dead) |
+#### Original built-in themes (still shipped)
+| name | alive | dead | grid | accent |
+|------|-------|------|------|--------|
+| `classic` | `#FFFFFF` | `#000000` | `#808080` | `#00AAAA` |
+| `zenburn` | `#DCDCCC` | `#4D4D4D` | `#3F3F3F` | `#8CD0D3` |
+| `solarized` | `#fdf6e3` | `#002b36` | `#073642` | `#2AA198` |
 
 #### `src/themes.lua`
-- Export: `themes`, `get(name)`, `list()`
+- Export: `get(name)`, `list()`, `next(name)`, `prev(name)`, `skipped()`, `extrusionShadow(theme, face, alive)`
 
 ### `src/config.lua`
 - Central constants:
@@ -664,6 +665,8 @@ return {
 | `previewDotMinPx` | `4` | Phase 0 ✓ |
 | `tileDepthAlivePx` | `3` | Phase 0 ✓ |
 | `tileDepthDeadPx` | `0` | Phase 0 ✓ |
+| `accentBlendAlive` | `0.72` | vim themes ✓ |
+| `accentBlendDead` | `0.42` | vim themes ✓ |
 | `gridMode` | `"auto"` | Phase 5 |
 | `forcedRows`, `forcedCols`, `forcedTileSize` | mirror hints | Phase 5 |
 | `activeRule` | `"conway"` | M2-A ✓ |
@@ -819,5 +822,5 @@ return {
 - [ ] Add runtime rule switching (keyboard/UI picker) → **Phases 2–3**
 - [ ] Add runtime theme switching (keyboard/UI picker) → **Phases 2–3**
 - [ ] Add more built-in rule presets beyond `conway`, `ant_colony` → **Phase 3** userspace
-- [ ] Add more built-in themes beyond `classic`, `zenburn`, `solarized` → **Phase 3** userspace
+- [x] Add more built-in themes beyond `classic`, `zenburn`, `solarized` (21 vim-derived presets + accent shadows)
 - [x] Add `gosper_glider_gun` pattern (RLE, M3-C)

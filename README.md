@@ -42,7 +42,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, and `src/ui/statusbar.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, and status bar layout.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, and `src/themes.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar layout, and theme registry.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -53,7 +53,7 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | Key | Purpose |
 |-----|---------|
 | `rows`, `cols`, `tileSize` | Cell pixels (`tileSize`) and starting grid hints; `rows`/`cols` are recomputed at runtime to fill the window (shipped `tileSize`: `24`) |
-| `activeTheme` | `classic`, `zenburn`, or `solarized` |
+| `activeTheme` | Theme preset id from `themes.list()` (default `"classic"`; shipped default may differ) |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
 | `stepInterval` | Default auto-step interval (`0.10`) |
@@ -69,6 +69,10 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `previewDotMinPx` | Minimum preview square side length in pixels (default `4`) |
 | `tileDepthAlivePx` | Pseudo-3D extrusion depth for alive tiles in pixels (default `3`; `0` disables) |
 | `tileDepthDeadPx` | Pseudo-3D extrusion for dead tiles (default `0` = flat) |
+| `accentBlendAlive` | Blend toward theme `accent` on alive-tile extrusion shadows (0–1; default `0.72`) |
+| `accentBlendDead` | Blend toward theme `accent` on dead tiles and pane chrome (0–1; default `0.42`) |
+
+**Themes:** 21 built-in presets in `src/themes.lua` — `classic`, `zenburn`, `solarized`, `monokai`, `gruvbox`, `dracula`, `nord`, and others mapped from [vim-colorschemes](https://github.com/flazz/vim-colorschemes). Each defines `alive`, `dead`, `grid`, and an optional vim-syntax `accent` used for colored 3D shadows. Run `lua -e 'for _,n in ipairs(require("src.themes").list()) do print(n) end'` to list ids.
 
 See `PLAN.md` for the full implementation roadmap.
 
