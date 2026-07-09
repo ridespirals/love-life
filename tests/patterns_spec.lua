@@ -9,7 +9,7 @@ local withLoveMock = specHelper.withLoveMock
 test("list returns catalog ids including rle assets", function()
   assert.equal(
     table.concat(patterns.list(), ","),
-    "glider,blinker,beacon,pulsar,gosper_glider_gun,lifeview"
+    "backrake_1,beacon,blinker,bomber,circle_of_fire,copperhead,cottonmouth,diamond,fireship,glider,gosper_glider_gun,lifeview,loafer,moose_antlers,noahs_ark,pulsar,pulsar_on_pentadecathlon_i,sidecar,still_life_tagalong"
   )
 end)
 

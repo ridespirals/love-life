@@ -115,7 +115,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   1. `patterns/<id>.lua`
   2. `patterns/<id>.rle`
   3. fallback to `glider`
-- Shipped `.rle` assets include `pulsar`, `gosper_glider_gun`, and `lifeview`.
+- Shipped patterns: 3 Lua (`glider`, `blinker`, `beacon`) and 16 `.rle` assets (spaceships, oscillators, guns/rakes, methuselahs, etc.). Set `defaultPattern` to any catalog id from `patterns.list()`.
 - RLE `rule = ...` headers are parsed, but simulation still uses `activeRule` from config.
 
 ## Features

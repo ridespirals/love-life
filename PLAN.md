@@ -629,7 +629,7 @@ return {
 | Tier | Patterns | When |
 |------|----------|------|
 | Core (M2-B) | `glider`, `blinker`, `beacon` | Required for phase complete |
-| Extended (M3-C) | `pulsar.rle`, `gosper_glider_gun.rle`, `lifeview.rle` | Loaded via RLE parser |
+| Extended (M3-C) | `pulsar.rle`, `gosper_glider_gun.rle`, `lifeview.rle`, plus spaceships (`copperhead`, `fireship`, `loafer`, `sidecar`), guns/rakes (`backrake_1`, `bomber`, `circle_of_fire`), methuselahs (`cottonmouth`, `moose_antlers`, `noahs_ark`, `diamond`), hybrids (`pulsar_on_pentadecathlon_i`, `still_life_tagalong`) | Loaded via RLE parser |
 | Deferred (Future) | `random_soup` | Optional procedural seed |
 
 #### RLE import (M3-C implementation)

@@ -62,7 +62,8 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Default load pattern: `glider` (configurable via `defaultPattern`).
 - **M2-B** ✓ catalog tiers:
   - Core (Lua): glider, blinker, beacon
-  - Extended (RLE): pulsar, gosper_glider_gun, lifeview
+  - Core (Lua): glider, blinker, beacon
+  - Extended (RLE): pulsar, gosper_glider_gun, lifeview, copperhead, fireship, loafer, sidecar, bomber, diamond, backrake_1, circle_of_fire, cottonmouth, moose_antlers, noahs_ark, pulsar_on_pentadecathlon_i, still_life_tagalong
   - Deferred: random_soup; **pattern type grouping** (still lifes, oscillators, spaceships, linear growth, etc.) for picker UI; external RLE repo sync with categories
 
 ## Status bar and playback

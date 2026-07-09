@@ -1,6 +1,4 @@
-# this was the rule i got when first loading https://lazyslug.com/lifeview/
-# not sure if it's random, something special, or what, but it looks cool and runs for a while
-# also not sure if comments are technically part of the RLE spec but i put a comment in the
-# text box on the page and it still loaded and ran correctly
+# lifeview
+# category: spaceship
 x = 7, y = 3, rule = B3/S23
 o3b3o$3o2bo$bo!
