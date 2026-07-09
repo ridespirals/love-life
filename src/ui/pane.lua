@@ -6,6 +6,8 @@ local TITLE_GAP = 22
 local LINE_HEIGHT = 16
 local CLOSE_RESERVE = 32
 
+local titleFont
+
 local paneDefs = {
   rule = {
     title = "Rules",
@@ -48,6 +50,68 @@ local function configPx(config, key, default)
     return value
   end
   return default
+end
+
+local function lerpColor(color, target, amount)
+  return {
+    color[1] + (target[1] - color[1]) * amount,
+    color[2] + (target[2] - color[2]) * amount,
+    color[3] + (target[3] - color[3]) * amount,
+  }
+end
+
+local function panelDepth(config, w, h)
+  local depth = configPx(config, "tileDepthAlivePx", 3)
+  local minDim = math.min(w, h)
+  if minDim < 4 then
+    return 0
+  end
+  return math.min(depth, math.floor(minDim / 3))
+end
+
+local function drawExtrudedPanel(x, y, w, h, theme, config)
+  local face = theme.dead
+  local depth = panelDepth(config, w, h)
+
+  if depth <= 0 then
+    setColor(face, 0.98)
+    love.graphics.rectangle("fill", x, y, w, h)
+    return
+  end
+
+  local faceW = w - depth
+  local faceH = h - depth
+  local shadow = lerpColor(face, { 0, 0, 0 }, 0.2)
+  local highlight = lerpColor(face, { 1, 1, 1 }, 0.1)
+
+  setColor(shadow, 0.98)
+  love.graphics.rectangle("fill", x + depth, y + h - depth, faceW, depth)
+  love.graphics.rectangle("fill", x + w - depth, y + depth, depth, faceH)
+
+  setColor(face, 0.98)
+  love.graphics.rectangle("fill", x, y, faceW, faceH)
+
+  setColor(highlight, 0.98)
+  love.graphics.rectangle("fill", x, y, faceW, 1)
+  love.graphics.rectangle("fill", x, y, 1, faceH)
+end
+
+local function withTitleFont(fn)
+  if not love or not love.graphics or not love.graphics.getFont then
+    fn()
+    return
+  end
+
+  local previous = love.graphics.getFont()
+  local titleSize = previous:getHeight() + 2
+  -- LÖVE 11.x: no Font:setBold(); revisit when LÖVE 12 ships (see PLAN.md).
+  if not titleFont or titleFont:getHeight() ~= titleSize then
+    titleFont = love.graphics.newFont(titleSize)
+  end
+
+  love.graphics.setFont(titleFont)
+  fn()
+  love.graphics.setFont(previous)
 end
 
 local function estimateTextWidth(text)
@@ -97,9 +161,13 @@ local function layoutPaneRect(config, state)
   }
 end
 
-local function drawFill(theme, rect)
+local function drawFlatPanel(theme, rect)
   setColor(theme.dead, 0.98)
   love.graphics.rectangle("fill", rect.x, rect.y, rect.w, rect.h)
+end
+
+local function drawPanel(theme, config, rect)
+  drawExtrudedPanel(rect.x, rect.y, rect.w, rect.h, theme, config)
 end
 
 function M.create()
@@ -210,15 +278,17 @@ function M.draw(state, theme, config)
   local rect = M.getRect(config, state)
   local anchor = state.anchor
 
-  drawFill(theme, rect)
+  drawPanel(theme, config, rect)
   if anchor then
-    drawFill(theme, anchor)
+    drawFlatPanel(theme, anchor)
   end
 
-  setColor(theme.alive, 1)
-  love.graphics.print(def.title, rect.x + PANE_PAD_X, rect.y + PANE_PAD_Y)
+  withTitleFont(function()
+    setColor(theme.alive, 1)
+    love.graphics.print(def.title, rect.x + PANE_PAD_X, rect.y + PANE_PAD_Y)
+  end)
 
-  setColor(theme.grid, 1)
+  setColor(theme.alive, 1)
   local textY = rect.y + PANE_PAD_Y + TITLE_GAP
   for _, line in ipairs(def.lines) do
     love.graphics.print(line, rect.x + PANE_PAD_X, textY)

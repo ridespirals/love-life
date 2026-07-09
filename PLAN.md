@@ -742,6 +742,7 @@ return {
 - Status bar text scaling: long strings can clip on small windows; decide whether to truncate, reduce font size, or wrap.
 - Playback timer semantics: fast mode already changes `stepInterval` at runtime via `playback.setStepInterval` while held; decide if other runtime interval changes should reset accumulator.
 - Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
+- **LÖVE 12 (when released):** Revisit `Font:setBold()` for pane titles (11.x uses larger font only); evaluate CI/release bump from 11.5.
 
 ### M1 visual checklist (regression)
 - Expected rows/cols, aligned grid lines, theme colors; step morph on birth/death cells only (Phase 0)
