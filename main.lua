@@ -241,7 +241,18 @@ function love.mousepressed(x, y, button)
   local hit = statusbar.hitTestButton(config, x, y, fastMode)
   if hit == "settings" then
     pane.toggle(paneState, "settings", statusbar.getButton(config, fastMode, "settings"))
-  elseif hit == "play" then
+    return
+  end
+
+  if pane.hitTestPane(config, paneState, x, y) then
+    return
+  end
+
+  if pane.isOpen(paneState) then
+    pane.close(paneState)
+  end
+
+  if hit == "play" then
     playback.play(playbackState)
     fastPlayMouse = true
     syncFastMode()

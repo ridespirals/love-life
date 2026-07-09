@@ -251,6 +251,13 @@ function M.hitTestClose(config, state, x, y)
   end
 end
 
+function M.hitTestPane(config, state, x, y)
+  local rect = M.getRect(config, state)
+  if rect and contains(rect, x, y) then
+    return true
+  end
+end
+
 function M.drawBackdrop(state, config)
   if not state.openId then
     return
