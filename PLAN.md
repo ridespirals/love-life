@@ -431,7 +431,36 @@ Board drawing (`src/input/board.lua`):
 
 Pattern export: `patterns.fromWorld(world)` → `{ cells = {{col,row}, ...} }` for draft/save.
 
+**Phase 4a scope:** flat catalog list (built-in + user). **Deferred follow-up:** group patterns by **type** in the picker UI (see Deferred).
+
 **Checkpoint:** draw shape on board, save as `my_pattern`, reload from list.
+
+---
+
+#### Pattern type grouping (deferred — post Phase 4)
+
+When the catalog grows — especially if loading from a **public RLE repository** — the pattern pane should group entries by **LifeWiki-style category**, not only a flat id list.
+
+**Proposed categories (initial set):**
+
+| Category | Examples |
+|----------|----------|
+| Still lifes | block, beehive, loaf |
+| Oscillators | blinker, beacon, pulsar |
+| Spaceships | glider, lwss |
+| Linear growth | puffer, rake, gun |
+| Methuselahs | diehard, r-pentomino |
+| Other / uncategorized | fallback when type unknown |
+
+**Data model (future):**
+- Extend pattern metadata: `{ id, name, cells, category?, period?, tags? }`
+- Built-in Lua/RLE: optional `category` field in module table or RLE comment header (e.g. `#C category: oscillator`)
+- External repo import: map filename, sidecar `.json`, or community index to `category`
+- `patterns.listByCategory()` or `patterns.listGrouped()` for pane UI (collapsible sections)
+
+**UI (future):** Pattern pane shows category headers with scrollable sub-lists; search/filter across all types. User-saved patterns default to `Other` or user-assigned type on Save.
+
+**Not in Phase 4 MVP** — ship flat list first; add grouping when catalog size or external RLE sync justifies it.
 
 ---
 
@@ -612,6 +641,8 @@ return {
   - honoring `#P` offsets
   - multiple patterns per file
   - runtime file picker / import UI
+  - **pattern type metadata** and grouped picker UI (still lifes, oscillators, spaceships, linear growth, etc.) — see Phase 4 deferred follow-up
+  - sync from a **public RLE pattern repository** (community catalog + category index)
 
 ### Status bar (bottom)
 - Fixed-height bar at **bottom** of window (`statusBarHeight` in config, not in theme).
@@ -838,6 +869,8 @@ return {
 - [ ] Step backward via generation history stack (`grid.clone`)
 - [ ] RLE export for user patterns
 - [ ] Import/share UI (file picker)
+- [ ] **Pattern catalog grouping by type** (still lifes, oscillators, spaceships, linear growth, methuselahs, etc.) for pattern pane UI
+- [ ] **External RLE repository sync** — consume a public pattern repo; category metadata drives grouped picker
 - [ ] Add export feature (gif/mp4 or equivalent)
 - [ ] Add `random_soup` — optional procedural seed
 

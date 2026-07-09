@@ -63,7 +63,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - **M2-B** ✓ catalog tiers:
   - Core (Lua): glider, blinker, beacon
   - Extended (RLE): pulsar, gosper_glider_gun, lifeview
-  - Deferred: random_soup
+  - Deferred: random_soup; **pattern type grouping** (still lifes, oscillators, spaceships, linear growth, etc.) for picker UI; external RLE repo sync with categories
 
 ## Status bar and playback
 - **M2-C** ✓: bottom status bar shows rulestring, `rows×cols`, theme, and generation counter (`Gen: N`).

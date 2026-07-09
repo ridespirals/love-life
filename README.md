@@ -87,7 +87,7 @@ See `PLAN.md` for the full implementation roadmap.
 | **4** | Pattern picker + click-to-draw board editing |
 | **5** | Grid settings (auto-fit vs forced size, letterbox) |
 
-Deferred: history stack (step backward), RLE export, import UI, video export.
+Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
 ## Status bar
 
