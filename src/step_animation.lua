@@ -1,14 +1,26 @@
 local M = {}
 
 local PHASE_IDLE = "idle"
-local PHASE_MORPH = "morph"
+local PHASE_PREVIEW = "preview"
+local PHASE_COMMIT = "commit"
+
+local function resolveDurations(config)
+  if config.stepAnimPreviewSec and config.stepAnimCommitSec then
+    return config.stepAnimPreviewSec, config.stepAnimCommitSec
+  end
+
+  local total = config.stepAnimSec or 0.2
+  return total * 0.4, total * 0.6
+end
 
 function M.create(config)
+  local previewSec, commitSec = resolveDurations(config)
   return {
     phase = PHASE_IDLE,
     elapsed = 0,
     enabled = config.stepAnimEnabled ~= false,
-    durationSec = config.stepAnimSec or 0.2,
+    previewSec = previewSec,
+    commitSec = commitSec,
     speedScale = 1,
   }
 end
@@ -34,7 +46,7 @@ function M.begin(state)
     return nil
   end
 
-  state.phase = PHASE_MORPH
+  state.phase = PHASE_PREVIEW
   state.elapsed = 0
   return nil
 end
@@ -55,9 +67,16 @@ function M.update(state, dt)
     return "commit"
   end
 
+  local duration = state.phase == PHASE_PREVIEW and state.previewSec or state.commitSec
   state.elapsed = state.elapsed + dt * state.speedScale
 
-  if state.elapsed < state.durationSec then
+  if state.elapsed < duration then
+    return nil
+  end
+
+  if state.phase == PHASE_PREVIEW then
+    state.phase = PHASE_COMMIT
+    state.elapsed = 0
     return nil
   end
 
@@ -66,16 +85,17 @@ function M.update(state, dt)
   return "commit"
 end
 
-function M.getMorphT(state)
+function M.getPhaseT(state)
   if state.phase == PHASE_IDLE then
-    return 0
+    return PHASE_IDLE, 0
   end
 
-  if state.durationSec <= 0 then
-    return 1
+  local duration = state.phase == PHASE_PREVIEW and state.previewSec or state.commitSec
+  if duration <= 0 then
+    return state.phase, 1
   end
 
-  return math.min(1, state.elapsed / state.durationSec)
+  return state.phase, math.min(1, state.elapsed / duration)
 end
 
 function M.getCellChange(world, row, col)

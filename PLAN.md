@@ -123,7 +123,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 Turn the status bar from a read-only stats row into the **primary control surface**: clickable labels open docked panes; a master **Settings** button covers grid/display options. Users can pick built-ins, edit drafts in memory, and **Save** custom patterns, rules, and themes to a shareable userspace folder.
 
-**Generation step animation** (Phase 0 ✓) replaces static preview dots with a per-step circle morph; shipped independently of the settings UI.
+**Generation step animation** (Phase 0 ✓): square preview → commit morph, idle next-state markers, pseudo-3D alive tiles.
 
 **Fullscreen** (F11 / Alt+Enter) is folded into Phase 1 alongside the UI shell — keyboard-only, no status bar button.
 
@@ -248,28 +248,28 @@ Can ship before UI phases — no pane/status-bar chip work required.
 
 #### Shipped behavior (Phase 0 ✓)
 
-Single morph per generation step (`stepAnimSec`). Paused board shows `current` only. On step/play:
+Two-phase morph per generation step (`stepAnimPreviewSec` + `stepAnimCommitSec`). **Idle:** `current` on pseudo-3D tiles plus tiny square next-state markers where `current ~= next`. **Step/play:**
 
-- **Birth:** alive circle grows `0 → full` on dead tile (ease-in).
-- **Death:** alive circle shrinks `full → 0` on dead tile (ease-in).
+- **Preview:** marker eases in on changing cells (alive dot on dead tile = birth; dead dot on alive tile = death).
+- **Commit:** square grows to full alive face or dead square consumes the alive face.
 - Morph completes → `grid.step` + `grid.computeNext`.
 
-Fast mode (`f` hold) scales morph speed and step interval. `stepAnimEnabled = false` commits immediately.
+Alive cells use extruded top faces (`tileDepthAlivePx`); dead cells can stay flat (`tileDepthDeadPx = 0`). Fast mode (`f` hold) scales morph speed and step interval. `stepAnimEnabled = false` commits immediately.
 
 #### Historical design notes (superseded)
 
-Early iterations used static preview dots, then a two-phase anticipate/resolve morph, then a multi-generation death trail. The shipped design is a **single morph** per step (see above).
+Early iterations: static preview dots, circle morph, two-phase circle morph, multi-generation death trail. Shipped design: **square** preview → commit with idle next-state markers and pseudo-3D alive tiles.
 
 #### Files (Phase 0 ✓)
 
 | File | Role |
 |------|------|
-| `src/step_animation.lua` | Morph timer; `getMorphT`, `getCellChange` |
-| `src/renderer.lua` | Circle grow/shrink drawing |
+| `src/step_animation.lua` | Preview → commit timer; `getPhaseT`, `getCellChange` |
+| `src/renderer.lua` | Square morph, idle preview markers, extruded tiles |
 | `main.lua` | Defer `grid.step` until morph completes |
-| `tests/step_animation_spec.lua` | Morph timing and cell-change detection |
+| `tests/step_animation_spec.lua` | Phase timing and cell-change detection |
 
-**Checkpoint:** Manual step and auto-play show circle morph; paused board shows current gen only; fast mode speeds morph; tests green.
+**Checkpoint:** Idle shows current + next markers; step morphs squares; pseudo-3D alive tiles; fast mode works; tests green.
 
 ---
 
@@ -653,11 +653,16 @@ return {
 |-----|---------|-------|
 | `rows` | `40` | M1 ✓ |
 | `cols` | `60` | M1 ✓ |
-| `tileSize` | `12` | M1 ✓ |
+| `tileSize` | `24` | M1 ✓ |
 | `activeTheme` | `"classic"` | M1 ✓ |
 | `statusBarHeight` | `28` | M1 ✓ |
-| `stepAnimSec` | `0.20` | Phase 0 ✓ |
+| `stepAnimPreviewSec` | `0.08` | Phase 0 ✓ |
+| `stepAnimCommitSec` | `0.12` | Phase 0 ✓ |
 | `stepAnimEnabled` | `true` | Phase 0 ✓ |
+| `previewDotScale` | `0.15` | Phase 0 ✓ |
+| `previewDotMinPx` | `4` | Phase 0 ✓ |
+| `tileDepthAlivePx` | `3` | Phase 0 ✓ |
+| `tileDepthDeadPx` | `0` | Phase 0 ✓ |
 | `gridMode` | `"auto"` | Phase 5 |
 | `forcedRows`, `forcedCols`, `forcedTileSize` | mirror hints | Phase 5 |
 | `activeRule` | `"conway"` | M2-A ✓ |

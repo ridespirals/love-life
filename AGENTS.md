@@ -18,7 +18,7 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **M3-A** ✓ | `src/playback.lua`, `love.update` |
 | **M3-B** ✓ | Status bar controls, README |
 | **M3-C** ✓ | RLE parser + `.rle` pattern resolution |
-| **Phase 0** ✓ | Generation step animation (circle grow/shrink morph per step) |
+| **Phase 0** ✓ | Generation step animation (square preview → commit morph) |
 | **Phase 1** | UI shell (pane manager, clickable chips, Settings button) |
 | **Phase 2** | Rule and theme pickers (docked panes) |
 | **Phase 3** | Userspace save/load (`src/userdata.lua`) |
@@ -77,9 +77,11 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 
 ## Step Animation (Phase 0 ✓)
 - Maintain both `current` and `next` generation buffers; `grid.computeNext` runs after each commit and on load/restart.
-- **Paused:** board shows `current` only (no morph, no preview).
-- **Step/play:** one morph per generation — births grow an alive circle on a dead tile; deaths shrink an alive circle to empty on a dead tile (ease-in on radius). `grid.step` commits when morph completes.
-- Config: `stepAnimEnabled`, `stepAnimSec`. Fast mode (`f` hold) scales morph speed and step interval.
+- **Idle / paused:** `current` on pseudo-3D tiles plus tiny square markers where `current ~= next` (unobtrusive next-state preview).
+- **Step/play:** preview phase animates the marker; commit phase grows/shrinks the square to the new state; `grid.step` runs when both phases complete.
+- **Rendering:** square morphs (not circles); alive tiles extruded (`tileDepthAlivePx`); dead tiles flat or shallow (`tileDepthDeadPx`).
+- Config: `stepAnimEnabled`, `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`. Fast mode scales morph speed and step interval.
+- Shipped defaults (see `src/config.lua`): `tileSize` 24, preview min 4px / scale 0.15, alive depth 3px, dead depth 0.
 
 ## Conway Rules Reference
 - Default preset `conway` (`B3/S23`); alternate `ant_colony` (`B3/S234`) via `activeRule` in config.
@@ -95,7 +97,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 ## Planned Runtime/Code Shape
 - `conf.lua`: window/app configuration (resizable).
 - `main.lua`: LÖVE entry, input, lifecycle.
-- `src/config.lua`: board dimensions (runtime auto-fit), theme, `activeRule`, `defaultPattern`, `stepInterval`, status bar height.
+- `src/config.lua`: board dimensions (runtime auto-fit), theme, `activeRule`, `defaultPattern`, `stepInterval`, status bar height, step animation and tile depth keys.
 - `src/themes.lua`: named theme registry.
 - `src/rules.lua`: named rulestring presets and `Bx/Sy` parser.
 - `src/grid.lua`: world buffers, toroidal neighbor logic, `computeNext(world, rules)`, `step(world, rules)`.

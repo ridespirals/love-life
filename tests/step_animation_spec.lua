@@ -6,7 +6,8 @@ local test = require("tests.spec_helper").test
 
 local config = {
   stepAnimEnabled = true,
-  stepAnimSec = 0.3,
+  stepAnimPreviewSec = 0.1,
+  stepAnimCommitSec = 0.2,
 }
 
 local conway = rules.get("conway")
@@ -17,21 +18,29 @@ test("create starts idle", function()
   assert.isFalse(stepAnimation.isAnimating(state))
 end)
 
-test("begin enters morph", function()
+test("begin enters preview phase", function()
   local state = stepAnimation.create(config)
   stepAnimation.begin(state)
   assert.isFalse(stepAnimation.isIdle(state))
-  assert.equal(stepAnimation.getMorphT(state), 0)
+  local phase, t = stepAnimation.getPhaseT(state)
+  assert.equal(phase, "preview")
+  assert.equal(t, 0)
 end)
 
-test("update advances morph to commit", function()
+test("update advances preview to commit to grid commit", function()
   local state = stepAnimation.create(config)
   stepAnimation.begin(state)
 
-  assert.equal(stepAnimation.update(state, 0.1), nil)
-  assert.isTrue(stepAnimation.getMorphT(state) > 0)
+  assert.equal(stepAnimation.update(state, 0.05), nil)
+  local phase = stepAnimation.getPhaseT(state)
+  assert.equal(phase, "preview")
 
-  assert.equal(stepAnimation.update(state, 0.25), "commit")
+  assert.equal(stepAnimation.update(state, 0.06), nil)
+  phase = stepAnimation.getPhaseT(state)
+  assert.equal(phase, "commit")
+
+  assert.equal(stepAnimation.update(state, 0.1), nil)
+  assert.equal(stepAnimation.update(state, 0.15), "commit")
   assert.isTrue(stepAnimation.isIdle(state))
 end)
 
@@ -63,15 +72,19 @@ test("getCellChange detects birth and death", function()
   assert.equal(stepAnimation.getCellChange(world, 1, 2), "unchanged")
 end)
 
-test("speedScale greater than 1 completes morph faster", function()
+test("speedScale greater than 1 completes phases faster", function()
   local state = stepAnimation.create({
     stepAnimEnabled = true,
-    stepAnimSec = 0.2,
+    stepAnimPreviewSec = 0.1,
+    stepAnimCommitSec = 0.1,
   })
   stepAnimation.setSpeedScale(state, 4)
   stepAnimation.begin(state)
 
-  assert.equal(stepAnimation.update(state, 0.06), "commit")
+  assert.equal(stepAnimation.update(state, 0.03), nil)
+  assert.equal(stepAnimation.getPhaseT(state), "commit")
+
+  assert.equal(stepAnimation.update(state, 0.03), "commit")
   assert.isTrue(stepAnimation.isIdle(state))
 end)
 
@@ -84,9 +97,15 @@ test("getCellChange detects birth from three neighbors", function()
   assert.equal(stepAnimation.getCellChange(world, 2, 2), "birth")
 end)
 
-test("default morph duration when stepAnimSec omitted", function()
-  local state = stepAnimation.create({ stepAnimEnabled = true })
+test("stepAnimSec splits into preview and commit when phases omitted", function()
+  local state = stepAnimation.create({
+    stepAnimEnabled = true,
+    stepAnimSec = 0.3,
+  })
   stepAnimation.begin(state)
-  assert.equal(stepAnimation.update(state, 0.19), nil)
-  assert.equal(stepAnimation.update(state, 0.02), "commit")
+  assert.equal(stepAnimation.update(state, 0.11), nil)
+  assert.equal(stepAnimation.getPhaseT(state), "preview")
+  assert.equal(stepAnimation.update(state, 0.02), nil)
+  assert.equal(stepAnimation.getPhaseT(state), "commit")
+  assert.equal(stepAnimation.update(state, 0.19), "commit")
 end)
