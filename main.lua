@@ -64,6 +64,11 @@ local function rebuildWorldForWindow()
   resetSimulation({ resize = true })
 end
 
+local function toggleFullscreen()
+  local fullscreen, fstype = love.window.getFullscreen()
+  love.window.setFullscreen(not fullscreen, fstype or "desktop")
+end
+
 function love.load()
   activeRule = rules.get(config.activeRule)
   theme = themes.get(config.activeTheme)
@@ -99,6 +104,10 @@ function love.keypressed(key)
     restartWorld()
   elseif key == "f" then
     setFastMode(true)
+  elseif key == "f11" then
+    toggleFullscreen()
+  elseif key == "return" and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+    toggleFullscreen()
   elseif key == "q" then
     love.event.quit()
   end

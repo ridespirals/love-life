@@ -42,7 +42,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Status bar becomes the **primary control surface**: clickable chips open docked panes above the bar.
 - **Draft vs save:** Apply uses in-memory drafts immediately; Save writes to LÖVE save directory (`patterns/`, `rules/`, `themes/`).
 - **Grid modes:** `"auto"` (current resize behavior) or `"forced"` (fixed rows/cols/tileSize with letterbox centering).
-- **Fullscreen:** F11 and Alt+Enter toggle (Phase 1); keyboard-only, no status bar button.
+- **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto-fit + pattern restart).
 - Board drawing and editing require paused playback.
 
 ## Rulestrings

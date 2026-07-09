@@ -103,12 +103,11 @@ Deferred: history stack (step backward), RLE export, import UI, video export.
 - `n` or `Right Arrow`: step forward one generation
 - `r`: restart (reload `defaultPattern`, pause playback)
 - Hold `f`: temporary fast mode (`Play +`, uses `0.05` while held)
+- `F11` or `Alt+Enter`: toggle fullscreen (restarts simulation, same as window resize)
 - `q`: quit app
 - Status bar buttons: `Play`, `Pause`, `Step`, `Restart` (mouse click)
 
-**Planned (Phase 1):** `F11` and `Alt+Enter` toggle fullscreen. Toggling fullscreen restarts the simulation (same as window resize).
-
-Resizing the window recomputes grid dimensions to fill the viewport and restarts the simulation from `defaultPattern` (generation resets to 0, playback pauses).
+Resizing the window or toggling fullscreen recomputes grid dimensions to fill the viewport and restarts the simulation from `defaultPattern` (generation resets to 0, playback pauses).
 
 ## RLE Support
 
