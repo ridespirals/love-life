@@ -42,7 +42,7 @@ Pure Lua tests for simulation logic (no LÖVE required):
 lua tests/run.lua
 ```
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, and `src/ui/statusbar.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, and status bar layout.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, and `src/ui/statusbar.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, and status bar layout.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -58,9 +58,8 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
 | `stepInterval` | Default auto-step interval (`0.10`) |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
-| `previewDotScale` | Preview dot radius as fraction of tile size |
-| `previewDotMinRadiusPx` | Minimum preview dot radius (pixels) |
-| `previewDotMaxRadiusPx` | Maximum preview dot radius (pixels) |
+| `stepAnimEnabled` | Enable step morph animation (`true`) |
+| `stepAnimSec` | Morph duration per generation (seconds; default `0.20`) |
 
 See `PLAN.md` for the full implementation roadmap.
 
@@ -80,7 +79,7 @@ See `PLAN.md` for the full implementation roadmap.
 
 | Phase | Delivers |
 |-------|----------|
-| **0** | 3-step generation morph (replaces preview dots) |
+| **0** ✓ | Circle grow/shrink morph per generation step |
 | **1** | Pane UI shell, clickable status bar, fullscreen (F11 / Alt+Enter) |
 | **2** | Rule and theme pickers |
 | **3** | Userspace save/load for custom rules and themes |
@@ -121,7 +120,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
 ## Features
 
 1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on load and resize)
-2. Next-generation preview dots (v1.0); **Phase 0** replaces with step animation morph
+2. **Step animation** — circle grow (birth) or shrink (death) per generation; paused board shows current state only
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)
   - `B` digits: neighbor counts that birth a dead cell

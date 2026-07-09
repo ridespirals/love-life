@@ -3,7 +3,7 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** v1.0 shipped; post-1.0 phased roadmap (Phases 0–5)
+- **Current phase:** v1.1 in progress (Phase 0 step animation ✓); Phase 1 settings UI shell next.
 - **Active branch:** `main`
 
 ## Execution Order
@@ -18,8 +18,8 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **M3-A** ✓ | `src/playback.lua`, `love.update` |
 | **M3-B** ✓ | Status bar controls, README |
 | **M3-C** ✓ | RLE parser + `.rle` pattern resolution |
-| **Phase 0** | Generation step animation (3-phase morph; replaces preview dots) |
-| **Phase 1** | UI shell + fullscreen (pane manager, clickable chips, Settings button) |
+| **Phase 0** ✓ | Generation step animation (circle grow/shrink morph per step) |
+| **Phase 1** | UI shell (pane manager, clickable chips, Settings button) |
 | **Phase 2** | Rule and theme pickers (docked panes) |
 | **Phase 3** | Userspace save/load (`src/userdata.lua`) |
 | **Phase 4** | Pattern picker + board drawing |
@@ -62,7 +62,6 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Default load pattern: `glider` (configurable via `defaultPattern`).
 - **M2-B** ✓ catalog tiers:
   - Core (Lua): glider, blinker, beacon
-  - Core (Lua): glider, blinker, beacon
   - Extended (RLE): pulsar, gosper_glider_gun, lifeview, copperhead, fireship, loafer, sidecar, bomber, diamond, backrake_1, circle_of_fire, cottonmouth, moose_antlers, noahs_ark, pulsar_on_pentadecathlon_i, still_life_tagalong
   - Deferred: random_soup; **pattern type grouping** (still lifes, oscillators, spaceships, linear growth, etc.) for picker UI; external RLE repo sync with categories
 
@@ -76,14 +75,11 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - **Resize:** `love.resize` rebuilds the grid to fill the viewport and restarts from `defaultPattern` (same reset semantics as Restart).
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
-## Next-State Preview / Step Animation
-- Maintain both `current` and `next` generation buffers.
-- **v1.0 (current):** render preview markers on the board (colors from active theme):
-  - dead → alive: `alive`-colored center dot on dead tile
-  - alive → dead: `dead`-colored center dot on alive tile
-  - unchanged: no center dot
-- Preview dot sizing in config: `previewDotScale`, `previewDotMinRadiusPx`, `previewDotMaxRadiusPx`.
-- **Phase 0 (planned):** replace static preview dots with a 3-step morph (Rest → Anticipate → Resolve → commit `grid.step`). Paused board shows current gen only; next state revealed through animation on step. Config: `stepAnimAnticipateSec`, `stepAnimResolveSec`, `stepAnimEnabled`.
+## Step Animation (Phase 0 ✓)
+- Maintain both `current` and `next` generation buffers; `grid.computeNext` runs after each commit and on load/restart.
+- **Paused:** board shows `current` only (no morph, no preview).
+- **Step/play:** one morph per generation — births grow an alive circle on a dead tile; deaths shrink an alive circle to empty on a dead tile (ease-in on radius). `grid.step` commits when morph completes.
+- Config: `stepAnimEnabled`, `stepAnimSec`. Fast mode (`f` hold) scales morph speed and step interval.
 
 ## Conway Rules Reference
 - Default preset `conway` (`B3/S23`); alternate `ant_colony` (`B3/S234`) via `activeRule` in config.
@@ -109,7 +105,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - `src/ui/statusbar.lua`: bottom stats + playback controls (**M2-C** display, **M3-B** controls; **Phase 1+** clickable chips).
 - `src/ui/pane.lua`: pane manager (**Phase 1**).
 - `src/ui/panes/*.lua`: rule, theme, pattern, settings panes (**Phases 2–5**).
-- `src/step_animation.lua`: 3-phase generation morph (**Phase 0**).
+- `src/step_animation.lua`: per-step morph timer; defers `grid.step` until complete (**Phase 0**).
 - `src/userdata.lua`: userspace save/load (**Phase 3**).
 - `src/input/board.lua`: screen-to-cell + click drawing (**Phase 4**).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**; **Phase 0** defers `grid.step` until morph completes).

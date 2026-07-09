@@ -1,13 +1,9 @@
+local stepAnimation = require("src.step_animation")
+
 local M = {}
 
-local function clamp(value, minValue, maxValue)
-  if value < minValue then
-    return minValue
-  end
-  if value > maxValue then
-    return maxValue
-  end
-  return value
+local function easeIn(t)
+  return t * t
 end
 
 function M.getLayout(config)
@@ -27,44 +23,81 @@ function M.getLayout(config)
   }
 end
 
-local function previewDotRadius(config)
-  local rawRadius = config.tileSize * config.previewDotScale
-  return clamp(rawRadius, config.previewDotMinRadiusPx, config.previewDotMaxRadiusPx)
-end
-
 local function setColor(color)
   love.graphics.setColor(color[1], color[2], color[3], 1)
 end
 
-function M.draw(world, theme, config)
+local function drawSolidTile(x, y, tileSize, theme, alive)
+  setColor(alive and theme.alive or theme.dead)
+  love.graphics.rectangle("fill", x, y, tileSize, tileSize)
+end
+
+local function drawCircle(centerX, centerY, theme, alive, radius)
+  if radius <= 0 then
+    return
+  end
+  setColor(alive and theme.alive or theme.dead)
+  love.graphics.circle("fill", centerX, centerY, radius)
+end
+
+local function drawCircleOnTile(x, y, tileSize, centerX, centerY, theme, baseAlive, circleAlive, radius)
+  drawSolidTile(x, y, tileSize, theme, baseAlive)
+  drawCircle(centerX, centerY, theme, circleAlive, radius)
+end
+
+local function drawBirthMorph(x, y, tileSize, centerX, centerY, theme, fullRadius, eased)
+  local radius = fullRadius * eased
+  if radius >= fullRadius then
+    drawSolidTile(x, y, tileSize, theme, true)
+    return
+  end
+  drawCircleOnTile(x, y, tileSize, centerX, centerY, theme, false, true, radius)
+end
+
+local function drawDeathMorph(x, y, tileSize, centerX, centerY, theme, fullRadius, eased)
+  local radius = fullRadius * (1 - eased)
+  if radius <= 0 then
+    drawSolidTile(x, y, tileSize, theme, false)
+    return
+  end
+  if radius >= fullRadius then
+    drawSolidTile(x, y, tileSize, theme, true)
+    return
+  end
+  drawCircleOnTile(x, y, tileSize, centerX, centerY, theme, false, true, radius)
+end
+
+local function drawCell(world, theme, layout, row, col, animState)
+  local tileSize = layout.tileSize
+  local x = layout.offsetX + (col - 1) * tileSize
+  local y = layout.offsetY + (row - 1) * tileSize
+  local centerX = x + tileSize / 2
+  local centerY = y + tileSize / 2
+  local alive = world.current[row][col]
+  local change = stepAnimation.getCellChange(world, row, col)
+  local fullRadius = tileSize / 2
+
+  if stepAnimation.isIdle(animState) or change == "unchanged" then
+    drawSolidTile(x, y, tileSize, theme, alive)
+    return
+  end
+
+  local eased = easeIn(stepAnimation.getMorphT(animState))
+
+  if change == "birth" then
+    drawBirthMorph(x, y, tileSize, centerX, centerY, theme, fullRadius, eased)
+  else
+    drawDeathMorph(x, y, tileSize, centerX, centerY, theme, fullRadius, eased)
+  end
+end
+
+function M.draw(world, theme, config, animState)
   local layout = M.getLayout(config)
   local tileSize = layout.tileSize
-  local dotRadius = previewDotRadius(config)
 
   for row = 1, world.rows do
     for col = 1, world.cols do
-      local alive = world.current[row][col]
-      local x = layout.offsetX + (col - 1) * tileSize
-      local y = layout.offsetY + (row - 1) * tileSize
-
-      if alive then
-        setColor(theme.alive)
-      else
-        setColor(theme.dead)
-      end
-      love.graphics.rectangle("fill", x, y, tileSize, tileSize)
-
-      local willBeAlive = world.next[row][col]
-      if alive ~= willBeAlive then
-        local centerX = x + tileSize / 2
-        local centerY = y + tileSize / 2
-        if willBeAlive then
-          setColor(theme.alive)
-        else
-          setColor(theme.dead)
-        end
-        love.graphics.circle("fill", centerX, centerY, dotRadius)
-      end
+      drawCell(world, theme, layout, row, col, animState)
     end
   end
 

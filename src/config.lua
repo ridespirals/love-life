@@ -10,9 +10,8 @@ local config = {
   defaultPattern = "lifeview",
   stepInterval = 0.10,
   statusBarHeight = 28,
-  previewDotScale = 0.18,
-  previewDotMinRadiusPx = 2,
-  previewDotMaxRadiusPx = 8,
+  stepAnimEnabled = true,
+  stepAnimSec = 0.20,
 }
 
 return config

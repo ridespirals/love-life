@@ -7,22 +7,44 @@ local playback = require("src.playback")
 local renderer = require("src.renderer")
 local statusbar = require("src.ui.statusbar")
 local layout = require("src.layout")
+local stepAnimation = require("src.step_animation")
 
 local world
 local theme
 local activeRule
 local playbackState
+local animState
 local generation = 0
 local fastMode = false
 local FAST_STEP_INTERVAL = 0.05
+local FAST_ANIM_SPEED_MULTIPLIER = 4
 
-local function advanceGeneration()
+local function canRequestStep()
+  return stepAnimation.isIdle(animState)
+end
+
+local function commitGeneration()
   grid.step(world, activeRule)
+  grid.computeNext(world, activeRule)
   generation = generation + 1
 end
 
+local function requestStep()
+  if not canRequestStep() then
+    return
+  end
+
+  local result = stepAnimation.begin(animState)
+  if result == "commit_immediate" then
+    commitGeneration()
+  end
+end
+
 local function stepForward()
-  playback.stepForward(playbackState, advanceGeneration)
+  if not canRequestStep() then
+    return
+  end
+  playback.stepForward(playbackState, requestStep)
 end
 
 local function applyStepInterval()
@@ -33,12 +55,23 @@ local function applyStepInterval()
   playback.setStepInterval(playbackState, stepInterval)
 end
 
+local function applyAnimSpeed()
+  local scale = 1
+  if fastMode then
+    scale = FAST_ANIM_SPEED_MULTIPLIER
+  end
+  stepAnimation.setSpeedScale(animState, scale)
+end
+
 local function setFastMode(enabled)
   fastMode = enabled
   applyStepInterval()
+  applyAnimSpeed()
 end
 
 local function resetSimulation(opts)
+  stepAnimation.cancel(animState)
+
   if opts and opts.resize then
     local windowWidth, windowHeight = love.graphics.getDimensions()
     config.rows, config.cols = layout.computeGridSize(
@@ -73,7 +106,9 @@ function love.load()
   activeRule = rules.get(config.activeRule)
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
+  animState = stepAnimation.create(config)
   fastMode = false
+  applyAnimSpeed()
   rebuildWorldForWindow()
 end
 
@@ -82,12 +117,19 @@ function love.resize()
 end
 
 function love.update(dt)
-  playback.update(playbackState, dt, advanceGeneration)
+  local commit = stepAnimation.update(animState, dt)
+  if commit == "commit" then
+    commitGeneration()
+  end
+
+  if stepAnimation.isIdle(animState) then
+    playback.update(playbackState, dt, requestStep)
+  end
 end
 
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
-  renderer.draw(world, theme, config)
+  renderer.draw(world, theme, config, animState)
   statusbar.draw(world, theme, config, activeRule, generation, fastMode)
 end
 

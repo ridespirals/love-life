@@ -2,9 +2,9 @@
 
 ## Plan Status
 - **Branch:** `main`
-- **Version:** v1.0 (tagged releases)
-- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 polish; release packaging CI
-- **Next:** Post-1.0 phased roadmap — see recommended order in PLAN.md (1a fullscreen → Phase 0 animation → Phase 1 shell → …)
+- **Version:** v1.1 in progress (Phase 0 ✓; Phase 1 next)
+- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 polish; release packaging CI; 1a fullscreen; **Phase 0** step animation
+- **Next:** Phase 1 settings UI shell → Phases 2–5
 - Complete phases in order; each phase should leave the app runnable and tests green.
 - **Phase 0** and **Phase 1** can ship independently (parallel tracks); Phases 2–5 build on Phase 1.
 
@@ -123,7 +123,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 
 Turn the status bar from a read-only stats row into the **primary control surface**: clickable labels open docked panes; a master **Settings** button covers grid/display options. Users can pick built-ins, edit drafts in memory, and **Save** custom patterns, rules, and themes to a shareable userspace folder.
 
-**Generation step animation** (Phase 0) is a parallel polish track: it replaces static preview dots with a 3-step morph between generations and can ship independently of the settings UI.
+**Generation step animation** (Phase 0 ✓) replaces static preview dots with a per-step circle morph; shipped independently of the settings UI.
 
 **Fullscreen** (F11 / Alt+Enter) is folded into Phase 1 alongside the UI shell — keyboard-only, no status bar button.
 
@@ -246,93 +246,30 @@ Can ship before UI phases — no pane/status-bar chip work required.
 
 `src/renderer.lua` draws **current** tiles and **preview dots** for cells where `current ~= next` at the same time. `src/playback.lua` calls `grid.step` immediately, swapping buffers with no visual transition.
 
-#### Target behavior
+#### Shipped behavior (Phase 0 ✓)
 
-Replace simultaneous current+preview with a **3-step animation cycle** on each generation advance (manual step or auto-play tick):
+Single morph per generation step (`stepAnimSec`). Paused board shows `current` only. On step/play:
 
-| Step | Name | Visual |
-|------|------|--------|
-| 1 | **Rest** | Current generation only — full alive/dead tiles, no preview overlay |
-| 2 | **Anticipate** | Changing cells show growing markers: births = alive-colored dot on dead tile; deaths = dead-colored dot ("hole") on alive tile |
-| 3 | **Resolve** | Birth dots expand to full alive tiles; death "holes" shrink until the tile is empty dead — morph completes to `next` |
+- **Birth:** alive circle grows `0 → full` on dead tile (ease-in).
+- **Death:** alive circle shrinks `full → 0` on dead tile (ease-in).
+- Morph completes → `grid.step` + `grid.computeNext`.
 
-After step 3 completes, commit `grid.step` + `grid.computeNext` and return to step 1 (rest on new generation).
+Fast mode (`f` hold) scales morph speed and step interval. `stepAnimEnabled = false` commits immediately.
 
-When **paused** between steps: stay on step 1 (rest) — no static preview dots; the next state is only revealed through the animation when stepping.
+#### Historical design notes (superseded)
 
-```mermaid
-stateDiagram-v2
-  direction LR
-  Rest --> Anticipate: step triggered
-  Anticipate --> Resolve: phase timer
-  Resolve --> Commit: phase timer
-  Commit --> Rest: grid.step plus computeNext
-```
+Early iterations used static preview dots, then a two-phase anticipate/resolve morph, then a multi-generation death trail. The shipped design is a **single morph** per step (see above).
 
-#### Architecture
+#### Files (Phase 0 ✓)
 
-**New module:** `src/step_animation.lua`
-
-| API | Role |
-|-----|------|
-| `create(config)` | Phase durations / easing from config |
-| `isIdle()` | True when resting on current gen (step 1) |
-| `isAnimating()` | True during steps 2–3 |
-| `begin(world)` | Start cycle using existing `world.current` + `world.next` (requires prior `computeNext`) |
-| `update(dt)` | Advance phase progress |
-| `getCellVisual(row, col)` | Returns draw hints: base color, overlay type, morph `t` in `[0,1]` |
-
-**Playback change:** `src/playback.lua` and `main.lua` must **defer** `grid.step` until animation finishes:
-
-```lua
--- Today (immediate):
-advanceGeneration() → grid.step + generation++
-
--- Target:
-onStepRequest() → stepAnimation.begin(world)   -- world.next already computed
-love.update     → stepAnimation.update(dt)
-onComplete      → grid.step + computeNext + generation++
-```
-
-Auto-play: `stepInterval` measures time **between rest states** (step 1 to step 1), so animation duration adds to perceived cycle length unless config splits "rest hold" vs "morph duration".
-
-**Renderer change:** `src/renderer.lua`
-- Remove static preview-dot block.
-- For each cell, call `step_animation.getCellVisual` (or pass animation state into draw):
-  - **Rest:** draw full tile from `current` only.
-  - **Anticipate:** unchanged tiles = full rect; birth = dead base + growing alive circle; death = alive base + growing dead circle (hole).
-  - **Resolve:** interpolate circle radius → tile half-size (birth) or alive rect inset → hole → gone (death).
-- Use existing `previewDotScale` / min/max radius as **starting** dot size at anticipate phase; full tile = `tileSize / 2`.
-
-**Config additions** in `src/config.lua`:
-
-| Key | Purpose |
-|-----|---------|
-| `stepAnimAnticipateSec` | Duration of step 2 (default ~0.08) |
-| `stepAnimResolveSec` | Duration of step 3 (default ~0.12) |
-| `stepAnimEnabled` | Toggle (default `true`; false = instant step, legacy feel) |
-
-Fast mode (`f` hold): scale animation durations down (e.g. 0.25×) alongside step interval.
-
-#### Files touched
-
-| File | Work |
+| File | Role |
 |------|------|
-| `src/step_animation.lua` | Phase state machine + per-cell visual math |
-| `src/renderer.lua` | Morph drawing; remove preview dots |
-| `src/playback.lua` | Optional hook: block auto-step while animating |
-| `main.lua` | Wire animation update; defer `advanceGeneration` |
-| `tests/step_animation_spec.lua` | Phase transitions, interpolation at t=0/1 |
-| Docs | README animation note; AGENTS replaces "preview dots while paused" with animation model |
+| `src/step_animation.lua` | Morph timer; `getMorphT`, `getCellChange` |
+| `src/renderer.lua` | Circle grow/shrink drawing |
+| `main.lua` | Defer `grid.step` until morph completes |
+| `tests/step_animation_spec.lua` | Morph timing and cell-change detection |
 
-#### Edge cases
-
-- **Step during animation:** queue one step or ignore until idle (recommend: ignore / finish current morph).
-- **Restart / resize / pattern load:** cancel animation, reset to idle, show current grid.
-- **Rule change while paused:** recompute `next`, stay on rest (no preview until step).
-- **Unchanged cells:** full tile throughout all phases (no dot).
-
-**Checkpoint:** Manual step and auto-play both show 3-phase morph; paused board shows current gen only; fast mode speeds morph; tests green.
+**Checkpoint:** Manual step and auto-play show circle morph; paused board shows current gen only; fast mode speeds morph; tests green.
 
 ---
 
@@ -664,7 +601,7 @@ return {
 - **Play**: set `running = true`; `love.update` advances when accumulator ≥ `stepInterval`.
 - **Pause**: set `running = false`.
 - **Step forward**: single generation regardless of `running` — delegates to `grid.step(world, rules)` (v1.0: immediate; **Phase 0**: deferred until animation completes).
-- While paused, preview dots reflect pending next generation (**v1.0**); **Phase 0** replaces static preview dots with 3-step morph on step only.
+- While paused, board shows current generation only; morph runs on step/play (**Phase 0** ✓).
 - History push on forward step — **deferred** to Future history stack.
 
 ### Step backward (future — history stack)
@@ -719,12 +656,8 @@ return {
 | `tileSize` | `12` | M1 ✓ |
 | `activeTheme` | `"classic"` | M1 ✓ |
 | `statusBarHeight` | `28` | M1 ✓ |
-| `previewDotScale` | `0.18` | M1 ✓ |
-| `previewDotMinRadiusPx` | `2` | M1 ✓ |
-| `previewDotMaxRadiusPx` | `8` | M1 ✓ (Phase 0 reuses as morph starting size) |
-| `stepAnimAnticipateSec` | `0.08` | Phase 0 |
-| `stepAnimResolveSec` | `0.12` | Phase 0 |
-| `stepAnimEnabled` | `true` | Phase 0 |
+| `stepAnimSec` | `0.20` | Phase 0 ✓ |
+| `stepAnimEnabled` | `true` | Phase 0 ✓ |
 | `gridMode` | `"auto"` | Phase 5 |
 | `forcedRows`, `forcedCols`, `forcedTileSize` | mirror hints | Phase 5 |
 | `activeRule` | `"conway"` | M2-A ✓ |
@@ -790,7 +723,7 @@ return {
 | M2-C | Status bar shows rulestring, size, theme, generation |
 | M3-A | Generations advance on timer / step; preview dots while paused |
 | M3-B | Bar buttons + keys work; README accurate |
-| Phase 0 | 3-phase morph on step; paused board shows current gen only; tests green |
+| Phase 0 ✓ | Circle grow/shrink morph per step; paused board shows current gen only; tests green |
 | Phase 1 | Panes open/close; F11 fullscreen; placeholder panes OK |
 | Phase 2 | Switch rules/themes via panes without config edit |
 | Phase 3 | Custom theme persists across relaunch |
@@ -805,8 +738,7 @@ return {
 - Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
 
 ### M1 visual checklist (regression)
-- Expected rows/cols, aligned grid lines, theme colors, preview dots only on changes (v1.0; Phase 0 replaces with step animation)
-- Preview dot scale/clamp, auto-fit dims on resize (restarts sim), toroidal wrap
+- Expected rows/cols, aligned grid lines, theme colors; step morph on birth/death cells only (Phase 0)
 
 ## TODO Tracking
 
@@ -858,8 +790,8 @@ return {
 ## Next Features (Do Not Delete, Mark Complete Later)
 
 ### Post-1.0 phased roadmap (Phases 0–5)
-- [ ] **Phase 0** — Generation step animation (`src/step_animation.lua`; defer `grid.step`)
-- [ ] **Phase 1** — UI shell + fullscreen (pane manager, clickable chips, Settings button, F11/Alt+Enter)
+- [x] **Phase 0** — Generation step animation (`src/step_animation.lua`; defer `grid.step`)
+- [ ] **Phase 1** — UI shell (pane manager, clickable chips, Settings button; fullscreen keys done in 1a)
 - [ ] **Phase 2** — Rule and theme pickers (docked panes, built-in Apply)
 - [ ] **Phase 3** — Userspace save/load (`src/userdata.lua`; merged catalogs)
 - [ ] **Phase 4** — Pattern picker + board drawing (draft patterns, click-to-draw)
