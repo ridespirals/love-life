@@ -106,7 +106,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept).
 
-**Theme pane:** pick a preset or edit hex colors, then **Apply** (live swap while playback continues).
+**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`), then **Apply** (live swap while playback continues). Leave `accent` blank to fall back to plain shadow shading.
 
 ## Controls
 

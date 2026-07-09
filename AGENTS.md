@@ -5,12 +5,12 @@
 - Purpose: Conway's Game of Life in Lua using LÖVE.
 - **Current phase:** Phase 2 ✓ on `phase-2-rule-theme` (rebased on `main` with vim themes); **Phase 3** (userspace save/load) is next. v1.1.0 tagged (fullscreen + step animation).
 - **Active branch:** `phase-2-rule-theme`
-- **Last merge:** PR #1 `square-step-animation` — square preview→commit morph, idle next-state markers, pseudo-3D alive tiles.
+- **Last merge:** PR #2 `phase-1-statusbar` (pane manager + chips). `main` also has two direct post-merge commits importing 21 vim-derived themes with `accent` shadows (not yet PR-reviewed); this branch is rebased on top of both.
 
 ## Handoff (start here after restart)
 - **Run:** `lua tests/run.lua` (11 specs) · `love .` (visual smoke)
 - **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
-- **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — preset buttons, text/hex fields, Apply; `src/ui/pane_widgets.lua` shared controls.
+- **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — preset buttons, text/hex fields (theme pane: `alive`/`dead`/`grid`/`background`/optional `accent`), Apply; `src/ui/pane_widgets.lua` shared controls including `layoutGrid` (wraps preset buttons so the 21-theme catalog doesn't overflow the pane).
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
@@ -135,13 +135,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
-<<<<<<< HEAD
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `themes_spec`, `session` (via pane); **Phase 3+** `userdata_spec`.
-||||||| parent of c86ce9d (Add Phase 2 rule and theme pickers with in-game Apply.)
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`; **Phase 3+** `userdata_spec`.
-=======
 - **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `themes_spec`; **Phase 3+** `userdata_spec`.
->>>>>>> c86ce9d (Add Phase 2 rule and theme pickers with in-game Apply.)
 - **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 

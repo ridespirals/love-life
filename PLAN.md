@@ -338,11 +338,16 @@ No `conf.lua` change required — `resizable = true` already set.
 | File | Work |
 |------|------|
 | `src/ui/panes/rule_pane.lua` | Preset buttons, `Bx/Sy` text input, Apply ✓ |
-| `src/ui/panes/theme_pane.lua` | Preset buttons, hex color fields, Apply ✓ |
+| `src/ui/panes/theme_pane.lua` | Preset buttons, hex color fields (`alive`/`dead`/`grid`/`background`/`accent`), Apply ✓ |
 | `src/ui/pane_widgets.lua` | Shared button/field draw + hit-test ✓ |
 | `main.lua` | Swap `activeRule` / `theme` on Apply; `grid.computeNext` ✓ |
 
 **Checkpoint:** switch conway ↔ ant_colony and themes without editing config file. ✓
+
+**Post-checkpoint fixes (after theme catalog grew to 21 presets):**
+- Theme pane's editable fields initially omitted `accent`, even though `Apply` already threaded it through from the draft — added `accent` as a 5th (optional) field; blank clears it back to plain shadow shading.
+- Preset buttons laid out in a single unwrapped row would have made the pane far wider than the screen with 21 themes — added `src.ui.pane_widgets.layoutGrid` (wraps rows at a bounded width) and wired it into `theme_pane.lua` measure/layout.
+- Regression coverage in `tests/phase2_spec.lua`.
 
 ---
 
@@ -356,6 +361,8 @@ No `conf.lua` change required — `resizable = true` already set.
 | `src/rules.lua` / `src/themes.lua` | Load user presets |
 | Rule/Theme panes | Save / Delete buttons, name field |
 | `tests/userdata_spec.lua` | Round-trip serialize tests |
+
+**Watch for:** `rule_pane.lua` still lays out preset buttons in a single unwrapped row (fine for 2 built-ins). If user-saved rules grow the catalog, switch it to `pane_widgets.layoutGrid` the same way `theme_pane.lua` does (see Phase 2 post-checkpoint fixes).
 
 **Checkpoint:** create custom theme, quit, relaunch, still listed.
 

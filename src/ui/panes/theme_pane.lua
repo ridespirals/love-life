@@ -13,8 +13,12 @@ local GAP = 8
 local APPLY_W = 72
 local PRESET_MIN_W = 72
 local LABEL_W = 88
+-- Preset row wraps at this width regardless of final pane width (kept in
+-- sync between measure() and layout() so the pane never grows wider than
+-- the screen with a large theme catalog — see PLAN.md Phase 2 follow-up).
+local PRESET_ROW_MAX_W = 480
 
-local colorFields = { "alive", "dead", "grid", "background" }
+local colorFields = { "alive", "dead", "grid", "background", "accent" }
 
 local function estimatePresetWidth(name)
   if love and love.graphics and love.graphics.getFont then
@@ -23,9 +27,8 @@ local function estimatePresetWidth(name)
   return math.max(PRESET_MIN_W, #name * 7 + 16)
 end
 
-local function layout(rect, contentY, session)
+local function buildPresetButtons()
   local presetButtons = {}
-  local x = rect.x + PANE_PAD_X
   for _, name in ipairs(themes.list()) do
     presetButtons[#presetButtons + 1] = {
       id = name,
@@ -34,10 +37,16 @@ local function layout(rect, contentY, session)
       h = BTN_H,
     }
   end
-  widgets.layoutRow(x, contentY, presetButtons, BTN_GAP)
+  return presetButtons
+end
+
+local function layout(rect, contentY, session)
+  local presetButtons = buildPresetButtons()
+  local x = rect.x + PANE_PAD_X
+  local _, _, presetBlockH = widgets.layoutGrid(x, contentY, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
 
   local fields = {}
-  local fieldY = contentY + BTN_H + GAP
+  local fieldY = contentY + presetBlockH + GAP
   local colors = session.draftThemeColors or {}
   for _, key in ipairs(colorFields) do
     fields[#fields + 1] = {
@@ -48,7 +57,7 @@ local function layout(rect, contentY, session)
       y = fieldY + 14,
       w = rect.w - PANE_PAD_X * 2 - LABEL_W,
       h = FIELD_H,
-      value = colors[key] or "#000000",
+      value = colors[key] or (key == "accent" and "" or "#000000"),
       focused = session.draftThemeFocus == key,
     }
     fieldY = fieldY + 14 + FIELD_H + 6
@@ -71,17 +80,14 @@ local function layout(rect, contentY, session)
 end
 
 function M.measure(config)
+  local presetButtons = buildPresetButtons()
+  local _, presetW, presetBlockH = widgets.layoutGrid(0, 0, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
+
   local fieldBlock = #colorFields * (14 + FIELD_H + 6)
-  local contentH = BTN_H + GAP + fieldBlock + GAP + BTN_H
+  local contentH = presetBlockH + GAP + fieldBlock + GAP + BTN_H
   local contentW = config.paneWidth or 360
 
-  local presetW = PANE_PAD_X * 2
-  for _, name in ipairs(themes.list()) do
-    presetW = presetW + estimatePresetWidth(name) + BTN_GAP
-  end
-  presetW = presetW - BTN_GAP
-
-  return math.max(contentW, presetW), contentH
+  return math.max(contentW, presetW + PANE_PAD_X * 2), contentH
 end
 
 function M.draw(rect, contentY, theme, _config, session)
@@ -163,13 +169,18 @@ function M.apply(session)
     return
   end
 
+  local accent = colors.accent
+  if not accent or accent == "" then
+    accent = nil
+  end
+
   return themes.tryBuild({
     name = session.draftThemePresetId or "custom",
     alive = colors.alive,
     dead = colors.dead,
     grid = colors.grid,
     background = colors.background,
-    accent = colors.accent,
+    accent = accent,
   })
 end
 

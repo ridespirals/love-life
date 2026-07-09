@@ -14,6 +14,32 @@ function M.layoutRow(x, y, items, gap)
   return items
 end
 
+-- Wraps items into rows capped at maxRowW so wide catalogs (e.g. 21 themes)
+-- don't produce a pane wider than the screen. Returns the widest row width
+-- and total stacked height so callers can size the pane consistently.
+function M.layoutGrid(x, y, items, gap, maxRowW)
+  local rowX = x
+  local rowY = y
+  local rowH = 0
+  local usedW = 0
+
+  for _, item in ipairs(items) do
+    if rowX ~= x and rowX + item.w > x + maxRowW then
+      rowX = x
+      rowY = rowY + rowH + gap
+      rowH = 0
+    end
+    item.x = rowX
+    item.y = rowY
+    rowH = math.max(rowH, item.h)
+    rowX = rowX + item.w + gap
+    usedW = math.max(usedW, rowX - gap - x)
+  end
+
+  local totalH = rowY - y + rowH
+  return items, usedW, totalH
+end
+
 function M.drawButton(button, theme, selected)
   if selected then
     setColor(theme.alive, 0.25)

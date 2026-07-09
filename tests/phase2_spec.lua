@@ -3,6 +3,7 @@ local rules = require("src.rules")
 local themes = require("src.themes")
 local session = require("src.session")
 local rule_pane = require("src.ui.panes.rule_pane")
+local theme_pane = require("src.ui.panes.theme_pane")
 local test = require("tests.spec_helper").test
 
 test("fromRulestring builds custom preset", function()
@@ -53,4 +54,32 @@ test("rule_pane apply uses draft rulestring", function()
   state.draftRuleString = "B3/S234"
   local rule = rule_pane.apply(state)
   assert.equal(rule.rulestring, "B3/S234")
+end)
+
+test("resetThemeDraft carries preset accent into draft colors", function()
+  local state = session.create({ themeId = "monokai" })
+  local monokai = themes.get("monokai")
+  session.resetThemeDraft(state, monokai, themes)
+  assert.equal(state.draftThemeColors.accent, themes.toHex(monokai.accent))
+end)
+
+test("theme_pane apply preserves accent from draft", function()
+  local state = session.create({ themeId = "monokai" })
+  session.resetThemeDraft(state, themes.get("monokai"), themes)
+  local built = theme_pane.apply(state)
+  assert.isTrue(built.accent ~= nil)
+end)
+
+test("theme_pane apply omits accent when draft field is blank", function()
+  local state = session.create({ themeId = "classic" })
+  session.resetThemeDraft(state, themes.get("classic"), themes)
+  state.draftThemeColors.accent = ""
+  local built = theme_pane.apply(state)
+  assert.equal(built.accent, nil)
+end)
+
+test("theme_pane measure wraps the full theme catalog under a bounded width", function()
+  local w, h = theme_pane.measure({ paneWidth = 360 })
+  assert.isTrue(w <= 520)
+  assert.isTrue(h > 0)
 end)
