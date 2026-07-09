@@ -15,6 +15,7 @@ local specs = {
   "tests/rules_spec.lua",
   "tests/step_animation_spec.lua",
   "tests/pane_spec.lua",
+  "tests/phase2_spec.lua",
   "tests/statusbar_spec.lua",
   "tests/themes_spec.lua",
 }

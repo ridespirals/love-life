@@ -37,6 +37,17 @@ local rulePresets = {
   ant_colony = preset("ant_colony", "B3/S234"),
 }
 
+function M.fromRulestring(rulestring)
+  return preset("custom", rulestring)
+end
+
+function M.tryFromRulestring(rulestring)
+  local ok, rule = pcall(M.fromRulestring, rulestring)
+  if ok then
+    return rule
+  end
+end
+
 function M.get(name)
   return rulePresets[name] or rulePresets[defaultRule]
 end

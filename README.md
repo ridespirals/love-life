@@ -90,9 +90,9 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.1.0** — square preview→commit step animation, idle next-state markers, pseudo-3D alive tiles; fullscreen (F11 / Alt+Enter).
 
-**v1.2 (in progress)** — Phase 1 settings UI shell (clickable chips, docked panes).
+**v1.2 (in progress)** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (Apply).
 
-**Next:** Phase 2 rule/theme pickers — see [`PLAN.md`](PLAN.md).
+**Next:** Phase 3 userspace save/load — see [`PLAN.md`](PLAN.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -102,11 +102,15 @@ Deferred: history stack (step backward), RLE export, import UI, **pattern groupi
 
 **Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play).
 
-While a pane is open, playback keyboard shortcuts are disabled; press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
+While a pane is open, playback **keyboard** shortcuts are disabled; the simulation **keeps running** if it was already playing. Text input works in Rule/Theme fields. Press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
+
+**Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept).
+
+**Theme pane:** pick a preset or edit hex colors, then **Apply** (live swap while playback continues).
 
 ## Controls
 
-- `space`: toggle play/pause (disabled while a pane is open)
+- `space`: toggle play/pause (disabled while a pane is open — mouse Play/Pause still work)
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation

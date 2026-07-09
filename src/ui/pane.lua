@@ -10,19 +10,12 @@ local CLOSE_RESERVE = 32
 
 local titleFont
 
+local paneModules = {
+  rule = require("src.ui.panes.rule_pane"),
+  theme = require("src.ui.panes.theme_pane"),
+}
+
 local paneDefs = {
-  rule = {
-    title = "Rules",
-    lines = {
-      "Preset list and custom Bx/Sy rulestring — Phase 2.",
-    },
-  },
-  theme = {
-    title = "Themes",
-    lines = {
-      "Preset list and color editor — Phase 2.",
-    },
-  },
   pattern = {
     title = "Patterns",
     lines = {
@@ -37,6 +30,18 @@ local paneDefs = {
     },
   },
 }
+
+local function getPaneDef(state)
+  local mod = paneModules[state.openId]
+  if mod then
+    return { title = mod.title }
+  end
+  return paneDefs[state.openId]
+end
+
+local function getPaneModule(state)
+  return paneModules[state.openId]
+end
 
 local function contains(rect, x, y)
   return x >= rect.x and x <= rect.x + rect.w and y >= rect.y and y <= rect.y + rect.h
@@ -123,11 +128,21 @@ local function estimateTextWidth(text)
   return #text * 7
 end
 
-local function measureContent(def, config)
+local function measureContent(state, config)
+  local def = getPaneDef(state)
   local minW = configPx(config, "paneWidth", 360)
   local minH = configPx(config, "paneHeight", 120)
 
   local titleW = estimateTextWidth(def.title) + PANE_PAD_X * 2 + CLOSE_RESERVE
+  local mod = getPaneModule(state)
+
+  if mod then
+    local contentW, contentH = mod.measure(config)
+    local w = math.max(minW, titleW, contentW)
+    local h = math.max(minH, PANE_PAD_Y + TITLE_GAP + contentH + PANE_PAD_Y)
+    return w, h
+  end
+
   local bodyW = PANE_PAD_X * 2
   for _, line in ipairs(def.lines) do
     bodyW = math.max(bodyW, estimateTextWidth(line) + PANE_PAD_X * 2)
@@ -139,8 +154,7 @@ local function measureContent(def, config)
 end
 
 local function layoutPaneRect(config, state)
-  local def = paneDefs[state.openId]
-  local paneW, paneH = measureContent(def, config)
+  local paneW, paneH = measureContent(state, config)
   local windowW = select(1, love.graphics.getDimensions())
   local margin = configPx(config, "paneScreenMargin", 8)
 
@@ -180,7 +194,7 @@ function M.create()
 end
 
 function M.open(state, id, anchor)
-  if paneDefs[id] then
+  if paneDefs[id] or paneModules[id] then
     state.openId = id
     state.anchor = anchor
   end
@@ -211,7 +225,7 @@ function M.getHeight(config, state)
   if not state.openId then
     return 0
   end
-  local _, h = measureContent(paneDefs[state.openId], config)
+  local _, h = measureContent(state, config)
   return h
 end
 
@@ -272,12 +286,12 @@ function M.drawBackdrop(state, config)
   love.graphics.rectangle("fill", 0, 0, width, height)
 end
 
-function M.draw(state, theme, config)
+function M.draw(state, theme, config, session)
   if not state.openId then
     return
   end
 
-  local def = paneDefs[state.openId]
+  local def = getPaneDef(state)
   if not def then
     return
   end
@@ -297,11 +311,18 @@ function M.draw(state, theme, config)
     love.graphics.print(def.title, rect.x + PANE_PAD_X, rect.y + PANE_PAD_Y)
   end)
 
-  setColor(theme.alive, 1)
-  local textY = rect.y + PANE_PAD_Y + TITLE_GAP
-  for _, line in ipairs(def.lines) do
-    love.graphics.print(line, rect.x + PANE_PAD_X, textY)
-    textY = textY + LINE_HEIGHT
+  local contentY = rect.y + PANE_PAD_Y + TITLE_GAP
+  local mod = getPaneModule(state)
+
+  if mod then
+    mod.draw(rect, contentY, theme, config, session)
+  else
+    setColor(theme.alive, 1)
+    local textY = contentY
+    for _, line in ipairs(def.lines) do
+      love.graphics.print(line, rect.x + PANE_PAD_X, textY)
+      textY = textY + LINE_HEIGHT
+    end
   end
 
   local close = M.getCloseButton(config, state)
@@ -309,6 +330,33 @@ function M.draw(state, theme, config)
   love.graphics.rectangle("line", close.x + 0.5, close.y + 0.5, close.w, close.h)
   setColor(theme.alive, 1)
   love.graphics.printf("×", close.x, close.y + 2, close.w, "center")
+end
+
+function M.mousepressed(state, session, x, y, theme, config)
+  local mod = getPaneModule(state)
+  if not mod then
+    return
+  end
+
+  local rect = M.getRect(config, state)
+  local contentY = rect.y + PANE_PAD_Y + TITLE_GAP
+  return mod.mousepressed(rect, contentY, session, x, y, theme, config)
+end
+
+function M.keypressed(state, session, key)
+  local mod = getPaneModule(state)
+  if not mod or not mod.keypressed then
+    return false
+  end
+  return mod.keypressed(session, key)
+end
+
+function M.textinput(state, session, text)
+  local mod = getPaneModule(state)
+  if not mod or not mod.textinput then
+    return
+  end
+  mod.textinput(session, text)
 end
 
 return M
