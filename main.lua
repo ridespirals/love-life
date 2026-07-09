@@ -6,6 +6,8 @@ local patterns = require("src.patterns")
 local playback = require("src.playback")
 local renderer = require("src.renderer")
 local statusbar = require("src.ui.statusbar")
+local pane = require("src.ui.pane")
+local session = require("src.session")
 local layout = require("src.layout")
 local stepAnimation = require("src.step_animation")
 
@@ -16,6 +18,8 @@ local playbackState
 local animState
 local generation = 0
 local fastMode = false
+local paneState
+local sessionState
 local FAST_STEP_INTERVAL = 0.05
 local FAST_ANIM_SPEED_MULTIPLIER = 4
 
@@ -87,6 +91,7 @@ local function resetSimulation(opts)
   grid.computeNext(world, activeRule)
   playback.restart(playbackState)
   generation = 0
+  sessionState.appliedPatternId = config.defaultPattern
 end
 
 local function restartWorld()
@@ -107,6 +112,12 @@ function love.load()
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
   animState = stepAnimation.create(config)
+  sessionState = session.create({
+    ruleId = config.activeRule,
+    themeId = config.activeTheme,
+    patternId = config.defaultPattern,
+  })
+  paneState = pane.create()
   fastMode = false
   applyAnimSpeed()
   rebuildWorldForWindow()
@@ -130,10 +141,47 @@ end
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
   renderer.draw(world, theme, config, animState)
-  statusbar.draw(world, theme, config, activeRule, generation, fastMode)
+  statusbar.draw(
+    world,
+    theme,
+    config,
+    activeRule,
+    generation,
+    sessionState.appliedPatternId,
+    fastMode,
+    paneState
+  )
+  pane.draw(paneState, theme, config)
+  if pane.isOpen(paneState) then
+    statusbar.drawOpenerLabel(
+      world,
+      theme,
+      config,
+      activeRule,
+      generation,
+      sessionState.appliedPatternId,
+      fastMode,
+      paneState.anchor
+    )
+  end
+end
+
+local function paneBlocksPlaybackKeys()
+  return pane.capturesInput(paneState)
 end
 
 function love.keypressed(key)
+  if key == "escape" then
+    if pane.isOpen(paneState) then
+      pane.close(paneState)
+      return
+    end
+  end
+
+  if paneBlocksPlaybackKeys() and key ~= "q" then
+    return
+  end
+
   if key == "space" then
     playback.toggle(playbackState)
   elseif key == "p" then
@@ -166,8 +214,30 @@ function love.mousepressed(x, y, button)
     return
   end
 
+  if pane.hitTestClose(config, paneState, x, y) then
+    pane.close(paneState)
+    return
+  end
+
+  local chipPane, chipAnchor = statusbar.hitTestChip(
+    world,
+    theme,
+    config,
+    activeRule,
+    generation,
+    sessionState.appliedPatternId,
+    x,
+    y
+  )
+  if chipPane then
+    pane.toggle(paneState, chipPane, chipAnchor)
+    return
+  end
+
   local hit = statusbar.hitTestButton(config, x, y, fastMode)
-  if hit == "play" then
+  if hit == "settings" then
+    pane.toggle(paneState, "settings", statusbar.getButton(config, fastMode, "settings"))
+  elseif hit == "play" then
     playback.play(playbackState)
   elseif hit == "pause" then
     playback.pause(playbackState)
