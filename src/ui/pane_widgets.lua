@@ -56,8 +56,16 @@ function M.hitButton(button, x, y)
 end
 
 function M.drawField(label, field, theme)
+  local labelY = field.y - 14
+  if field.labelX then
+    local fontH = 12
+    if love and love.graphics and love.graphics.getFont then
+      fontH = love.graphics.getFont():getHeight()
+    end
+    labelY = field.y + math.floor((field.h - fontH) / 2)
+  end
   setColor(theme.alive, 1)
-  love.graphics.print(label, field.labelX or field.x, field.y - 14)
+  love.graphics.print(label, field.labelX or field.x, labelY)
   if field.focused then
     setColor(theme.alive, 0.2)
     love.graphics.rectangle("fill", field.x, field.y, field.w, field.h)
@@ -66,6 +74,15 @@ function M.drawField(label, field, theme)
   love.graphics.rectangle("line", field.x + 0.5, field.y + 0.5, field.w, field.h)
   setColor(theme.alive, 1)
   love.graphics.print(field.value, field.x + 4, field.y + 3)
+end
+
+function M.drawColorSwatch(swatch, color, theme)
+  if color then
+    setColor(color, 1)
+    love.graphics.rectangle("fill", swatch.x, swatch.y, swatch.w, swatch.h)
+  end
+  setColor(theme.grid, 1)
+  love.graphics.rectangle("line", swatch.x + 0.5, swatch.y + 0.5, swatch.w, swatch.h)
 end
 
 function M.hitField(field, x, y)

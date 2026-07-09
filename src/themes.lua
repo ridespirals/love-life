@@ -87,6 +87,16 @@ function M.toHex(color)
   return colorToHex(color)
 end
 
+function M.colorFromHex(hex)
+  if not hex or hex == "" or #hex < 7 then
+    return nil
+  end
+  local ok, color = pcall(hexToColor, hex)
+  if ok then
+    return color
+  end
+end
+
 function M.colorsToHex(theme)
   local hex = {
     alive = colorToHex(theme.alive),

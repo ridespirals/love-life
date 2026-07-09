@@ -17,8 +17,18 @@ local LABEL_W = 88
 -- sync between measure() and layout() so the pane never grows wider than
 -- the screen with a large theme catalog — see PLAN.md Phase 2 follow-up).
 local PRESET_ROW_MAX_W = 480
+local SWATCH_W = 22
+local SWATCH_GAP = 6
+local MIN_FIELD_W = 120
 
 local colorFields = { "alive", "dead", "grid", "background", "accent" }
+
+local function draftPreviewColor(colors, key)
+  if not colors then
+    return nil
+  end
+  return themes.colorFromHex(colors[key])
+end
 
 local function estimatePresetWidth(name)
   if love and love.graphics and love.graphics.getFont then
@@ -48,19 +58,27 @@ local function layout(rect, contentY, session)
   local fields = {}
   local fieldY = contentY + presetBlockH + GAP
   local colors = session.draftThemeColors or {}
+  local fieldW = rect.w - PANE_PAD_X * 2 - LABEL_W - SWATCH_GAP - SWATCH_W
+  local swatchX = rect.x + PANE_PAD_X + LABEL_W + fieldW + SWATCH_GAP
   for _, key in ipairs(colorFields) do
     fields[#fields + 1] = {
       id = key,
       label = key .. ":",
       labelX = rect.x + PANE_PAD_X,
       x = rect.x + PANE_PAD_X + LABEL_W,
-      y = fieldY + 14,
-      w = rect.w - PANE_PAD_X * 2 - LABEL_W,
+      y = fieldY,
+      w = fieldW,
       h = FIELD_H,
       value = colors[key] or (key == "accent" and "" or "#000000"),
       focused = session.draftThemeFocus == key,
+      swatch = {
+        x = swatchX,
+        y = fieldY,
+        w = SWATCH_W,
+        h = FIELD_H,
+      },
     }
-    fieldY = fieldY + 14 + FIELD_H + 6
+    fieldY = fieldY + FIELD_H + 6
   end
 
   local apply = {
@@ -83,15 +101,17 @@ function M.measure(config)
   local presetButtons = buildPresetButtons()
   local _, presetW, presetBlockH = widgets.layoutGrid(0, 0, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
 
-  local fieldBlock = #colorFields * (14 + FIELD_H + 6)
+  local fieldBlock = #colorFields * (FIELD_H + 6)
   local contentH = presetBlockH + GAP + fieldBlock + GAP + BTN_H
   local contentW = config.paneWidth or 360
+  local minFieldRowW = LABEL_W + MIN_FIELD_W + SWATCH_GAP + SWATCH_W + PANE_PAD_X * 2
 
-  return math.max(contentW, presetW + PANE_PAD_X * 2), contentH
+  return math.max(contentW, presetW + PANE_PAD_X * 2, minFieldRowW), contentH
 end
 
 function M.draw(rect, contentY, theme, _config, session)
   local ui = layout(rect, contentY, session)
+  local colors = session.draftThemeColors
 
   for _, button in ipairs(ui.presetButtons) do
     widgets.drawButton(button, theme, session.draftThemePresetId == button.id)
@@ -99,6 +119,7 @@ function M.draw(rect, contentY, theme, _config, session)
 
   for _, field in ipairs(ui.fields) do
     widgets.drawField(field.label, field, theme)
+    widgets.drawColorSwatch(field.swatch, draftPreviewColor(colors, field.id), theme)
   end
 
   widgets.drawButton(ui.apply, theme, false)

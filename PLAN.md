@@ -149,7 +149,7 @@ flowchart TB
 | Chip | Opens |
 |------|--------|
 | `Rule: B3/S23` | Rule pane — preset list + custom `Bx/Sy` field + Apply / Save |
-| `Theme: solarized` | Theme pane — preset list + color fields + Apply / Save |
+| `Theme: solarized` | Theme pane — preset list + hex fields + live swatches + Apply / Save |
 | `Pattern: glider` | Pattern pane — catalog list + New / Edit / Save |
 | `Size: 40x60` | Settings pane — grid section (or deep-link from master button) |
 | `Gen: N` | Read-only (no pane) |
@@ -338,16 +338,18 @@ No `conf.lua` change required — `resizable = true` already set.
 | File | Work |
 |------|------|
 | `src/ui/panes/rule_pane.lua` | Preset buttons, `Bx/Sy` text input, Apply ✓ |
-| `src/ui/panes/theme_pane.lua` | Preset buttons, hex color fields (`alive`/`dead`/`grid`/`background`/`accent`), Apply ✓ |
-| `src/ui/pane_widgets.lua` | Shared button/field draw + hit-test ✓ |
+| `src/ui/panes/theme_pane.lua` | Preset buttons, hex fields + live swatches, Apply ✓ |
+| `src/ui/pane_widgets.lua` | Shared button/field/swatch draw + `layoutGrid` ✓ |
 | `main.lua` | Swap `activeRule` / `theme` on Apply; `grid.computeNext` ✓ |
 
 **Checkpoint:** switch conway ↔ ant_colony and themes without editing config file. ✓
 
 **Post-checkpoint fixes (after theme catalog grew to 21 presets):**
-- Theme pane's editable fields initially omitted `accent`, even though `Apply` already threaded it through from the draft — added `accent` as a 5th (optional) field; blank clears it back to plain shadow shading.
-- Preset buttons laid out in a single unwrapped row would have made the pane far wider than the screen with 21 themes — added `src.ui.pane_widgets.layoutGrid` (wraps rows at a bounded width) and wired it into `theme_pane.lua` measure/layout.
-- Regression coverage in `tests/phase2_spec.lua`.
+- Theme pane's editable fields initially omitted `accent` — added as a 5th (optional) field; blank clears accent on Apply.
+- Preset buttons in a single row overflowed with 21 themes — `pane_widgets.layoutGrid` wraps preset rows at a bounded width.
+- Side-by-side label/field rows had vertical misalignment — labels now center on the input row.
+- **Draft color preview:** swatch column beside each hex field updates live on preset click or valid hex entry (no Apply needed); `themes.colorFromHex` parses draft values for swatch fill.
+- Regression coverage in `tests/phase2_spec.lua` and `tests/themes_spec.lua`.
 
 ---
 
@@ -665,7 +667,7 @@ return {
 | `solarized` | `#fdf6e3` | `#002b36` | `#073642` | `#2AA198` |
 
 #### `src/themes.lua`
-- Export: `get(name)`, `list()`, `next(name)`, `prev(name)`, `skipped()`, `extrusionShadow(theme, face, alive)`
+- Export: `get(name)`, `list()`, `next(name)`, `prev(name)`, `skipped()`, `colorFromHex(hex)`, `extrusionShadow(theme, face, alive)`
 
 ### `src/config.lua`
 - Central constants:

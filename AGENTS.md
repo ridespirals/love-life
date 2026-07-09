@@ -10,7 +10,7 @@
 ## Handoff (start here after restart)
 - **Run:** `lua tests/run.lua` (11 specs) · `love .` (visual smoke)
 - **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
-- **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — preset buttons, text/hex fields (theme pane: `alive`/`dead`/`grid`/`background`/optional `accent`), Apply; `src/ui/pane_widgets.lua` shared controls including `layoutGrid` (wraps preset buttons so the 21-theme catalog doesn't overflow the pane).
+- **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — preset buttons, text/hex fields, Apply; theme pane shows live **color swatches** beside each draft field (preset click or hex edit, before Apply); `src/ui/pane_widgets.lua` shared controls including `layoutGrid` (wraps preset buttons so the 21-theme catalog doesn't overflow the pane).
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
