@@ -14,6 +14,8 @@ love .
 
 Requires [LÖVE 11.x](https://love2d.org/).
 
+**Optional shortcut:** with [direnv](https://direnv.net/) installed and hooked into your shell (`eval "$(direnv hook zsh)"` / `bash`), running `direnv allow` once in this repo puts `bin/` on your `$PATH` while you're inside it. Then plain `run` and `check` work as one-word commands (see [`.envrc`](.envrc), `bin/run`, `bin/check`). `check` is used instead of `test` because `test` is a shell builtin that would always shadow a same-named script. This is purely a local convenience — `love .` and `lua tests/run.lua` always work without it.
+
 ## Releases
 
 Pre-built downloads are published on [GitHub Releases](https://github.com/ridespirals/love-life/releases).
@@ -41,6 +43,8 @@ Pure Lua tests for simulation logic (no LÖVE required):
 ```bash
 lua tests/run.lua
 ```
+
+Or, with direnv set up (see [Run](#run) above): `check`.
 
 Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, and `src/themes.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar layout, and theme registry.
 

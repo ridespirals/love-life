@@ -1,6 +1,9 @@
 # OS
 .DS_Store
 
+# direnv local cache (not the .envrc itself, which is committed)
+.direnv/
+
 # CI build dirs
 staging/
 release/
