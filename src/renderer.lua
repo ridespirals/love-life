@@ -18,16 +18,24 @@ local function lerpColor(color, target, amount)
   }
 end
 
+local function configPx(config, key, default)
+  local value = config[key]
+  if value ~= nil then
+    return value
+  end
+  return default
+end
+
 local function previewDotSize(tileSize, config)
-  local scaled = tileSize * (config.previewDotScale or 0.05)
-  return math.max(config.previewDotMinPx or 2, scaled)
+  local scaled = tileSize * configPx(config, "previewDotScale", 0.15)
+  return math.max(configPx(config, "previewDotMinPx", 4), scaled)
 end
 
 local function tileDepth(config, alive)
   if alive then
-    return config.tileDepthAlivePx or 2
+    return configPx(config, "tileDepthAlivePx", 3)
   end
-  return config.tileDepthDeadPx or 1
+  return configPx(config, "tileDepthDeadPx", 0)
 end
 
 local function clampDepth(depth, tileSize)

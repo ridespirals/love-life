@@ -2,11 +2,10 @@
 
 ## Plan Status
 - **Branch:** `main`
-- **Version:** v1.1 in progress (Phase 0 ✓; Phase 1 next)
-- **Done:** Milestones 1, 2-A/B/C, 3-A/B/C; post-M3 polish; release packaging CI; 1a fullscreen; **Phase 0** step animation
+- **Version:** v1.1 ready to tag (Phase 0 ✓ + 1a fullscreen); Phase 1 not started
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, **Phase 0** (square preview→commit, idle markers, pseudo-3D tiles)
 - **Next:** Phase 1 settings UI shell → Phases 2–5
 - Complete phases in order; each phase should leave the app runnable and tests green.
-- **Phase 0** and **Phase 1** can ship independently (parallel tracks); Phases 2–5 build on Phase 1.
 
 ## Goal
 Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, theme-driven rendering with next-generation preview markers, loadable initial patterns, configurable rulestrings, bottom status bar, and play/pause/step controls.
@@ -34,7 +33,7 @@ flowchart TD
   M3A[M3-A Playback engine]
   M3B[M3-B Controls + README]
   M3C[M3-C RLE import]
-  P0[Phase 0 Step animation]
+  P0[Phase 0 Step animation ✓]
   P1[Phase 1 UI shell]
   P2[Phase 2 Rule/Theme pickers]
   P3[Phase 3 Userspace save/load]
@@ -94,7 +93,7 @@ Pure Lua; no LÖVE changes required to finish this phase.
 2. Wire `love.update` — auto-advance when `accumulator ≥ stepInterval`
 3. Resolve active rules once in `love.load`; pass to `computeNext` / `step` / playback
 
-**Checkpoint:** Keyboard-only smoke test (temporary keys in `main.lua` or love.conf) — play/pause/step advances generations; preview dots update while paused.
+**Checkpoint (M3-A, superseded by Phase 0):** play/pause/step advances generations; idle next-state markers while paused.
 
 ### Milestone 3-B — Status bar controls + docs ✓
 1. Add play / pause / step buttons to `src/ui/statusbar.lua`
@@ -211,13 +210,13 @@ New module: `src/userdata.lua`
 
 #### Recommended implementation order
 
-**Do not parallelize Phase 0 and Phase 1 on the same branch** — both touch `main.lua`, `renderer.lua`, and playback timing.
+Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. **Start Phase 1 next.**
 
 | Step | Phase | Rationale |
 |------|-------|-----------|
-| 1 | **1a — Fullscreen** | F11 / Alt+Enter only; ~30 min, ships immediately, no architectural debt |
-| 2 | **0 — Step animation** | Changes step commit contract; nail before UI shell and board input |
-| 3 | **1 — UI shell + `session.lua`** | Pane framework, clickable chips; centralize state before editors |
+| 1 | **1a — Fullscreen** ✓ | F11 / Alt+Enter; shipped on `main` |
+| 2 | **0 — Step animation** ✓ | Square preview→commit, idle markers, 3D tiles; PR #1 |
+| 3 | **1 — UI shell + `session.lua`** | Pane framework, clickable chips; **next** |
 | 4 | **2 — Rule + theme pickers** | Apply-only first; validates pane UX without disk I/O |
 | 5 | **3a — `userdata.lua`** | Persistence API + catalog merge + unit tests |
 | 6 | **3b — Save UI** | Save / Delete on rule + theme panes |
@@ -229,7 +228,7 @@ New module: `src/userdata.lua`
 
 | Release | Contents |
 |---------|----------|
-| v1.1 | Fullscreen + Phase 0 animation |
+| v1.1 | Fullscreen (1a) + Phase 0 animation (square preview→commit, 3D tiles) — **ready to tag** |
 | v1.2 | Phase 1 shell + Phase 2 pickers (Apply only) |
 | v1.3 | Phase 3 persistence + Phase 4a pattern picker |
 | v1.4 | Phase 4b board drawing + Phase 5 grid settings |
@@ -238,11 +237,11 @@ New module: `src/userdata.lua`
 
 ---
 
-### Phase 0 — Generation step animation (parallel polish)
+### Phase 0 — Generation step animation ✓
 
-Can ship before UI phases — no pane/status-bar chip work required.
+Shipped on `main` (PR #1). No further Phase 0 work unless explicitly requested.
 
-#### Problem today
+#### Problem (pre-Phase 0)
 
 `src/renderer.lua` draws **current** tiles and **preview dots** for cells where `current ~= next` at the same time. `src/playback.lua` calls `grid.step` immediately, swapping buffers with no visual transition.
 
@@ -601,7 +600,7 @@ return {
 - **Play**: set `running = true`; `love.update` advances when accumulator ≥ `stepInterval`.
 - **Pause**: set `running = false`.
 - **Step forward**: single generation regardless of `running` — delegates to `grid.step(world, rules)` (v1.0: immediate; **Phase 0**: deferred until animation completes).
-- While paused, board shows current generation only; morph runs on step/play (**Phase 0** ✓).
+- While idle/paused, board shows **current** plus tiny square next-state markers; morph runs on step/play (**Phase 0** ✓).
 - History push on forward step — **deferred** to Future history stack.
 
 ### Step backward (future — history stack)
@@ -689,7 +688,7 @@ return {
 ### `src/renderer.lua`
 - Accept active theme + size config + layout (board area excludes status bar).
 - Compute board offset: centered in viewport **above** status bar.
-- Draw filled cells, preview dots, grid lines (see M1 behavior).
+- Draw extruded alive tiles, idle next-state square markers, step morph squares, grid lines.
 
 ### `main.lua`
 - `love.load`: world, theme, rules, pattern, initial `computeNext`
@@ -726,10 +725,10 @@ return {
 | M2-A | Tests green; `activeRule = "ant_colony"` changes survival (e.g. 4 neighbors) |
 | M2-B | `defaultPattern` loads from `patterns/`; `seedGlider` removed |
 | M2-C | Status bar shows rulestring, size, theme, generation |
-| M3-A | Generations advance on timer / step; preview dots while paused |
+| M3-A | Generations advance on timer / step; idle next-state markers while paused |
 | M3-B | Bar buttons + keys work; README accurate |
-| Phase 0 ✓ | Circle grow/shrink morph per step; paused board shows current gen only; tests green |
-| Phase 1 | Panes open/close; F11 fullscreen; placeholder panes OK |
+| Phase 0 ✓ | Square preview→commit morph; idle next-state markers; pseudo-3D alive tiles; tests green |
+| Phase 1 | Panes open/close; clickable chips; Settings button (fullscreen already shipped) |
 | Phase 2 | Switch rules/themes via panes without config edit |
 | Phase 3 | Custom theme persists across relaunch |
 | Phase 4 | Draw pattern, save, reload from list |

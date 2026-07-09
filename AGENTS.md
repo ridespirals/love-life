@@ -3,8 +3,17 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** v1.1 in progress (Phase 0 step animation ✓); Phase 1 settings UI shell next.
+- **Current phase:** Phase 0 ✓ on `main`; **Phase 1** (settings UI shell) is next. Optional: tag **v1.1.0** (fullscreen + step animation) before starting Phase 1.
 - **Active branch:** `main`
+- **Last merge:** PR #1 `square-step-animation` — square preview→commit morph, idle next-state markers, pseudo-3D alive tiles.
+
+## Handoff (start here after restart)
+- **Run:** `lua tests/run.lua` (8 specs) · `love .` (visual smoke)
+- **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
+- **Config knobs:** `src/config.lua` — `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`, `tileSize` (24).
+- **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
+- **Phase 1 scope:** `src/ui/pane.lua`, clickable status-bar chips, Settings button, `session.lua` draft state; fullscreen (F11/Alt+Enter) already done. See PLAN.md Phase 1 section.
+- **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.
 
 ## Execution Order
 Complete phases in order; each leaves the app runnable and tests green.
@@ -25,7 +34,7 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **Phase 4** | Pattern picker + board drawing |
 | **Phase 5** | Grid settings (auto vs forced, letterbox) |
 
-Phase 0 and Phase 1 should **not** be parallelized on one branch (shared `main.lua` / renderer / playback). Recommended sequence: **1a fullscreen → Phase 0 → Phase 1 → Phases 2–5** — see PLAN.md for release slices.
+Phase 0 ✓. **Next:** Phase 1 only (UI shell). Phases 2–5 build on Phase 1. See PLAN.md for release slices.
 
 See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 
@@ -122,7 +131,7 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
 - **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`; **Phase 0+** `step_animation_spec`; **Phase 3+** `userdata_spec`.
-- **Covered modules:** `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/ui/statusbar.lua` (plus post-1.0 modules as phases land).
+- **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 
 ## Working Agreement For This Repo

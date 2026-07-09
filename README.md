@@ -28,8 +28,8 @@ Pre-built downloads are published on [GitHub Releases](https://github.com/ridesp
 **Maintainers:** after merging to `main`, tag and push to trigger the release workflow:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 CI runs tests, builds packages via [`.github/workflows/release.yml`](.github/workflows/release.yml), and publishes assets with [action-gh-release](https://github.com/softprops/action-gh-release).
@@ -80,7 +80,7 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.0** — first tagged release with `.love` and platform packages via GitHub Actions.
 
-**v1.1 (in progress)** — square preview → commit step animation, idle next-state markers, pseudo-3D alive tiles.
+**v1.1 (ready to tag)** — square preview→commit step animation, idle next-state markers, pseudo-3D alive tiles; fullscreen (F11 / Alt+Enter).
 
 **Next:** Phase 1 settings UI shell — see [`PLAN.md`](PLAN.md).
 
