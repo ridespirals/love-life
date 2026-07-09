@@ -4,12 +4,21 @@
 
 Cellular Automata in Lua LÖVE
 
+> **Branch `moonscript`:** experimental MoonScript conversion — see [`MOONSCRIPT_EXPERIMENT.md`](MOONSCRIPT_EXPERIMENT.md). Run `bin/check` / `bin/run` (compile + test/play); requires `luarocks install moonscript`. Not on `main`.
+
 ## Run
 
 From the repo root:
 
 ```bash
 love .
+```
+
+On the **`moonscript`** branch, compile MoonScript sources first:
+
+```bash
+bin/run          # compile + launch
+bin/check        # compile + unit tests
 ```
 
 Requires [LÖVE 11.x](https://love2d.org/).
@@ -43,6 +52,8 @@ Pure Lua tests for simulation logic (no LÖVE required):
 ```bash
 lua tests/run.lua
 ```
+
+On **`moonscript`**, `bin/check` compiles `.moon` → `.lua` then runs the same suite (`luarocks install moonscript` once).
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 

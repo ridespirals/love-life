@@ -1,0 +1,17 @@
+love.conf = (t) ->
+  rows = 40
+  cols = 60
+  tileSize = 24
+  statusBarHeight = 28
+  margin = 40
+  boardWidth = cols * tileSize
+  boardHeight = rows * tileSize
+  t.window.title = "Love Life"
+  t.window.width = boardWidth + margin * 2
+  t.window.height = boardHeight + statusBarHeight + margin * 2
+  t.window.resizable = true
+  t.window.minwidth = 320
+  t.window.minheight = 240
+  t.window.vsync = 1
+  t.modules.joystick = false
+  t.modules.physics = false

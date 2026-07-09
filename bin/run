@@ -1,3 +1,5 @@
 #!/bin/sh
 # Launch the game. Bare `run` works inside this repo via direnv (see .envrc).
+set -e
+"$(dirname "$0")/compile"
 exec love .

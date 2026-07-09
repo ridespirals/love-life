@@ -7,3 +7,10 @@
 # CI build dirs
 staging/
 release/
+
+# MoonScript compile output (source of truth is *.moon)
+/main.lua
+/conf.lua
+/src/**/*.lua
+/tests/**/*.lua
+!patterns/*.lua

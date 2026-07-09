@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, moonscript]
   pull_request:
 
 jobs:
@@ -15,5 +15,11 @@ jobs:
         with:
           luaVersion: "5.4"
 
-      - name: Run unit tests
-        run: lua tests/run.lua
+      - name: Install luarocks
+        run: sudo apt-get update && sudo apt-get install -y luarocks
+
+      - name: Install MoonScript
+        run: luarocks install moonscript
+
+      - name: Compile and run unit tests
+        run: bin/check

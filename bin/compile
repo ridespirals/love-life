@@ -1,0 +1,9 @@
+#!/bin/sh
+# Compile MoonScript sources to Lua (generated .lua is gitignored).
+set -e
+export PATH="${HOME}/.luarocks/bin:${PATH}"
+ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+moonc main.moon conf.moon
+moonc src
+moonc tests
