@@ -1,4 +1,5 @@
 local stepAnimation = require("src.step_animation")
+local themes = require("src.themes")
 
 local M = {}
 
@@ -82,7 +83,7 @@ local function drawExtrudedTile(x, y, tileSize, theme, alive, depth)
   end
 
   local faceSize = tileSize - depth
-  local shadow = lerpColor(face, { 0, 0, 0 }, alive and 0.35 or 0.2)
+  local shadow = themes.extrusionShadow(theme, face, alive)
   local highlight = lerpColor(face, { 1, 1, 1 }, alive and 0.18 or 0.1)
 
   setColor(shadow)

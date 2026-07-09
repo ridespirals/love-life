@@ -1,3 +1,5 @@
+local themes = require("src.themes")
+
 local M = {}
 
 local PANE_PAD_X = 12
@@ -81,7 +83,7 @@ local function drawExtrudedPanel(x, y, w, h, theme, config)
 
   local faceW = w - depth
   local faceH = h - depth
-  local shadow = lerpColor(face, { 0, 0, 0 }, 0.2)
+  local shadow = themes.extrusionShadow(theme, face, false)
   local highlight = lerpColor(face, { 1, 1, 1 }, 0.1)
 
   setColor(shadow, 0.98)

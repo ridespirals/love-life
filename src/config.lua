@@ -21,6 +21,9 @@ local config = {
   previewDotMinPx = 4,
   tileDepthAlivePx = 3,
   tileDepthDeadPx = 0,
+  -- Temporary theme review harness (vim import batch). Toggle with `c`; step with `[` / `]`.
+  themeReviewAutoCycle = false,
+  themeReviewCycleSec = 3,
 }
 
 return config
