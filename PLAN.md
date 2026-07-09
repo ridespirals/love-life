@@ -2,9 +2,9 @@
 
 ## Plan Status
 - **Branch:** `main`
-- **Version:** v1.1 ready to tag (Phase 0 ✓ + 1a fullscreen); Phase 1 not started
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, **Phase 0** (square preview→commit, idle markers, pseudo-3D tiles)
-- **Next:** Phase 1 settings UI shell → Phases 2–5
+- **Version:** v1.1.0 tagged; Phase 1 ✓; Phase 2 not started
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, **Phase 0**, **Phase 1** (UI shell)
+- **Next:** Phase 2 rule/theme pickers → Phases 3–5
 - Complete phases in order; each phase should leave the app runnable and tests green.
 
 ## Goal
@@ -34,7 +34,7 @@ flowchart TD
   M3B[M3-B Controls + README]
   M3C[M3-C RLE import]
   P0[Phase 0 Step animation ✓]
-  P1[Phase 1 UI shell]
+  P1[Phase 1 UI shell ✓]
   P2[Phase 2 Rule/Theme pickers]
   P3[Phase 3 Userspace save/load]
   P4[Phase 4 Pattern picker + drawing]
@@ -157,7 +157,8 @@ flowchart TB
 **Right:** existing Play / Pause / Step / Restart + new **Settings** button (grid, tile size, auto-fit toggle, fullscreen hint).
 
 **Pane behavior:**
-- Docked **above** the status bar, grows upward into the viewport (reduces board draw area while open).
+- Docked above the opener chip or button (left edges align; right-align on overflow).
+- Full-window dim except the pane and active opener, which stay bright.
 - One pane open at a time; clicking the same chip or `Esc` closes it.
 - Theme-driven colors; reuse `src/ui/statusbar.lua` color helpers.
 
@@ -210,14 +211,14 @@ New module: `src/userdata.lua`
 
 #### Recommended implementation order
 
-Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. **Start Phase 1 next.**
+Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. **Start Phase 2 next.**
 
 | Step | Phase | Rationale |
 |------|-------|-----------|
 | 1 | **1a — Fullscreen** ✓ | F11 / Alt+Enter; shipped on `main` |
 | 2 | **0 — Step animation** ✓ | Square preview→commit, idle markers, 3D tiles; PR #1 |
-| 3 | **1 — UI shell + `session.lua`** | Pane framework, clickable chips; **next** |
-| 4 | **2 — Rule + theme pickers** | Apply-only first; validates pane UX without disk I/O |
+| 3 | **1 — UI shell + `session.lua`** ✓ | Pane framework, clickable chips; placeholder panes |
+| 4 | **2 — Rule + theme pickers** | Apply-only first; validates pane UX without disk I/O; **next** |
 | 5 | **3a — `userdata.lua`** | Persistence API + catalog merge + unit tests |
 | 6 | **3b — Save UI** | Save / Delete on rule + theme panes |
 | 7 | **4a — Pattern picker** | Catalog list + Load (no drawing yet) |
@@ -272,17 +273,18 @@ Early iterations: static preview dots, circle morph, two-phase circle morph, mul
 
 ---
 
-### Phase 1 — UI shell + fullscreen (foundation)
+### Phase 1 — UI shell + fullscreen ✓
 
 **Delivers:** pane framework, clickable status bar regions, Settings button, fullscreen keys.
 
-| File | Work |
+| File | Role |
 |------|------|
-| `src/ui/pane.lua` | Pane manager: open/close, draw, hit-test, height |
-| `src/ui/statusbar.lua` | Stat chip hit regions; Settings button; delegate pane draw |
-| `main.lua` | Input routing; F11 + Alt+Enter fullscreen; pass `paneHeight` to renderer |
-| `src/renderer.lua` | Accept optional `paneHeight` to shrink viewport |
-| Docs | README controls |
+| `src/ui/pane.lua` | Pane manager: open/close/toggle, draw, hit-test, height |
+| `src/ui/statusbar.lua` | Clickable stat chips; Settings button |
+| `src/session.lua` | Draft/applied state scaffold for Phases 2–5 |
+| `main.lua` | Input routing; `Esc` closes pane |
+| `src/renderer.lua` | Board layout unchanged when pane open |
+| `tests/pane_spec.lua` | Pane open/close/toggle and hit-test |
 
 #### Fullscreen toggle
 
@@ -316,7 +318,7 @@ Use `"desktop"` fullscreen mode (borderless desktop resolution; works well with 
 
 No `conf.lua` change required — `resizable = true` already set.
 
-**Checkpoint:** panes open/close; fullscreen works; no functional editors yet (placeholder panes OK).
+**Checkpoint:** ✓ Docked pane + dim spotlight on opener; chips/Settings/×/`Esc` open and close; playback keys blocked while open.
 
 ---
 
@@ -504,7 +506,7 @@ The items below remain tracked for history; implementation is covered by Phases 
 | `src/userdata.lua` | planned | Phase 3 ✓ |
 | `tests/userdata_spec.lua` | planned | Phase 3 ✓ |
 | `src/input/board.lua` | planned | Phase 4 ✓ |
-| `src/session.lua` | optional | Phase 2+ draft/save session state |
+| `src/session.lua` | exists | Phase 1 ✓ draft/applied scaffold |
 | `.github/workflows/test.yml` | exists | CI — Lua 5.4, `lua tests/run.lua` on push/PR |
 | `.github/workflows/release.yml` | exists | v1.0 — tag-triggered build + GitHub Release |
 
@@ -728,7 +730,7 @@ return {
 | M3-A | Generations advance on timer / step; idle next-state markers while paused |
 | M3-B | Bar buttons + keys work; README accurate |
 | Phase 0 ✓ | Square preview→commit morph; idle next-state markers; pseudo-3D alive tiles; tests green |
-| Phase 1 | Panes open/close; clickable chips; Settings button (fullscreen already shipped) |
+| Phase 1 ✓ | Panes open/close; clickable chips; Settings button |
 | Phase 2 | Switch rules/themes via panes without config edit |
 | Phase 3 | Custom theme persists across relaunch |
 | Phase 4 | Draw pattern, save, reload from list |
@@ -740,6 +742,7 @@ return {
 - Status bar text scaling: long strings can clip on small windows; decide whether to truncate, reduce font size, or wrap.
 - Playback timer semantics: fast mode already changes `stepInterval` at runtime via `playback.setStepInterval` while held; decide if other runtime interval changes should reset accumulator.
 - Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
+- **LÖVE 12 (when released):** Revisit `Font:setBold()` for pane titles (11.x uses larger font only); evaluate CI/release bump from 11.5.
 
 ### M1 visual checklist (regression)
 - Expected rows/cols, aligned grid lines, theme colors; step morph on birth/death cells only (Phase 0)

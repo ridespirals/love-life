@@ -3,16 +3,17 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Phase 0 ✓ on `main`; **Phase 1** (settings UI shell) is next. Optional: tag **v1.1.0** (fullscreen + step animation) before starting Phase 1.
+- **Current phase:** Phase 1 ✓ on `main`; **Phase 2** (rule/theme pickers) is next. v1.1.0 tagged (fullscreen + step animation).
 - **Active branch:** `main`
 - **Last merge:** PR #1 `square-step-animation` — square preview→commit morph, idle next-state markers, pseudo-3D alive tiles.
 
 ## Handoff (start here after restart)
-- **Run:** `lua tests/run.lua` (8 specs) · `love .` (visual smoke)
+- **Run:** `lua tests/run.lua` (9 specs) · `love .` (visual smoke)
+- **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
-- **Config knobs:** `src/config.lua` — `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`, `tileSize` (24).
+- **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
-- **Phase 1 scope:** `src/ui/pane.lua`, clickable status-bar chips, Settings button, `session.lua` draft state; fullscreen (F11/Alt+Enter) already done. See PLAN.md Phase 1 section.
+- **Phase 2 scope:** Rule and theme pickers with Apply in `src/ui/panes/*.lua`. See PLAN.md Phase 2 section.
 - **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.
 
 ## Execution Order
@@ -28,13 +29,13 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **M3-B** ✓ | Status bar controls, README |
 | **M3-C** ✓ | RLE parser + `.rle` pattern resolution |
 | **Phase 0** ✓ | Generation step animation (square preview → commit morph) |
-| **Phase 1** | UI shell (pane manager, clickable chips, Settings button) |
+| **Phase 1** ✓ | UI shell (pane manager, clickable chips, Settings button) |
 | **Phase 2** | Rule and theme pickers (docked panes) |
 | **Phase 3** | Userspace save/load (`src/userdata.lua`) |
 | **Phase 4** | Pattern picker + board drawing |
 | **Phase 5** | Grid settings (auto vs forced, letterbox) |
 
-Phase 0 ✓. **Next:** Phase 1 only (UI shell). Phases 2–5 build on Phase 1. See PLAN.md for release slices.
+Phase 0 ✓ · Phase 1 ✓. **Next:** Phase 2 (rule/theme pickers with Apply). Phases 3–5 build on Phase 2. See PLAN.md for release slices.
 
 See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 
@@ -114,7 +115,8 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - `src/patterns/rle.lua`: RLE parser (`x/y/rule` header, run counts, `$`, `!`).
 - `src/renderer.lua`: theme-driven board render (viewport above status bar).
 - `src/ui/statusbar.lua`: bottom stats + playback controls (**M2-C** display, **M3-B** controls; **Phase 1+** clickable chips).
-- `src/ui/pane.lua`: pane manager (**Phase 1**).
+- `src/ui/pane.lua`: pane manager (**Phase 1** ✓).
+- `src/session.lua`: draft/applied session state (**Phase 1** ✓).
 - `src/ui/panes/*.lua`: rule, theme, pattern, settings panes (**Phases 2–5**).
 - `src/step_animation.lua`: per-step morph timer; defers `grid.step` until complete (**Phase 0**).
 - `src/userdata.lua`: userspace save/load (**Phase 3**).
@@ -130,8 +132,8 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`; **Phase 0+** `step_animation_spec`; **Phase 3+** `userdata_spec`.
-- **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation` (plus post-1.0 modules as phases land).
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`; **Phase 3+** `userdata_spec`.
+- **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 
 ## Working Agreement For This Repo

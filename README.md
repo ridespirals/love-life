@@ -58,6 +58,10 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
 | `stepInterval` | Default auto-step interval (`0.10`) |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
+| `paneWidth` | Minimum docked pane width (pixels; default `360`; grows with content) |
+| `paneHeight` | Minimum docked pane height when open (pixels; default `120`; grows with content) |
+| `paneBackdropAlpha` | Dim overlay strength over the full window when a pane is open (0–1; default `0.55`) |
+| `paneScreenMargin` | Minimum inset from window edges when positioning panes (default `8`) |
 | `stepAnimEnabled` | Enable step morph animation (`true`) |
 | `stepAnimPreviewSec` | Preview-marker phase duration (seconds; default `0.08`) |
 | `stepAnimCommitSec` | Square grow/shrink commit phase (seconds; default `0.12`) |
@@ -80,29 +84,35 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.0** — first tagged release with `.love` and platform packages via GitHub Actions.
 
-**v1.1 (ready to tag)** — square preview→commit step animation, idle next-state markers, pseudo-3D alive tiles; fullscreen (F11 / Alt+Enter).
+**v1.1.0** — square preview→commit step animation, idle next-state markers, pseudo-3D alive tiles; fullscreen (F11 / Alt+Enter).
 
-**Next:** Phase 1 settings UI shell — see [`PLAN.md`](PLAN.md).
+**v1.2 (in progress)** — Phase 1 settings UI shell (clickable chips, docked panes).
+
+**Next:** Phase 2 rule/theme pickers — see [`PLAN.md`](PLAN.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
 ## Status bar
 
-**Display:** `Rule`, `Size` (`rows×cols`), `Theme`, `Gen` (generation counter).
+**Clickable chips (left):** `Rule`, `Theme`, `Pattern`, `Size` — open a pane docked above the chip; the rest of the screen dims. `Gen` is read-only.
 
-**Buttons:** `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held.
+**Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play).
+
+While a pane is open, playback keyboard shortcuts are disabled; press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
 
 ## Controls
 
-- `space`: toggle play/pause
+- `space`: toggle play/pause (disabled while a pane is open)
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation
 - `r`: restart (reload `defaultPattern`, pause playback)
-- Hold `f`: temporary fast mode (`Play +`, uses `0.05` while held)
+- `Esc` or click outside the pane: close open settings pane
+- Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)
 - `F11` or `Alt+Enter`: toggle fullscreen (restarts simulation, same as window resize)
 - `q`: quit app
-- Status bar buttons: `Play`, `Pause`, `Step`, `Restart` (mouse click)
+- Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)
+- Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
 
 Resizing the window or toggling fullscreen recomputes grid dimensions to fill the viewport and restarts the simulation from `defaultPattern` (generation resets to 0, playback pauses).
 
