@@ -96,7 +96,7 @@ Deferred: history stack (step backward), RLE export, import UI, **pattern groupi
 
 **Clickable chips (left):** `Rule`, `Theme`, `Pattern`, `Size` — open a pane docked above the chip; the rest of the screen dims. `Gen` is read-only.
 
-**Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held.
+**Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play).
 
 While a pane is open, playback keyboard shortcuts are disabled; press `Esc` or click × to close.
 
@@ -108,7 +108,7 @@ While a pane is open, playback keyboard shortcuts are disabled; press `Esc` or c
 - `n` or `Right Arrow`: step forward one generation
 - `r`: restart (reload `defaultPattern`, pause playback)
 - `Esc`: close open settings pane
-- Hold `f`: temporary fast mode (`Play +`, uses `0.05` while held)
+- Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)
 - `F11` or `Alt+Enter`: toggle fullscreen (restarts simulation, same as window resize)
 - `q`: quit app
 - Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)

@@ -18,6 +18,8 @@ local playbackState
 local animState
 local generation = 0
 local fastMode = false
+local fastKeyboard = false
+local fastPlayMouse = false
 local paneState
 local sessionState
 local FAST_STEP_INTERVAL = 0.05
@@ -67,8 +69,8 @@ local function applyAnimSpeed()
   stepAnimation.setSpeedScale(animState, scale)
 end
 
-local function setFastMode(enabled)
-  fastMode = enabled
+local function syncFastMode()
+  fastMode = fastKeyboard or fastPlayMouse
   applyStepInterval()
   applyAnimSpeed()
 end
@@ -193,7 +195,8 @@ function love.keypressed(key)
   elseif key == "r" then
     restartWorld()
   elseif key == "f" then
-    setFastMode(true)
+    fastKeyboard = true
+    syncFastMode()
   elseif key == "f11" then
     toggleFullscreen()
   elseif key == "return" and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
@@ -205,7 +208,8 @@ end
 
 function love.keyreleased(key)
   if key == "f" then
-    setFastMode(false)
+    fastKeyboard = false
+    syncFastMode()
   end
 end
 
@@ -239,11 +243,24 @@ function love.mousepressed(x, y, button)
     pane.toggle(paneState, "settings", statusbar.getButton(config, fastMode, "settings"))
   elseif hit == "play" then
     playback.play(playbackState)
+    fastPlayMouse = true
+    syncFastMode()
   elseif hit == "pause" then
     playback.pause(playbackState)
   elseif hit == "step" then
     stepForward()
   elseif hit == "restart" then
     restartWorld()
+  end
+end
+
+function love.mousereleased(x, y, button)
+  if button ~= 1 then
+    return
+  end
+
+  if fastPlayMouse then
+    fastPlayMouse = false
+    syncFastMode()
   end
 end
