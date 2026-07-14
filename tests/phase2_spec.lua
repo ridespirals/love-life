@@ -83,3 +83,35 @@ test("theme_pane measure wraps the full theme catalog under a bounded width", fu
   assert.isTrue(w <= 520)
   assert.isTrue(h > 0)
 end)
+
+test("theme_pane preset click returns apply_theme", function()
+  local state = session.create({ themeId = "classic" })
+  session.resetThemeDraft(state, themes.get("classic"), themes)
+  local rect = { x = 0, y = 0, w = 480, h = 400 }
+  local contentY = 10
+  local action = theme_pane.mousepressed(rect, contentY, state, 20, contentY + 5)
+  assert.equal(action, "apply_theme")
+  assert.equal(state.draftThemePresetId, themes.list()[1])
+end)
+
+test("theme_pane hex edit applies only when draft is valid", function()
+  local state = session.create({ themeId = "classic" })
+  session.resetThemeDraft(state, themes.get("classic"), themes)
+  state.draftThemeFocus = "alive"
+  state.draftThemeColors.alive = "#"
+  assert.equal(theme_pane.textinput(state, "f"), nil)
+  assert.equal(state.draftThemeColors.alive, "#f")
+
+  state.draftThemeColors.alive = "#fffff"
+  assert.equal(theme_pane.textinput(state, "f"), "apply_theme")
+  assert.equal(state.draftThemeColors.alive, "#ffffff")
+end)
+
+test("theme_pane backspace can re-apply when draft stays valid", function()
+  local state = session.create({ themeId = "classic" })
+  session.resetThemeDraft(state, themes.get("classic"), themes)
+  state.draftThemeFocus = "accent"
+  state.draftThemeColors.accent = "x"
+  assert.equal(theme_pane.keypressed(state, "backspace"), "apply_theme")
+  assert.equal(state.draftThemeColors.accent, "")
+end)

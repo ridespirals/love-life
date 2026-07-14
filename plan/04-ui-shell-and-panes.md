@@ -9,7 +9,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Related: [`03-playback.
 1. **M2-C** — status bar, display only (rulestring, size, theme, generation). ✓ shipped.
 2. **M3-B** — status bar play/pause/step/restart controls + README. ✓ shipped.
 3. **Phase 1** — pane manager, clickable chips, Settings button, fullscreen. ✓ shipped.
-4. **Phase 2** — rule and theme pickers on the pane framework (Apply only, no persistence yet). ✓ shipped.
+4. **Phase 2** — rule and theme pickers on the pane framework (rule Apply; theme auto-apply; no persistence yet). ✓ shipped.
 5. **Phase 3+** — Save/Delete UI on these same panes (see [`05-persistence.md`](05-persistence.md)).
 
 ---
@@ -59,7 +59,7 @@ flowchart TB
 | Chip | Opens |
 |------|--------|
 | `Rule: B3/S23` | Rule pane — preset list + custom `Bx/Sy` field + Apply / Save |
-| `Theme: solarized` | Theme pane — preset list + hex fields + live swatches + Apply / Save |
+| `Theme: solarized` | Theme pane — preset list + hex fields + live swatches (auto-apply) + Save (Phase 3) |
 | `Pattern: glider` | Pattern pane — catalog list + New / Edit / Save (Phase 4, see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md)) |
 | `Size: 40x60` | Settings pane — grid section (Phase 5, see [`07-grid-settings.md`](07-grid-settings.md)) |
 | `Gen: N` | Read-only (no pane) |
@@ -74,26 +74,26 @@ flowchart TB
 
 ### Draft vs saved state
 
-Session object in `src/session.lua`:
+Session object in `src/session.lua` (shipped field names):
 
 | Field | Purpose |
 |-------|---------|
-| `draftRule` | Unsaved custom rulestring / preset selection |
-| `draftTheme` | Unsaved color edits |
-| `draftPattern` | Cells drawn or edited, not yet saved (Phase 4) |
-| `gridMode` | `"auto"` (default) or `"forced"` (Phase 5) |
-| `forcedTileSize`, `forcedRows`, `forcedCols` | Only used when `gridMode == "forced"` (Phase 5) |
+| `appliedRuleId`, `appliedThemeId`, `appliedPatternId` | Last applied catalog ids (Theme chip label uses live `theme.name`, kept in sync with `appliedThemeId`) |
+| `draftRulePresetId`, `draftRuleString`, `draftRuleFocus` | In-progress rule edits before Apply |
+| `draftThemePresetId`, `draftThemeColors`, `draftThemeFocus` | In-progress theme edits (auto-applied when valid) |
+| `draftPatternId` | Scaffold for Phase 4 |
+| `gridMode` | `"auto"` (default) or `"forced"` (Phase 5) — forced size fields not yet on session |
 
-- **Apply** — use draft in simulation immediately. **Per-pane playback policy** (preserve running sim when possible):
+- **Commit to simulation** (asymmetric by pane):
 
-| Pane | On Apply |
-|------|----------|
-| Theme | Live color swap; **playback continues** |
-| Rule | **Pause**; cancel in-flight step animation; swap rule; `grid.computeNext` (board cells preserved) |
-| Pattern (Phase 4) | **Pause**; reload pattern onto board; reset generation |
-| Grid settings (Phase 5) | **Pause**; rebuild grid; reload active pattern |
+| Pane | When | Behavior |
+|------|------|----------|
+| Theme | On preset click, or when hex draft becomes valid | Live color swap; **playback continues**; **pane stays open** |
+| Rule | **Apply** button | **Pause**; cancel in-flight step animation; swap rule; `grid.computeNext` (board cells preserved); pane closes |
+| Pattern (Phase 4) | Apply / Load | **Pause**; reload pattern onto board; reset generation |
+| Grid settings (Phase 5) | Apply | **Pause**; rebuild grid; reload active pattern |
 
-Opening a pane never pauses playback. Panes block playback **keyboard** shortcuts only — not the `love.update` timer (see [`03-playback.md`](03-playback.md)).
+Opening a pane never pauses playback. Panes block playback **keyboard** shortcuts only — not the `love.update` timer (see [`03-playback.md`](03-playback.md)). Closing a pane (Esc / × / outside click) does **not** discard mid-edit drafts until the pane is reopened (drafts then reset from the applied state via `syncDraftForPane`). Explicit **Discard** is Phase 3.
 - **Save** — write to userspace; assign stable `id` (slug from name). See [`05-persistence.md`](05-persistence.md).
 - **Discard** — revert draft to last applied/saved state.
 
@@ -166,20 +166,21 @@ No `conf.lua` change required — `resizable = true` already set.
 | File | Work |
 |------|------|
 | `src/ui/panes/rule_pane.lua` | Preset buttons, `Bx/Sy` text input, Apply ✓ |
-| `src/ui/panes/theme_pane.lua` | Preset buttons, hex fields + live swatches, Apply ✓ |
+| `src/ui/panes/theme_pane.lua` | Preset buttons, hex fields + live swatches; **auto-apply** (no Apply button) ✓ |
 | `src/ui/pane_widgets.lua` | Shared button/field/swatch draw + `layoutGrid` ✓ |
-| `main.lua` | Swap `activeRule` / `theme` on Apply; `grid.computeNext` ✓ |
+| `main.lua` | Rule Apply swaps `activeRule` + `computeNext`; theme auto-apply live-swaps `theme` (pane stays open) ✓ |
 
 **Checkpoint:** switch conway ↔ ant_colony and themes (see [`01-simulation-and-patterns.md`](01-simulation-and-patterns.md), [`02-rendering-and-animation.md`](02-rendering-and-animation.md)) without editing config file. ✓
 
 **Post-checkpoint fixes (after theme catalog grew to 21 presets):**
-- Theme pane's editable fields initially omitted `accent` — added as a 5th (optional) field; blank clears accent on Apply.
+- Theme pane's editable fields initially omitted `accent` — added as a 5th (optional) field; blank clears accent on apply.
 - Preset buttons in a single row overflowed with 21 themes — `pane_widgets.layoutGrid` wraps preset rows at a bounded width.
 - Side-by-side label/field rows had vertical misalignment — labels now center on the input row.
-- **Draft color preview:** swatch column beside each hex field updates live on preset click or valid hex entry (no Apply needed); `themes.colorFromHex` parses draft values for swatch fill.
+- **Draft color preview:** swatch column beside each hex field updates live on preset click or valid hex entry; `themes.colorFromHex` parses draft values for swatch fill.
+- **Theme Apply button removed:** preset click and valid hex/backspace edits auto-apply; pane stays open for browsing.
 - Regression coverage in `tests/phase2_spec.lua` and `tests/themes_spec.lua`.
 
-**Watch for (Phase 3):** `rule_pane.lua` still lays out preset buttons in a single unwrapped row (fine for 2 built-ins). If user-saved rules grow the catalog, switch it to `pane_widgets.layoutGrid` the same way `theme_pane.lua` does.
+**Watch for (Phase 3):** `rule_pane.lua` still lays out preset buttons in a single unwrapped row (fine for 2 built-ins). If user-saved rules grow the catalog, switch it to `pane_widgets.layoutGrid` the same way `theme_pane.lua` does. Theme Save sits beside hex fields (no Apply button); Rule keeps Apply then Save.
 
 ## Design decisions (locked)
 
@@ -241,7 +242,7 @@ No `conf.lua` change required — `resizable = true` already set.
 - [x] **Phase 1** — UI shell (pane manager, clickable chips, Settings button; fullscreen keys done in 1a)
 
 ### Phase 2 ✓
-- [x] **Phase 2** — Rule and theme pickers (docked panes, built-in Apply)
+- [x] **Phase 2** — Rule and theme pickers (rule Apply; theme auto-apply)
 
 ### Superseded by later phases (mark complete when phase ships)
 - [ ] Add click-to-toggle cell state → Phase 4 (see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md))

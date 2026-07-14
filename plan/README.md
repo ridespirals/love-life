@@ -59,7 +59,7 @@ flowchart TD
   M3C[M3-C RLE import]
   P0[Phase 0 Step animation ✓]
   P1[Phase 1 UI shell ✓]
-  P2[Phase 2 Rule/Theme pickers]
+  P2[Phase 2 Rule/Theme pickers ✓]
   P3[Phase 3 Userspace save/load]
   P4[Phase 4 Pattern picker + drawing]
   P5[Phase 5 Grid settings pane]
@@ -86,7 +86,7 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 �
 | 1 | **1a — Fullscreen** ✓ | F11 / Alt+Enter; shipped on `main` |
 | 2 | **0 — Step animation** ✓ | Square preview→commit, idle markers, 3D tiles; PR #1 |
 | 3 | **1 — UI shell + `session.lua`** ✓ | Pane framework, clickable chips; placeholder panes |
-| 4 | **2 — Rule + theme pickers** ✓ | Apply-only first; validates pane UX without disk I/O |
+| 4 | **2 — Rule + theme pickers** ✓ | Rule Apply + theme auto-apply; validates pane UX without disk I/O |
 | 5 | **3a — `userdata.lua`** | Persistence API + catalog merge + unit tests; **next** |
 | 6 | **3b — Save UI** | Save / Delete on rule + theme panes |
 | 7 | **4a — Pattern picker** | Catalog list + Load (no drawing yet) |
@@ -101,7 +101,7 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 �
 | Release | Contents |
 |---------|----------|
 | v1.1 | Fullscreen (1a) + Phase 0 animation (square preview→commit, 3D tiles) — shipped |
-| v1.2 | Phase 1 shell + Phase 2 pickers (Apply only) — shipped |
+| v1.2 | Phase 1 shell + Phase 2 pickers (rule Apply; theme auto-apply) — shipped |
 | v1.3 | Phase 3 persistence + Phase 4a pattern picker |
 | v1.4 | Phase 4b board drawing + Phase 5 grid settings |
 

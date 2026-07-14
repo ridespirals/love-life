@@ -56,10 +56,9 @@ local function applyThemeDraft()
     return
   end
 
-  -- Apply policy: live swap; playback continues (see AGENTS.md).
+  -- Apply policy: live swap; playback continues; pane stays open for browsing.
   theme = nextTheme
   sessionState.appliedThemeId = nextTheme.name
-  pane.close(paneState)
 end
 
 local function togglePane(id, anchor)
@@ -221,7 +220,12 @@ function love.keypressed(key)
   end
 
   if pane.isOpen(paneState) then
-    if pane.keypressed(paneState, sessionState, key) then
+    local paneAction = pane.keypressed(paneState, sessionState, key)
+    if paneAction == "apply_theme" then
+      applyThemeDraft()
+      return
+    end
+    if paneAction then
       return
     end
     if key ~= "q" then
@@ -260,7 +264,10 @@ end
 
 function love.textinput(text)
   if pane.isOpen(paneState) then
-    pane.textinput(paneState, sessionState, text)
+    local action = pane.textinput(paneState, sessionState, text)
+    if action == "apply_theme" then
+      applyThemeDraft()
+    end
   end
 end
 

@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, and `src/themes.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar layout, and theme registry.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec`), and `src/themes.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar/pane hit regions, session drafts, and theme registry.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -57,9 +57,9 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | Key | Purpose |
 |-----|---------|
 | `rows`, `cols`, `tileSize` | Cell pixels (`tileSize`) and starting grid hints; `rows`/`cols` are recomputed at runtime to fill the window (shipped `tileSize`: `24`) |
-| `activeTheme` | Theme preset id from `themes.list()` (default `"classic"`; shipped default may differ) |
+| `activeTheme` | Theme preset id from `themes.list()` (shipped default `"solarized"`) |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
-| `defaultPattern` | Pattern id to load on start (`.lua` first, then `.rle` fallback by same id) |
+| `defaultPattern` | Pattern id to load on start (shipped default `"lifeview"`; `.lua` first, then `.rle` by same id) |
 | `stepInterval` | Default auto-step interval (`0.10`) |
 | `statusBarHeight` | Bottom bar reserve (pixels) |
 | `paneWidth` | Minimum docked pane width (pixels; default `360`; grows with content) |
@@ -94,7 +94,7 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.1.0** — square preview→commit step animation, idle next-state markers, pseudo-3D alive tiles; fullscreen (F11 / Alt+Enter).
 
-**v1.2 (in progress)** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (Apply).
+**v1.2.0** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (rule Apply; theme auto-apply).
 
 **Next:** Phase 3 userspace save/load — see [`plan/05-persistence.md`](plan/05-persistence.md).
 
@@ -110,7 +110,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept).
 
-**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`). A **swatch** beside each field previews the draft color live (preset click or valid 7-char hex); **Apply** commits the theme (live swap while playback continues). Leave `accent` blank to fall back to plain shadow shading.
+**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. A **swatch** beside each field previews the draft color. Leave `accent` blank to fall back to plain shadow shading.
 
 ## Controls
 
@@ -147,7 +147,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. In-game settings UI, pattern editor, and userspace save/load (Phases 1–5 — see [`plan/README.md`](plan/README.md))
+5. In-game settings UI shell + rule/theme pickers (Phases 1–2 ✓); pattern editor and userspace save/load planned (Phases 3–5 — see [`plan/README.md`](plan/README.md))
 6. Video export (deferred)
 
 ### Attribution

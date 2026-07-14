@@ -111,7 +111,7 @@ local function withTitleFont(fn)
 
   local previous = love.graphics.getFont()
   local titleSize = previous:getHeight() + 2
-  -- LÖVE 11.x: no Font:setBold(); revisit when LÖVE 12 ships (see PLAN.md).
+  -- LÖVE 11.x: no Font:setBold(); revisit when LÖVE 12 ships (see plan/04-ui-shell-and-panes.md).
   if not titleFont or titleFont:getHeight() ~= titleSize then
     titleFont = love.graphics.newFont(titleSize)
   end
@@ -356,7 +356,7 @@ function M.textinput(state, session, text)
   if not mod or not mod.textinput then
     return
   end
-  mod.textinput(session, text)
+  return mod.textinput(session, text)
 end
 
 return M

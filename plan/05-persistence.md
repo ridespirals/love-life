@@ -9,8 +9,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on [`04-ui-shel
 ## Development order
 
 1. **3a — `src/userdata.lua`**: persistence API + catalog merge + unit tests.
-2. **3b — Save UI**: Save / Delete buttons on rule + theme panes.
-
+2. **3b — Save UI**: Save / Delete buttons on rule + theme panes (theme has no Apply — Save persists the live-applied draft; rule still Apply then Save).
 ---
 
 ### Phase 3 — Userspace save/load for rules and themes
@@ -36,7 +35,7 @@ All user-created assets live under the LÖVE save directory (shareable, outside 
 <saveDirectory>/
   patterns/<id>.lua      # { id, name, cells = {{col,row}, ...} }
   rules/<id>.lua         # { id, name, rulestring = "B3/S23" }
-  themes/<id>.lua        # { name, alive, dead, grid, background } hex strings
+  themes/<id>.lua        # { name, alive, dead, grid, background, accent? } hex strings
 ```
 
 New module: `src/userdata.lua`
@@ -50,9 +49,9 @@ New module: `src/userdata.lua`
 
 ### Save/Discard semantics
 
-See [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md) "Draft vs saved state" for the full Apply/Save/Discard framework this phase implements:
-- **Save** — write to userspace; assign stable `id` (slug from name).
-- **Discard** — revert draft to last applied/saved state.
+See [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md) "Draft vs saved state" for the full commit/Save/Discard framework this phase implements:
+- **Save** — write the currently applied draft to userspace; assign stable `id` (slug from name). Theme Save persists the live-applied colors (including optional `accent`); no separate Apply step.
+- **Discard** — revert draft fields to last applied/saved state (closing a pane alone does not Discard).
 
 ## Testing strategy for this area
 
