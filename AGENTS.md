@@ -3,9 +3,11 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Phase 2 ✓ on `phase-2-rule-theme` (rebased on `main` with vim themes); **Phase 3** (userspace save/load) is next. v1.1.0 tagged (fullscreen + step animation).
-- **Active branch:** `phase-2-rule-theme`
-- **Last merge:** PR #2 `phase-1-statusbar` (pane manager + chips). `main` also has two direct post-merge commits importing 21 vim-derived themes with `accent` shadows (not yet PR-reviewed); this branch is rebased on top of both.
+- **Current phase:** Phase 2 ✓ merged to `main`; **Phase 3** (userspace save/load) is next. v1.2.0 tagged.
+- **Active branch:** `main`
+- **Last merge:** PR #3 `phase-2-rule-theme` (rule/theme pickers + swatches + `layoutGrid`).
+- **Backlog captured (not started, not sequenced):** camera/viewport, floating toolbar (pan/draw/zoom), controller input layer, reusable button transition fx — see "Backlog: camera, toolbar, controller" below and `plan/08-camera-and-viewport.md`, `plan/09-toolbar-and-drawing-tools.md`, `plan/10-controller-input.md`.
+- A separate `moonscript` experiment branch exists (full logic port to MoonScript, evaluation doc `MOONSCRIPT_EXPERIMENT.md`); it is **not** part of the primary Lua roadmap and should be ignored unless explicitly revisited.
 
 ## Handoff (start here after restart)
 - **Run:** `lua tests/run.lua` (11 specs) · `love .` (visual smoke)
@@ -14,7 +16,7 @@
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
-- **Phase 3 scope:** Userspace save/load in `src/userdata.lua`. See PLAN.md Phase 3 section.
+- **Phase 3 scope:** Userspace save/load in `src/userdata.lua`. See `plan/05-persistence.md`.
 - **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.
 
 ## Execution Order
@@ -35,10 +37,13 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **Phase 3** | Userspace save/load (`src/userdata.lua`) |
 | **Phase 4** | Pattern picker + board drawing |
 | **Phase 5** | Grid settings (auto vs forced, letterbox) |
+| **Phase 6** (backlog) | Camera & viewport — pan/zoom, world ≠ visible area (`src/camera.lua`) |
+| **Phase 7** (backlog) | Floating toolbar — pan tool, draw tool, zoom +/− (`src/ui/toolbar.lua`) |
+| **Phase 8** (backlog) | Controller input layer — unified mouse/keyboard/gamepad actions (`src/input/controller.lua`) |
 
-Phase 0 ✓ · Phase 1 ✓ · Phase 2 ✓. **Next:** Phase 3 (userspace save/load). Phases 4–5 build on Phase 3. See PLAN.md for release slices.
+Phase 0 ✓ · Phase 1 ✓ · Phase 2 ✓. **Next:** Phase 3 (userspace save/load). Phases 4–5 build on Phase 3. Phases 6–8 are backlog items captured for later — not sequenced yet, and camera work (6) may end up pulled earlier since it touches the same coordinate math as Phase 4b/5. See `plan/README.md` for release slices and the full recommended implementation order.
 
-See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
+See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoints, vision diagram, and file-level detail split by application area).
 
 ## Product Direction
 - Build a configurable board of square tiles representing world state.
@@ -56,6 +61,16 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto-fit + pattern restart).
 - Board drawing and editing require paused playback.
 - **Playback continuity:** opening a pane does **not** pause the simulation. Theme **Apply** is a live visual swap while play continues. Rule **Apply** pauses and recomputes next-state preview (cells preserved). Pattern **Apply** (Phase 4) and grid **Apply** (Phase 5) pause and reload the board. Only block playback **keyboard** shortcuts while a pane has focus—not the timer in `love.update`.
+
+## Backlog: camera, floating toolbar, controller input (Phases 6–8, not started)
+- **Camera/viewport (Phase 6):** separate the simulated world from the visible viewport so patterns can grow beyond the window. Adds `src/camera.lua` (world↔screen transforms, pan, zoom). **Hard constraint:** the initial view at load must remain pixel-identical to today's centered zoom=1 board.
+- **Floating toolbar (Phase 7):** new always-visible panel (suggested upper-left), separate from the docked-pane system — never dims the background, not opened via a status bar chip. Two tools plus zoom controls:
+  - **Pan (hand icon):** click-and-drag moves the camera; does not pause playback.
+  - **Draw (pencil icon):** hover + left-click/drag paints cells alive, right-click/drag paints cells dead, tracing every cell the cursor crosses while held. **Selecting this tool pauses the simulation.** The tool button is always available; choosing it is what triggers the pause. Supersedes the originally-planned always-on `src/input/board.lua` click-to-draw from Phase 4.
+  - **Zoom +/−:** steps `camera.zoom` by a configurable amount, anchored on the current view center (not the cursor).
+- **Controller input layer (Phase 8):** deliberately its own phase, per explicit request — mouse/keyboard UI on the status bar and toolbar is comparatively easy and should ship independently. Adds `src/input/controller.lua`, an action-dispatch layer so mouse, keyboard, and gamepad (`love.gamepadpressed`/`love.gamepadaxis`) all drive the same named actions (pan, zoom, play/pause, step, tool select).
+- **Reusable button transition fx (independent, small):** Play/Pause button gets a "growing rectangle + trails" animation on state change. Must be a standalone, config-driven component (`src/ui/button_fx.lua`, shape mirrors `step_animation.lua`'s phase machine) attachable to any button rect — not hard-coded into `statusbar.lua`. Exact visual tuned later.
+- **Open, not decided:** sequencing of Phases 6–8 relative to Phase 3–5; whether Phase 5's forced/letterbox grid mode is still needed once a camera exists; toolbar icon rendering strategy (glyphs/shapes vs. sprite sheet). See `plan/08-camera-and-viewport.md`, `plan/09-toolbar-and-drawing-tools.md`, and `plan/07-grid-settings.md` for detail.
 
 ## Rulestrings
 - Life rulestrings use the form `Bx/Sy`:
@@ -123,10 +138,14 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - `src/ui/panes/*.lua`: rule, theme, pattern, settings panes (**Phases 2–5**).
 - `src/step_animation.lua`: per-step morph timer; defers `grid.step` until complete (**Phase 0**).
 - `src/userdata.lua`: userspace save/load (**Phase 3**).
-- `src/input/board.lua`: screen-to-cell + click drawing (**Phase 4**).
+- `src/input/board.lua`: screen-to-cell + click drawing (**Phase 4**; behavior superseded by Phase 7 Draw tool once that lands).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**; **Phase 0** defers `grid.step` until morph completes).
 - `src/layout.lua`: viewport-to-grid sizing (`computeGridSize`; **Phase 5** adds forced letterbox layout).
 - `src/util.lua`: shared helpers (`wrap`).
+- `src/camera.lua`: world↔screen transforms, pan/zoom state (**Phase 6**, backlog).
+- `src/ui/toolbar.lua`: always-visible floating panel — pan/draw tool buttons, zoom +/− (**Phase 7**, backlog).
+- `src/input/controller.lua`: unified mouse/keyboard/gamepad action dispatch (**Phase 8**, backlog).
+- `src/ui/button_fx.lua`: reusable button transition animation, e.g. Play/Pause growing-rectangle effect (backlog, independent of Phases 6–8).
 - `patterns/`: one file per initial state (`.lua` or `.rle`).
 - `README.md`: usage and scope docs.
 - `tests/`: plain Lua unit tests (`lua tests/run.lua`).
@@ -135,11 +154,11 @@ See `PLAN.md` for checkpoints, vision diagram, and file-level detail.
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `themes_spec`; **Phase 3+** `userdata_spec`.
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `themes_spec`; **Phase 3+** `userdata_spec`; **Phase 6–8 backlog** will add `camera_spec`, `toolbar_spec`, `controller_spec` (mocked input dispatch), and `button_fx_spec`.
 - **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 
 ## Working Agreement For This Repo
 - Keep this `AGENTS.md` updated with active context, constraints, and decisions.
-- Keep `PLAN.md` updated as implementation progresses.
-- Preserve historical intent in `PLAN.md` by marking items complete rather than deleting sections.
+- Keep the `plan/` directory (see [`plan/README.md`](plan/README.md)) updated as implementation progresses.
+- Preserve historical intent in `plan/` docs by marking items complete rather than deleting sections.

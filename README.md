@@ -78,7 +78,7 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 
 **Themes:** 21 built-in presets in `src/themes.lua` — `classic`, `zenburn`, `solarized`, `monokai`, `gruvbox`, `dracula`, `nord`, and others mapped from [vim-colorschemes](https://github.com/flazz/vim-colorschemes). Each defines `alive`, `dead`, `grid`, and an optional vim-syntax `accent` used for colored 3D shadows. Run `lua -e 'for _,n in ipairs(require("src.themes").list()) do print(n) end'` to list ids.
 
-See `PLAN.md` for the full implementation roadmap.
+See [`plan/README.md`](plan/README.md) for the full implementation roadmap, split by application area.
 
 ## Status
 
@@ -96,7 +96,7 @@ See `PLAN.md` for the full implementation roadmap.
 
 **v1.2 (in progress)** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (Apply).
 
-**Next:** Phase 3 userspace save/load — see [`PLAN.md`](PLAN.md).
+**Next:** Phase 3 userspace save/load — see [`plan/05-persistence.md`](plan/05-persistence.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -147,7 +147,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. In-game settings UI, pattern editor, and userspace save/load (Phases 1–5 — see `PLAN.md`)
+5. In-game settings UI, pattern editor, and userspace save/load (Phases 1–5 — see [`plan/README.md`](plan/README.md))
 6. Video export (deferred)
 
 ### Attribution
