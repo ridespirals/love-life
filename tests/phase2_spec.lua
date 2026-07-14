@@ -94,24 +94,21 @@ test("theme_pane preset click returns apply_theme", function()
   assert.equal(state.draftThemePresetId, themes.list()[1])
 end)
 
-test("theme_pane hex edit applies only when draft is valid", function()
+test("theme_pane color field click opens color picker", function()
   local state = session.create({ themeId = "classic" })
   session.resetThemeDraft(state, themes.get("classic"), themes)
-  state.draftThemeFocus = "alive"
-  state.draftThemeColors.alive = "#"
-  assert.equal(theme_pane.textinput(state, "f"), nil)
-  assert.equal(state.draftThemeColors.alive, "#f")
-
-  state.draftThemeColors.alive = "#fffff"
-  assert.equal(theme_pane.textinput(state, "f"), "apply_theme")
-  assert.equal(state.draftThemeColors.alive, "#ffffff")
+  local rect = { x = 0, y = 0, w = 480, h = 600 }
+  local contentY = 10
+  local action = theme_pane.mousepressed(rect, contentY, state, 100, 160)
+  assert.equal(action, "open_color_picker")
+  assert.equal(state.colorPickField, "alive")
 end)
 
-test("theme_pane backspace can re-apply when draft stays valid", function()
+test("theme_pane applyColorPick updates draft hex and marks custom", function()
   local state = session.create({ themeId = "classic" })
   session.resetThemeDraft(state, themes.get("classic"), themes)
-  state.draftThemeFocus = "accent"
-  state.draftThemeColors.accent = "x"
-  assert.equal(theme_pane.keypressed(state, "backspace"), "apply_theme")
-  assert.equal(state.draftThemeColors.accent, "")
+  local color = require("src.color")
+  theme_pane.applyColorPick(state, "alive", color.fromHex("#112233"))
+  assert.equal(state.draftThemeColors.alive, "#112233")
+  assert.equal(state.draftThemePresetId, "custom")
 end)

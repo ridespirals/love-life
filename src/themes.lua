@@ -1,31 +1,9 @@
 local config = require("src.config")
-
-local function hexToColor(hex)
-  hex = hex:gsub("#", "")
-  local r = tonumber(hex:sub(1, 2), 16) / 255
-  local g = tonumber(hex:sub(3, 4), 16) / 255
-  local b = tonumber(hex:sub(5, 6), 16) / 255
-  return { r, g, b }
-end
-
-local function lerpColor(color, target, amount)
-  return {
-    color[1] + (target[1] - color[1]) * amount,
-    color[2] + (target[2] - color[2]) * amount,
-    color[3] + (target[3] - color[3]) * amount,
-  }
-end
-
-local function colorToHex(color)
-  local function byte(channel)
-    return string.format("%02x", math.floor(channel * 255 + 0.5))
-  end
-  return "#" .. byte(color[1]) .. byte(color[2]) .. byte(color[3])
-end
+local color = require("src.color")
 
 local function withBackground(theme)
   if not theme.background then
-    theme.background = { theme.dead[1], theme.dead[2], theme.dead[3] }
+    theme.background = color.copy(theme.dead)
   end
   return theme
 end
@@ -33,18 +11,19 @@ end
 local function theme(name, alive, dead, grid, accent)
   local built = {
     name = name,
-    alive = hexToColor(alive),
-    dead = hexToColor(dead),
-    grid = hexToColor(grid or dead),
+    alive = color.fromHex(alive),
+    dead = color.fromHex(dead),
+    grid = color.fromHex(grid or dead),
   }
   if accent then
-    built.accent = hexToColor(accent)
+    built.accent = color.fromHex(accent)
   end
   return withBackground(built)
 end
 
 -- alive/dead/grid from Normal fg/bg and structural vim groups;
 -- accent from a signature syntax hue (String, Function, Keyword, etc.).
+-- Hex literals here are define-time only; runtime theme colors are LÖVE RGB 0–1.
 local themes = {
   classic = theme("classic", "#FFFFFF", "#000000", "#808080", "#00AAAA"),
   zenburn = theme("zenburn", "#DCDCCC", "#4D4D4D", "#3F3F3F", "#8CD0D3"),
@@ -85,43 +64,62 @@ local userThemes = {}
 
 local M = {}
 
-function M.toHex(color)
-  return colorToHex(color)
+function M.toHex(c)
+  return color.toHex(c)
 end
 
 function M.colorFromHex(hex)
-  if not hex or hex == "" or #hex < 7 then
-    return nil
-  end
-  local ok, color = pcall(hexToColor, hex)
-  if ok then
-    return color
-  end
+  return color.fromHex(hex)
 end
 
 function M.colorsToHex(theme)
   local hex = {
-    alive = colorToHex(theme.alive),
-    dead = colorToHex(theme.dead),
-    grid = colorToHex(theme.grid),
-    background = colorToHex(theme.background),
+    alive = color.toHex(theme.alive),
+    dead = color.toHex(theme.dead),
+    grid = color.toHex(theme.grid),
+    background = color.toHex(theme.background),
   }
   if theme.accent then
-    hex.accent = colorToHex(theme.accent)
+    hex.accent = color.toHex(theme.accent)
   end
   return hex
 end
 
+function M.colorsToRgb(theme)
+  local rgb = {
+    alive = color.copy(theme.alive),
+    dead = color.copy(theme.dead),
+    grid = color.copy(theme.grid),
+    background = color.copy(theme.background),
+  }
+  if theme.accent then
+    rgb.accent = color.copy(theme.accent)
+  end
+  return rgb
+end
+
 function M.build(opts)
+  local alive = color.normalize(opts.alive)
+  local dead = color.normalize(opts.dead)
+  local grid = color.normalize(opts.grid)
+  local background = color.normalize(opts.background)
+  if not alive or not dead or not grid or not background then
+    error("invalid theme color", 2)
+  end
+
   local built = {
     name = opts.name or "custom",
-    alive = hexToColor(opts.alive),
-    dead = hexToColor(opts.dead),
-    grid = hexToColor(opts.grid),
-    background = hexToColor(opts.background),
+    alive = alive,
+    dead = dead,
+    grid = grid,
+    background = background,
   }
-  if opts.accent then
-    built.accent = hexToColor(opts.accent)
+  if opts.accent and opts.accent ~= "" then
+    local accent = color.normalize(opts.accent)
+    if not accent then
+      error("invalid accent color", 2)
+    end
+    built.accent = accent
   end
   return withBackground(built)
 end
@@ -200,13 +198,13 @@ end
 
 function M.extrusionShadow(theme, face, alive)
   if theme.accent then
-    return lerpColor(
+    return color.lerp(
       face,
       theme.accent,
       alive and config.accentBlendAlive or config.accentBlendDead
     )
   end
-  return lerpColor(face, { 0, 0, 0 }, alive and 0.35 or 0.2)
+  return color.lerp(face, { 0, 0, 0 }, alive and 0.35 or 0.2)
 end
 
 local function indexOf(name)

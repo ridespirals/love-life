@@ -13,6 +13,8 @@ local theme_pane = require("src.ui.panes.theme_pane")
 local layout = require("src.layout")
 local stepAnimation = require("src.step_animation")
 local userdata = require("src.userdata")
+local color_picker = require("src.ui.color_picker")
+local color = require("src.color")
 
 local world
 local theme
@@ -25,6 +27,7 @@ local fastKeyboard = false
 local fastPlayMouse = false
 local paneState
 local sessionState
+local colorPickerState
 local FAST_STEP_INTERVAL = 0.05
 local FAST_ANIM_SPEED_MULTIPLIER = 4
 
@@ -131,7 +134,7 @@ local function saveThemeDraft()
     return
   end
 
-  local colors = themes.colorsToHex(built)
+  local colors = themes.colorsToRgb(built)
   local record = {
     id = id,
     name = sessionState.draftThemeName,
@@ -171,6 +174,24 @@ local function deleteThemeDraft()
   theme = fallback
   sessionState.appliedThemeId = fallback.name
   session.resetThemeDraft(sessionState, fallback, themes)
+end
+
+local function consumeColorPickerResult()
+  local result = color_picker.takeResult(colorPickerState)
+  if not result or not result.confirmed then
+    return
+  end
+  theme_pane.applyColorPick(sessionState, result.field, result.color)
+  applyThemeDraft()
+end
+
+local function openColorPickerForField(field)
+  local colors = sessionState.draftThemeColors or {}
+  local initial = colors[field]
+  if field == "accent" and (not initial or initial == "") then
+    initial = color.rgb(1, 1, 1)
+  end
+  color_picker.open(colorPickerState, initial, field)
 end
 
 local function togglePane(id, anchor)
@@ -279,6 +300,7 @@ function love.load()
     patternId = config.defaultPattern,
   })
   paneState = pane.create()
+  colorPickerState = color_picker.create()
   fastMode = false
   applyAnimSpeed()
   rebuildWorldForWindow()
@@ -325,9 +347,15 @@ function love.draw()
       paneState.anchor
     )
   end
+  color_picker.draw(colorPickerState, theme, config)
 end
 
 function love.keypressed(key)
+  if color_picker.keypressed(colorPickerState, key) then
+    consumeColorPickerResult()
+    return
+  end
+
   if key == "escape" then
     if pane.isOpen(paneState) then
       pane.close(paneState)
@@ -337,10 +365,6 @@ function love.keypressed(key)
 
   if pane.isOpen(paneState) then
     local paneAction = pane.keypressed(paneState, sessionState, key)
-    if paneAction == "apply_theme" then
-      applyThemeDraft()
-      return
-    end
     if paneAction then
       return
     end
@@ -379,16 +403,21 @@ function love.keyreleased(key)
 end
 
 function love.textinput(text)
+  if color_picker.isOpen(colorPickerState) then
+    return
+  end
   if pane.isOpen(paneState) then
-    local action = pane.textinput(paneState, sessionState, text)
-    if action == "apply_theme" then
-      applyThemeDraft()
-    end
+    pane.textinput(paneState, sessionState, text)
   end
 end
 
 function love.mousepressed(x, y, button)
   if button ~= 1 then
+    return
+  end
+
+  if color_picker.mousepressed(colorPickerState, x, y) then
+    consumeColorPickerResult()
     return
   end
 
@@ -432,6 +461,8 @@ function love.mousepressed(x, y, button)
       saveThemeDraft()
     elseif action == "delete_theme" then
       deleteThemeDraft()
+    elseif action == "open_color_picker" then
+      openColorPickerForField(sessionState.colorPickField)
     end
     return
   end
@@ -453,10 +484,16 @@ function love.mousepressed(x, y, button)
   end
 end
 
+function love.mousemoved(x, y)
+  color_picker.mousemoved(colorPickerState, x, y)
+end
+
 function love.mousereleased(x, y, button)
   if button ~= 1 then
     return
   end
+
+  color_picker.mousereleased(colorPickerState)
 
   if fastPlayMouse then
     fastPlayMouse = false

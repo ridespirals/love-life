@@ -1,5 +1,7 @@
 local M = {}
 
+local color = require("src.color")
+
 local VALID_TYPES = {
   rules = true,
   themes = true,
@@ -93,8 +95,16 @@ function M.deserialize(chunk)
   return result
 end
 
-local function isHexColor(value)
-  return type(value) == "string" and value:match("^#%x%x%x%x%x%x$") ~= nil
+local function normalizeThemeColorField(value, allowEmpty)
+  if allowEmpty and (value == nil or value == "") then
+    return nil
+  end
+  local normalized = color.normalize(value)
+  if not normalized then
+    return nil, "invalid color"
+  end
+  -- Persist as LÖVE-native 0–1 RGB (no alpha for theme slots).
+  return { normalized[1], normalized[2], normalized[3] }
 end
 
 function M.validate(assetType, data)
@@ -117,15 +127,25 @@ function M.validate(assetType, data)
   end
 
   if assetType == "themes" then
+    local normalized = {
+      id = data.id,
+      name = data.name,
+    }
     for _, key in ipairs({ "alive", "dead", "grid", "background" }) do
-      if not isHexColor(data[key]) then
-        return nil, "invalid " .. key
+      local channel, err = normalizeThemeColorField(data[key], false)
+      if not channel then
+        return nil, err or ("invalid " .. key)
       end
+      normalized[key] = channel
     end
-    if data.accent ~= nil and data.accent ~= "" and not isHexColor(data.accent) then
-      return nil, "invalid accent"
+    if data.accent ~= nil and data.accent ~= "" then
+      local accent, err = normalizeThemeColorField(data.accent, false)
+      if not accent then
+        return nil, err or "invalid accent"
+      end
+      normalized.accent = accent
     end
-    return data
+    return normalized
   end
 
   if assetType == "patterns" then

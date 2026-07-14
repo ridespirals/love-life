@@ -1,4 +1,5 @@
 local themes = require("src.themes")
+local color = require("src.color")
 local widgets = require("src.ui.pane_widgets")
 
 local M = {}
@@ -14,9 +15,6 @@ local SAVE_W = 72
 local DELETE_W = 72
 local PRESET_MIN_W = 72
 local LABEL_W = 88
--- Preset row wraps at this width regardless of final pane width (kept in
--- sync between measure() and layout() so the pane never grows wider than
--- the screen with a large theme catalog — see plan/04-ui-shell-and-panes.md).
 local PRESET_ROW_MAX_W = 480
 local SWATCH_W = 22
 local SWATCH_GAP = 6
@@ -28,7 +26,7 @@ local function draftPreviewColor(colors, key)
   if not colors then
     return nil
   end
-  return themes.colorFromHex(colors[key])
+  return color.fromHex(colors[key])
 end
 
 local function estimatePresetWidth(name)
@@ -71,7 +69,7 @@ local function layout(rect, contentY, session)
       w = fieldW,
       h = FIELD_H,
       value = colors[key] or (key == "accent" and "" or "#000000"),
-      focused = session.draftThemeFocus == key,
+      focused = false,
       swatch = {
         x = swatchX,
         y = fieldY,
@@ -120,12 +118,6 @@ local function layout(rect, contentY, session)
     save = save,
     delete = delete,
   }
-end
-
-local function applyActionIfValid(session)
-  if M.apply(session) then
-    return "apply_theme"
-  end
 end
 
 function M.measure(config)
@@ -181,9 +173,10 @@ function M.mousepressed(rect, contentY, session, x, y)
   end
 
   for _, field in ipairs(ui.fields) do
-    if widgets.hitField(field, x, y) then
-      session.draftThemeFocus = field.id
-      return
+    if widgets.hitField(field, x, y) or widgets.hitField(field.swatch, x, y) then
+      session.colorPickField = field.id
+      session.draftThemeFocus = nil
+      return "open_color_picker"
     end
   end
 
@@ -196,61 +189,37 @@ function M.mousepressed(rect, contentY, session, x, y)
 end
 
 function M.textinput(session, text)
-  local focus = session.draftThemeFocus
-  if not focus then
+  if session.draftThemeFocus ~= "name" then
     return
   end
-
-  if focus == "name" then
-    local ch = text
-    if ch:match("^[%w%s_%-]$") then
-      session.draftThemeName = (session.draftThemeName or "") .. ch
-    end
-    return
-  end
-
-  if not session.draftThemeColors then
-    return
-  end
-
-  local ch = text:lower()
-  if ch:match("^[0-9a-f#]$") then
-    local value = session.draftThemeColors[focus] or "#"
-    if #value < 7 then
-      session.draftThemeColors[focus] = value .. ch
-      session.draftThemePresetId = "custom"
-      return applyActionIfValid(session)
-    end
+  local ch = text
+  if ch:match("^[%w%s_%-]$") then
+    session.draftThemeName = (session.draftThemeName or "") .. ch
   end
 end
 
 function M.keypressed(session, key)
-  local focus = session.draftThemeFocus
-  if not focus then
+  if session.draftThemeFocus ~= "name" then
     return false
   end
-
-  if focus == "name" then
-    if key == "backspace" then
-      local value = session.draftThemeName or ""
-      session.draftThemeName = value:sub(1, #value - 1)
-      return true
-    end
-    return false
-  end
-
-  if not session.draftThemeColors then
-    return false
-  end
-
   if key == "backspace" then
-    local value = session.draftThemeColors[focus] or ""
-    session.draftThemeColors[focus] = value:sub(1, #value - 1)
-    session.draftThemePresetId = "custom"
-    return applyActionIfValid(session) or true
+    local value = session.draftThemeName or ""
+    session.draftThemeName = value:sub(1, #value - 1)
+    return true
   end
-
   return false
+end
+
+function M.applyColorPick(session, field, picked)
+  if not field or not session.draftThemeColors then
+    return
+  end
+  if field == "accent" and (not picked) then
+    session.draftThemeColors.accent = ""
+  else
+    session.draftThemeColors[field] = color.toHex(picked)
+  end
+  session.draftThemePresetId = "custom"
 end
 
 function M.apply(session)

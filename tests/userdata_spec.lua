@@ -108,6 +108,24 @@ test("serialize and deserialize round-trip theme records with accent", function(
   assert.equal(loaded.alive, "#ffffff")
 end)
 
+test("validate normalizes hex theme colors to LÖVE RGB 0-1", function()
+  local valid = userdata.validate("themes", {
+    id = "ink",
+    name = "Ink",
+    alive = "#ffffff",
+    dead = "#000000",
+    grid = "#808080",
+    background = "#000000",
+    accent = "#00aaaa",
+  })
+  assert.equal(valid.alive[1], 1)
+  assert.equal(valid.alive[2], 1)
+  assert.equal(valid.alive[3], 1)
+  assert.equal(valid.dead[1], 0)
+  assert.equal(valid.accent[1], 0)
+  assert.isTrue(math.abs(valid.accent[2] - (0xaa / 255)) < 1e-6)
+end)
+
 test("serialize and deserialize round-trip theme records without accent", function()
   local data = {
     id = "plain",

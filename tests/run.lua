@@ -19,6 +19,7 @@ local specs = {
   "tests/statusbar_spec.lua",
   "tests/themes_spec.lua",
   "tests/userdata_spec.lua",
+  "tests/color_spec.lua",
 }
 
 local passed = 0

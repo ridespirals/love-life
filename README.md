@@ -112,7 +112,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept). Enter a **Name** and **Save** to keep a custom rule in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved rule.
 
-**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. A **swatch** beside each field previews the draft color. Leave `accent` blank to fall back to plain shadow shading. **Save** / **Delete** work like the rule pane for user themes.
+**Theme pane:** pick a preset or click a color field/swatch to open the **HSV color picker** (saturation×value square + hue bar). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. Leave `accent` blank / clearable via a white default pick to fall back to plain shadow shading. **Save** / **Delete** work like the rule pane for user themes.
 
 ## Controls
 
