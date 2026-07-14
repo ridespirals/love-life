@@ -40,14 +40,15 @@ function M.layoutGrid(x, y, items, gap, maxRowW)
   return items, usedW, totalH
 end
 
-function M.drawButton(button, theme, selected)
-  if selected then
+function M.drawButton(button, theme, selected, disabled)
+  local alpha = disabled and 0.35 or 1
+  if selected and not disabled then
     setColor(theme.alive, 0.25)
     love.graphics.rectangle("fill", button.x, button.y, button.w, button.h)
   end
-  setColor(theme.grid, 1)
+  setColor(theme.grid, alpha)
   love.graphics.rectangle("line", button.x + 0.5, button.y + 0.5, button.w, button.h)
-  setColor(theme.alive, 1)
+  setColor(theme.alive, alpha)
   love.graphics.printf(button.label, button.x, button.y + 4, button.w, "center")
 end
 

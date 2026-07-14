@@ -81,6 +81,8 @@ local skipped = {
 
 local defaultTheme = "classic"
 
+local userThemes = {}
+
 local M = {}
 
 function M.toHex(color)
@@ -131,16 +133,64 @@ function M.tryBuild(opts)
   end
 end
 
+function M.isBuiltin(id)
+  return themes[id] ~= nil
+end
+
+function M.isUser(id)
+  return userThemes[id] ~= nil
+end
+
+function M.loadUser(userdata)
+  userThemes = {}
+  if not userdata then
+    return
+  end
+
+  for _, id in ipairs(userdata.list("themes")) do
+    if not themes[id] then
+      local data = userdata.load("themes", id)
+      if data then
+        local built = M.tryBuild({
+          name = id,
+          alive = data.alive,
+          dead = data.dead,
+          grid = data.grid,
+          background = data.background,
+          accent = (data.accent ~= "" and data.accent) or nil,
+        })
+        if built then
+          userThemes[id] = built
+        end
+      end
+    end
+  end
+end
+
 function M.get(name)
-  return themes[name] or themes[defaultTheme]
+  return themes[name] or userThemes[name] or themes[defaultTheme]
 end
 
 function M.list()
   local names = {}
-  for name in pairs(themes) do
-    names[#names + 1] = name
+  local seen = {}
+
+  local function addSorted(source)
+    local batch = {}
+    for id in pairs(source) do
+      batch[#batch + 1] = id
+    end
+    table.sort(batch)
+    for _, id in ipairs(batch) do
+      if not seen[id] then
+        seen[id] = true
+        names[#names + 1] = id
+      end
+    end
   end
-  table.sort(names)
+
+  addSorted(themes)
+  addSorted(userThemes)
   return names
 end
 

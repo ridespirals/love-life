@@ -10,8 +10,8 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 
 - **Branch:** `main`
 - **Version:** v1.2.0 tagged; Phase 2 ✓ (merged via PR #3)
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers)
-- **Next:** Phase 3 userspace save/load → Phases 4–5
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load)
+- **Next:** Phase 4 pattern picker + board drawing → Phase 5
 - **Backlog (not started, not sequenced):** Phase 6 (camera/viewport), Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer), reusable button transition fx
 
 ## Directory map
@@ -60,7 +60,7 @@ flowchart TD
   P0[Phase 0 Step animation ✓]
   P1[Phase 1 UI shell ✓]
   P2[Phase 2 Rule/Theme pickers ✓]
-  P3[Phase 3 Userspace save/load]
+  P3[Phase 3 Userspace save/load ✓]
   P4[Phase 4 Pattern picker + drawing]
   P5[Phase 5 Grid settings pane]
   P6[Phase 6 Camera and viewport]
@@ -79,7 +79,7 @@ flowchart TD
 
 ### Recommended implementation order (post-1.0)
 
-Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 ✓. **Start Phase 3 next.**
+Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 ✓. Phase 3 ✓. **Start Phase 4 next.**
 
 | Step | Phase | Rationale |
 |------|-------|-----------|
@@ -87,9 +87,9 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 �
 | 2 | **0 — Step animation** ✓ | Square preview→commit, idle markers, 3D tiles; PR #1 |
 | 3 | **1 — UI shell + `session.lua`** ✓ | Pane framework, clickable chips; placeholder panes |
 | 4 | **2 — Rule + theme pickers** ✓ | Rule Apply + theme auto-apply; validates pane UX without disk I/O |
-| 5 | **3a — `userdata.lua`** | Persistence API + catalog merge + unit tests; **next** |
-| 6 | **3b — Save UI** | Save / Delete on rule + theme panes |
-| 7 | **4a — Pattern picker** | Catalog list + Load (no drawing yet) |
+| 5 | **3a — `userdata.lua`** ✓ | Persistence API + catalog merge + unit tests |
+| 6 | **3b — Save UI** ✓ | Save / Delete on rule + theme panes |
+| 7 | **4a — Pattern picker** | Catalog list + Load (no drawing yet); **next** |
 | 8 | **4b — Board drawing** | Superseded in mechanism by Phase 7's Draw tool once that lands — see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) |
 | 9 | **5 — Grid settings** | Auto vs forced letterbox last; changes global resize policy |
 | 10 | **6 — Camera & viewport** (backlog) | See sequencing note above — may move earlier |

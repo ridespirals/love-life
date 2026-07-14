@@ -11,7 +11,11 @@ local BTN_GAP = 6
 local FIELD_H = 22
 local GAP = 8
 local APPLY_W = 72
+local SAVE_W = 72
+local DELETE_W = 72
 local PRESET_MIN_W = 72
+local PRESET_ROW_MAX_W = 480
+local LABEL_W = 88
 
 local function estimatePresetWidth(name)
   if love and love.graphics and love.graphics.getFont then
@@ -29,9 +33,8 @@ local function matchPresetId(rulestring)
   return "custom"
 end
 
-local function layout(rect, contentY, session)
+local function buildPresetButtons()
   local presetButtons = {}
-  local x = rect.x + PANE_PAD_X
   for _, name in ipairs(rules.list()) do
     presetButtons[#presetButtons + 1] = {
       id = name,
@@ -40,45 +43,83 @@ local function layout(rect, contentY, session)
       h = BTN_H,
     }
   end
-  widgets.layoutRow(x, contentY, presetButtons, BTN_GAP)
+  return presetButtons
+end
 
-  local fieldY = contentY + BTN_H + GAP + 14
+local function layout(rect, contentY, session)
+  local presetButtons = buildPresetButtons()
+  local x = rect.x + PANE_PAD_X
+  local _, _, presetBlockH = widgets.layoutGrid(x, contentY, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
+
+  local fieldY = contentY + presetBlockH + GAP
   local field = {
     x = rect.x + PANE_PAD_X,
     y = fieldY,
     w = rect.w - PANE_PAD_X * 2,
     h = FIELD_H,
     value = session.draftRuleString or "",
-    focused = session.draftRuleFocus,
+    focused = session.draftRuleFocus == "rulestring",
   }
 
+  local nameY = fieldY + FIELD_H + GAP
+  local nameField = {
+    id = "name",
+    label = "Name:",
+    labelX = rect.x + PANE_PAD_X,
+    x = rect.x + PANE_PAD_X + LABEL_W,
+    y = nameY,
+    w = rect.w - PANE_PAD_X * 2 - LABEL_W,
+    h = FIELD_H,
+    value = session.draftRuleName or "",
+    focused = session.draftRuleFocus == "name",
+  }
+
+  local btnY = nameY + FIELD_H + GAP
   local apply = {
     id = "apply",
     label = "Apply",
     x = rect.x + PANE_PAD_X,
-    y = fieldY + FIELD_H + GAP,
+    y = btnY,
     w = APPLY_W,
     h = BTN_H,
+  }
+  local save = {
+    id = "save",
+    label = "Save",
+    x = apply.x + APPLY_W + BTN_GAP,
+    y = btnY,
+    w = SAVE_W,
+    h = BTN_H,
+  }
+  local delete = {
+    id = "delete",
+    label = "Delete",
+    x = save.x + SAVE_W + BTN_GAP,
+    y = btnY,
+    w = DELETE_W,
+    h = BTN_H,
+    enabled = rules.isUser(session.draftRulePresetId),
   }
 
   return {
     presetButtons = presetButtons,
     field = field,
+    nameField = nameField,
     apply = apply,
+    save = save,
+    delete = delete,
   }
 end
 
 function M.measure(config)
-  local contentH = BTN_H + GAP + 14 + FIELD_H + GAP + BTN_H
+  local presetButtons = buildPresetButtons()
+  local _, presetW, presetBlockH = widgets.layoutGrid(0, 0, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
+
+  local contentH = presetBlockH + GAP + FIELD_H + GAP + FIELD_H + GAP + BTN_H
   local contentW = config.paneWidth or 360
+  local btnRowW = PANE_PAD_X * 2 + APPLY_W + SAVE_W + DELETE_W + BTN_GAP * 2
 
-  local presetW = PANE_PAD_X * 2
-  for _, name in ipairs(rules.list()) do
-    presetW = presetW + estimatePresetWidth(name) + BTN_GAP
-  end
-  presetW = presetW - BTN_GAP
-
-  return math.max(contentW, presetW), contentH
+  return math.max(contentW, presetW + PANE_PAD_X * 2, btnRowW), contentH
 end
 
 function M.draw(rect, contentY, theme, _config, session)
@@ -89,7 +130,10 @@ function M.draw(rect, contentY, theme, _config, session)
   end
 
   widgets.drawField("Rulestring:", ui.field, theme)
+  widgets.drawField(ui.nameField.label, ui.nameField, theme)
   widgets.drawButton(ui.apply, theme, false)
+  widgets.drawButton(ui.save, theme, false)
+  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
 end
 
 function M.mousepressed(rect, contentY, session, x, y)
@@ -98,19 +142,30 @@ function M.mousepressed(rect, contentY, session, x, y)
   if widgets.hitButton(ui.apply, x, y) then
     return "apply_rule"
   end
+  if widgets.hitButton(ui.save, x, y) then
+    return "save_rule"
+  end
+  if ui.delete.enabled and widgets.hitButton(ui.delete, x, y) then
+    return "delete_rule"
+  end
 
   for _, button in ipairs(ui.presetButtons) do
     if widgets.hitButton(button, x, y) then
       local rule = rules.get(button.id)
       session.draftRulePresetId = rule.name
       session.draftRuleString = rule.rulestring
+      session.draftRuleName = rule.name
       session.draftRuleFocus = false
       return
     end
   end
 
   if widgets.hitField(ui.field, x, y) then
-    session.draftRuleFocus = true
+    session.draftRuleFocus = "rulestring"
+    return
+  end
+  if widgets.hitField(ui.nameField, x, y) then
+    session.draftRuleFocus = "name"
     return
   end
 
@@ -118,7 +173,15 @@ function M.mousepressed(rect, contentY, session, x, y)
 end
 
 function M.textinput(session, text)
-  if not session.draftRuleFocus then
+  if session.draftRuleFocus == "name" then
+    local ch = text
+    if ch:match("^[%w%s_%-]$") then
+      session.draftRuleName = (session.draftRuleName or "") .. ch
+    end
+    return
+  end
+
+  if session.draftRuleFocus ~= "rulestring" then
     return
   end
 
@@ -130,7 +193,16 @@ function M.textinput(session, text)
 end
 
 function M.keypressed(session, key)
-  if not session.draftRuleFocus then
+  if session.draftRuleFocus == "name" then
+    if key == "backspace" then
+      local value = session.draftRuleName or ""
+      session.draftRuleName = value:sub(1, #value - 1)
+      return true
+    end
+    return false
+  end
+
+  if session.draftRuleFocus ~= "rulestring" then
     return false
   end
 

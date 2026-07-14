@@ -10,6 +10,8 @@ local BTN_H = 22
 local BTN_GAP = 6
 local FIELD_H = 22
 local GAP = 8
+local SAVE_W = 72
+local DELETE_W = 72
 local PRESET_MIN_W = 72
 local LABEL_W = 88
 -- Preset row wraps at this width regardless of final pane width (kept in
@@ -80,9 +82,43 @@ local function layout(rect, contentY, session)
     fieldY = fieldY + FIELD_H + 6
   end
 
+  local nameField = {
+    id = "name",
+    label = "Name:",
+    labelX = rect.x + PANE_PAD_X,
+    x = rect.x + PANE_PAD_X + LABEL_W,
+    y = fieldY,
+    w = fieldW,
+    h = FIELD_H,
+    value = session.draftThemeName or "",
+    focused = session.draftThemeFocus == "name",
+  }
+  fieldY = fieldY + FIELD_H + GAP
+
+  local save = {
+    id = "save",
+    label = "Save",
+    x = rect.x + PANE_PAD_X,
+    y = fieldY,
+    w = SAVE_W,
+    h = BTN_H,
+  }
+  local delete = {
+    id = "delete",
+    label = "Delete",
+    x = save.x + SAVE_W + BTN_GAP,
+    y = fieldY,
+    w = DELETE_W,
+    h = BTN_H,
+    enabled = themes.isUser(session.draftThemePresetId),
+  }
+
   return {
     presetButtons = presetButtons,
     fields = fields,
+    nameField = nameField,
+    save = save,
+    delete = delete,
   }
 end
 
@@ -96,12 +132,13 @@ function M.measure(config)
   local presetButtons = buildPresetButtons()
   local _, presetW, presetBlockH = widgets.layoutGrid(0, 0, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
 
-  local fieldBlock = #colorFields * (FIELD_H + 6)
-  local contentH = presetBlockH + GAP + fieldBlock
+  local fieldBlock = (#colorFields + 1) * (FIELD_H + 6)
+  local contentH = presetBlockH + GAP + fieldBlock + GAP + BTN_H
   local contentW = config.paneWidth or 360
   local minFieldRowW = LABEL_W + MIN_FIELD_W + SWATCH_GAP + SWATCH_W + PANE_PAD_X * 2
+  local btnRowW = PANE_PAD_X * 2 + SAVE_W + DELETE_W + BTN_GAP
 
-  return math.max(contentW, presetW + PANE_PAD_X * 2, minFieldRowW), contentH
+  return math.max(contentW, presetW + PANE_PAD_X * 2, minFieldRowW, btnRowW), contentH
 end
 
 function M.draw(rect, contentY, theme, _config, session)
@@ -116,16 +153,28 @@ function M.draw(rect, contentY, theme, _config, session)
     widgets.drawField(field.label, field, theme)
     widgets.drawColorSwatch(field.swatch, draftPreviewColor(colors, field.id), theme)
   end
+
+  widgets.drawField(ui.nameField.label, ui.nameField, theme)
+  widgets.drawButton(ui.save, theme, false)
+  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
 end
 
 function M.mousepressed(rect, contentY, session, x, y)
   local ui = layout(rect, contentY, session)
+
+  if widgets.hitButton(ui.save, x, y) then
+    return "save_theme"
+  end
+  if ui.delete.enabled and widgets.hitButton(ui.delete, x, y) then
+    return "delete_theme"
+  end
 
   for _, button in ipairs(ui.presetButtons) do
     if widgets.hitButton(button, x, y) then
       local preset = themes.get(button.id)
       session.draftThemePresetId = preset.name
       session.draftThemeColors = themes.colorsToHex(preset)
+      session.draftThemeName = preset.name
       session.draftThemeFocus = nil
       return "apply_theme"
     end
@@ -138,12 +187,29 @@ function M.mousepressed(rect, contentY, session, x, y)
     end
   end
 
+  if widgets.hitField(ui.nameField, x, y) then
+    session.draftThemeFocus = "name"
+    return
+  end
+
   session.draftThemeFocus = nil
 end
 
 function M.textinput(session, text)
   local focus = session.draftThemeFocus
-  if not focus or not session.draftThemeColors then
+  if not focus then
+    return
+  end
+
+  if focus == "name" then
+    local ch = text
+    if ch:match("^[%w%s_%-]$") then
+      session.draftThemeName = (session.draftThemeName or "") .. ch
+    end
+    return
+  end
+
+  if not session.draftThemeColors then
     return
   end
 
@@ -160,7 +226,20 @@ end
 
 function M.keypressed(session, key)
   local focus = session.draftThemeFocus
-  if not focus or not session.draftThemeColors then
+  if not focus then
+    return false
+  end
+
+  if focus == "name" then
+    if key == "backspace" then
+      local value = session.draftThemeName or ""
+      session.draftThemeName = value:sub(1, #value - 1)
+      return true
+    end
+    return false
+  end
+
+  if not session.draftThemeColors then
     return false
   end
 

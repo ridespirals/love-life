@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec`), and `src/themes.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar/pane hit regions, session drafts, and theme registry.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec`), `src/themes.lua`, and `src/userdata.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar/pane hit regions, session drafts, theme registry, and userspace serialize/save round-trips.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -96,7 +96,9 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.2.0** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (rule Apply; theme auto-apply).
 
-**Next:** Phase 3 userspace save/load — see [`plan/05-persistence.md`](plan/05-persistence.md).
+**Phase 3 ✓** — userspace save/load for rules and themes (`src/userdata.lua`; Save/Delete on panes; built-ins protected).
+
+**Next:** Phase 4 pattern picker + board drawing — see [`plan/06-pattern-picker-and-drawing.md`](plan/06-pattern-picker-and-drawing.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -108,9 +110,9 @@ Deferred: history stack (step backward), RLE export, import UI, **pattern groupi
 
 While a pane is open, playback **keyboard** shortcuts are disabled; the simulation **keeps running** if it was already playing. Text input works in Rule/Theme fields. Press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
 
-**Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept).
+**Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept). Enter a **Name** and **Save** to keep a custom rule in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved rule.
 
-**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. A **swatch** beside each field previews the draft color. Leave `accent` blank to fall back to plain shadow shading.
+**Theme pane:** pick a preset or edit hex colors (`alive`, `dead`, `grid`, `background`, optional `accent`). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. A **swatch** beside each field previews the draft color. Leave `accent` blank to fall back to plain shadow shading. **Save** / **Delete** work like the rule pane for user themes.
 
 ## Controls
 
@@ -147,7 +149,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. In-game settings UI shell + rule/theme pickers (Phases 1–2 ✓); pattern editor and userspace save/load planned (Phases 3–5 — see [`plan/README.md`](plan/README.md))
+5. In-game settings UI shell + rule/theme pickers + userspace save/load (Phases 1–3 ✓); pattern editor planned (Phases 4–5 — see [`plan/README.md`](plan/README.md))
 6. Video export (deferred)
 
 ### Attribution

@@ -4,26 +4,27 @@ Covers saving/loading user-created rules, themes, and (later) patterns to the L�
 
 See [`README.md`](README.md) for the cross-area roadmap. Depends on [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md) (Save/Delete UI lands on the existing rule/theme panes) and [`01-simulation-and-patterns.md`](01-simulation-and-patterns.md) (catalog merge extends `src/rules.lua`/`src/patterns.lua`). Feeds [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) (Phase 4 pattern save).
 
-**Status:** next up — not started.
+**Status:** ✓ shipped — built-ins are read-only; Save slugs a unique id from the Name field; Delete only for user entries; no Discard button (reopen resets drafts).
 
 ## Development order
 
-1. **3a — `src/userdata.lua`**: persistence API + catalog merge + unit tests.
-2. **3b — Save UI**: Save / Delete buttons on rule + theme panes (theme has no Apply — Save persists the live-applied draft; rule still Apply then Save).
+1. **3a — `src/userdata.lua`**: persistence API + catalog merge + unit tests. ✓
+2. **3b — Save UI**: Save / Delete buttons on rule + theme panes (theme has no Apply — Save persists the live-applied draft; rule still Apply then Save). ✓
+
 ---
 
-### Phase 3 — Userspace save/load for rules and themes
+### Phase 3 — Userspace save/load for rules and themes ✓
 
 **Delivers:** Save custom rule/theme to save directory; merged catalogs.
 
 | File | Work |
 |------|------|
-| `src/userdata.lua` | IO + serialization |
-| `src/rules.lua` / `src/themes.lua` | Load user presets |
-| Rule/Theme panes | Save / Delete buttons, name field |
-| `tests/userdata_spec.lua` | Round-trip serialize tests |
+| `src/userdata.lua` | IO + serialization ✓ |
+| `src/rules.lua` / `src/themes.lua` | Load user presets ✓ |
+| Rule/Theme panes | Save / Delete buttons, name field ✓ |
+| `tests/userdata_spec.lua` | Round-trip serialize tests ✓ |
 
-**Checkpoint:** create custom theme, quit, relaunch, still listed.
+**Checkpoint:** create custom theme, quit, relaunch, still listed. ✓
 
 ## Design details
 
@@ -33,25 +34,26 @@ All user-created assets live under the LÖVE save directory (shareable, outside 
 
 ```
 <saveDirectory>/
-  patterns/<id>.lua      # { id, name, cells = {{col,row}, ...} }
+  patterns/<id>.lua      # { id, name, cells = {{col,row}, ...} } (Phase 4)
   rules/<id>.lua         # { id, name, rulestring = "B3/S23" }
-  themes/<id>.lua        # { name, alive, dead, grid, background, accent? } hex strings
+  themes/<id>.lua        # { id, name, alive, dead, grid, background, accent? } hex strings
 ```
 
-New module: `src/userdata.lua`
-- `getBasePath()` → `love.filesystem.getSaveDirectory() .. "/..."`
-- `list(type)`, `load(type, id)`, `save(type, id, data)`, `delete(type, id)`
+Module: `src/userdata.lua`
+- `slugify`, `serialize`, `deserialize`, `validate`
+- `ensureDirs()`, `list(type)`, `load(type, id)`, `save(type, id, data)`, `delete(type, id)`
 - Pure-Lua serialization helpers (testable without LÖVE) + thin `love.filesystem` IO wrapper
 
-**Catalog merge:** extend `src/patterns.lua`, `src/rules.lua`, `src/themes.lua` (see [`01-simulation-and-patterns.md`](01-simulation-and-patterns.md), [`02-rendering-and-animation.md`](02-rendering-and-animation.md)):
+**Catalog merge:** `rules.loadUser` / `themes.loadUser`:
 - Built-ins first, then user entries from save dir
-- `list()` returns merged ids; `get(id)` checks built-in → bundled RLE → user file
+- Built-in ids never overwritten by user files
+- `list()` returns merged ids; `get(id)` checks built-in → user → fallback
 
 ### Save/Discard semantics
 
-See [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md) "Draft vs saved state" for the full commit/Save/Discard framework this phase implements:
-- **Save** — write the currently applied draft to userspace; assign stable `id` (slug from name). Theme Save persists the live-applied colors (including optional `accent`); no separate Apply step.
-- **Discard** — revert draft fields to last applied/saved state (closing a pane alone does not Discard).
+- **Save** — write the currently applied draft to userspace; assign stable `id` via `slugify(name)`. Theme Save persists live-applied colors (including optional `accent`). Refuses empty or built-in ids.
+- **Delete** — only when `isUser(id)`; falls back to `conway` / `classic`.
+- **Discard** — not a button; closing a pane alone does not Discard; reopening resets drafts from applied state via `syncDraftForPane`.
 
 ## Testing strategy for this area
 
@@ -61,11 +63,11 @@ See [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md) "Draft vs saved state
 
 | File | Status | Phase |
 |------|--------|-------|
-| `src/userdata.lua` | planned | Phase 3 |
-| `tests/userdata_spec.lua` | planned | Phase 3 |
+| `src/userdata.lua` | exists | Phase 3 ✓ |
+| `tests/userdata_spec.lua` | exists | Phase 3 ✓ |
 
 ## TODO tracking
 
-### Phase 3 (not started)
-- [ ] **Phase 3** — Userspace save/load (`src/userdata.lua`; merged catalogs)
-- [ ] Add more built-in rule presets beyond `conway`, `ant_colony` → userspace covers custom presets instead of expanding built-ins
+### Phase 3 ✓
+- [x] **Phase 3** — Userspace save/load (`src/userdata.lua`; merged catalogs)
+- [x] Add more built-in rule presets beyond `conway`, `ant_colony` → userspace covers custom presets instead of expanding built-ins

@@ -12,6 +12,7 @@ local rule_pane = require("src.ui.panes.rule_pane")
 local theme_pane = require("src.ui.panes.theme_pane")
 local layout = require("src.layout")
 local stepAnimation = require("src.step_animation")
+local userdata = require("src.userdata")
 
 local world
 local theme
@@ -46,6 +47,8 @@ local function applyRuleDraft()
   stepAnimation.cancel(animState)
   activeRule = rule
   sessionState.appliedRuleId = rule.name
+  sessionState.draftRulePresetId = rule.name
+  sessionState.draftRuleName = sessionState.draftRuleName or rule.name
   grid.computeNext(world, activeRule)
   pane.close(paneState)
 end
@@ -59,6 +62,115 @@ local function applyThemeDraft()
   -- Apply policy: live swap; playback continues; pane stays open for browsing.
   theme = nextTheme
   sessionState.appliedThemeId = nextTheme.name
+end
+
+local function saveRuleDraft()
+  local id = userdata.slugify(sessionState.draftRuleName or "")
+  if id == "" then
+    return
+  end
+  if rules.isBuiltin(id) then
+    return
+  end
+
+  local rule = rule_pane.apply(sessionState)
+  if not rule then
+    return
+  end
+
+  local saved = userdata.save("rules", id, {
+    id = id,
+    name = sessionState.draftRuleName,
+    rulestring = rule.rulestring,
+  })
+  if not saved then
+    return
+  end
+
+  rules.loadUser(userdata)
+  local loaded = rules.get(id)
+  playback.pause(playbackState)
+  stepAnimation.cancel(animState)
+  activeRule = loaded
+  sessionState.appliedRuleId = id
+  sessionState.draftRulePresetId = id
+  sessionState.draftRuleString = loaded.rulestring
+  sessionState.draftRuleName = id
+  grid.computeNext(world, activeRule)
+end
+
+local function deleteRuleDraft()
+  local id = sessionState.draftRulePresetId
+  if not rules.isUser(id) then
+    return
+  end
+
+  userdata.delete("rules", id)
+  rules.loadUser(userdata)
+
+  local fallback = rules.get("conway")
+  playback.pause(playbackState)
+  stepAnimation.cancel(animState)
+  activeRule = fallback
+  sessionState.appliedRuleId = fallback.name
+  session.resetRuleDraft(sessionState, fallback)
+  grid.computeNext(world, activeRule)
+end
+
+local function saveThemeDraft()
+  local id = userdata.slugify(sessionState.draftThemeName or "")
+  if id == "" then
+    return
+  end
+  if themes.isBuiltin(id) then
+    return
+  end
+
+  local built = theme_pane.apply(sessionState)
+  if not built then
+    return
+  end
+
+  local colors = themes.colorsToHex(built)
+  local record = {
+    id = id,
+    name = sessionState.draftThemeName,
+    alive = colors.alive,
+    dead = colors.dead,
+    grid = colors.grid,
+    background = colors.background,
+  }
+  if colors.accent then
+    record.accent = colors.accent
+  end
+
+  local saved = userdata.save("themes", id, record)
+  if not saved then
+    return
+  end
+
+  themes.loadUser(userdata)
+  local loaded = themes.get(id)
+  theme = loaded
+  sessionState.appliedThemeId = id
+  sessionState.draftThemePresetId = id
+  sessionState.draftThemeColors = themes.colorsToHex(loaded)
+  sessionState.draftThemeName = id
+end
+
+local function deleteThemeDraft()
+  local id = sessionState.draftThemePresetId
+  if not themes.isUser(id) then
+    return
+  end
+
+  userdata.delete("themes", id)
+  themes.loadUser(userdata)
+
+  local fallback = themes.get("classic")
+  theme = fallback
+  sessionState.appliedThemeId = fallback.name
+  session.resetThemeDraft(sessionState, fallback, themes)
 end
 
 local function togglePane(id, anchor)
@@ -153,6 +265,10 @@ local function toggleFullscreen()
 end
 
 function love.load()
+  userdata.ensureDirs()
+  rules.loadUser(userdata)
+  themes.loadUser(userdata)
+
   activeRule = rules.get(config.activeRule)
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
@@ -308,6 +424,14 @@ function love.mousepressed(x, y, button)
       applyRuleDraft()
     elseif action == "apply_theme" then
       applyThemeDraft()
+    elseif action == "save_rule" then
+      saveRuleDraft()
+    elseif action == "delete_rule" then
+      deleteRuleDraft()
+    elseif action == "save_theme" then
+      saveThemeDraft()
+    elseif action == "delete_theme" then
+      deleteThemeDraft()
     end
     return
   end
