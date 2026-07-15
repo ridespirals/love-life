@@ -173,7 +173,7 @@ local function drawCell(world, theme, config, layout, row, col, animState)
   local change = stepAnimation.getCellChange(world, row, col)
   local previewSize = previewDotSize(tileSize, config)
 
-  if stepAnimation.isIdle(animState) then
+  if stepAnimation.isIdle(animState) or not stepAnimation.effectiveEnabled(config) then
     drawIdleCell(x, y, tileSize, theme, config, alive, change, previewSize)
     return
   end

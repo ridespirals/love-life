@@ -405,6 +405,10 @@ local function tryBeginBoardStroke(x, y, button)
   return true
 end
 
+local function syncAnimEnabled()
+  stepAnimation.syncEnabled(animState, config)
+end
+
 local function migrateWorldToGridSize()
   if not world then
     return false
@@ -418,6 +422,7 @@ local function migrateWorldToGridSize()
   stepAnimation.cancel(animState)
   world = grid.resize(world, config.rows, config.cols)
   grid.computeNext(world, activeRule)
+  syncAnimEnabled()
   return true
 end
 
@@ -442,6 +447,9 @@ local function applyGridSettings()
   sessionState.gridMode = settings.mode
   config.gridMode = settings.mode
   config.tileSize = settings.tileSize
+  if settings.stepAnimEnabled ~= nil then
+    config.stepAnimEnabled = settings.stepAnimEnabled
+  end
 
   if settings.mode == "forced" then
     config.forcedRows = settings.forcedRows
@@ -460,6 +468,7 @@ local function applyGridSettings()
     migrateWorldToGridSize()
   end
 
+  syncAnimEnabled()
   session.resetGridDraft(sessionState, config)
   pane.close(paneState)
 end

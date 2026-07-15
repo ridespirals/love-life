@@ -68,7 +68,8 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `paneScreenMargin` | Minimum inset from window edges when positioning panes (default `8`) |
 | `gridMode` | `"auto"` (refit rows/cols on resize) or `"forced"` (fixed grid, letterboxed) |
 | `forcedRows`, `forcedCols`, `forcedTileSize` | Starting hints for forced mode (defaults mirror `rows`/`cols`/`tileSize`) |
-| `stepAnimEnabled` | Enable step morph animation (`true`) |
+| `stepAnimEnabled` | Enable step morph animation (`true`); Settings pane On/Off |
+| `stepAnimMinTileSize` | Minimum tile size (px) before morph animations run (default `6`) |
 | `stepAnimPreviewSec` | Preview-marker phase duration (seconds; default `0.08`) |
 | `stepAnimCommitSec` | Square grow/shrink commit phase (seconds; default `0.12`) |
 | `previewDotScale` | Preview square size as fraction of tile face (default `0.15`) |
@@ -122,7 +123,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Board drawing (paused only):** when playback is paused and no pane/color picker is open, **left-click/drag** toggles cells alive along the stroke; **right-click/drag** erases. Drawing marks the applied pattern as `custom` until you Apply a catalog entry or Save.
 
-**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Apply** rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
+**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
 
 ## Controls
 

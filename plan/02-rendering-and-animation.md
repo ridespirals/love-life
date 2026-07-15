@@ -76,7 +76,7 @@ Two-phase morph per generation step (`stepAnimPreviewSec` + `stepAnimCommitSec`)
 - **Commit:** square grows to full alive face or dead square consumes the alive face.
 - Morph completes → `grid.step` + `grid.computeNext`.
 
-Alive cells use extruded top faces (`tileDepthAlivePx`); dead cells can stay flat (`tileDepthDeadPx = 0`). Fast mode (`f` hold, see [`03-playback.md`](03-playback.md)) scales morph speed and step interval. `stepAnimEnabled = false` commits immediately.
+Alive cells use extruded top faces (`tileDepthAlivePx`); dead cells can stay flat (`tileDepthDeadPx = 0`). Fast mode (`f` hold, see [`03-playback.md`](03-playback.md)) scales morph speed and step interval. Morph animations are skipped when `stepAnimEnabled` is false or `tileSize` is below `stepAnimMinTileSize` (default 6); the Settings pane exposes the On/Off preference.
 
 ### Historical design notes (superseded)
 
@@ -123,6 +123,7 @@ Visual feedback on the status bar Play/Pause button when playback starts or paus
 | `stepAnimPreviewSec` | `0.08` | Phase 0 ✓ |
 | `stepAnimCommitSec` | `0.12` | Phase 0 ✓ |
 | `stepAnimEnabled` | `true` | Phase 0 ✓ |
+| `stepAnimMinTileSize` | `6` | Phase 5 ✓ |
 | `previewDotScale` | `0.15` | Phase 0 ✓ |
 | `previewDotMinPx` | `4` | Phase 0 ✓ |
 | `tileDepthAlivePx` | `3` | Phase 0 ✓ |

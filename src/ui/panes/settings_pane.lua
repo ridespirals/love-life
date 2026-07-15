@@ -12,6 +12,7 @@ local FIELD_H = 22
 local GAP = 8
 local APPLY_W = 72
 local MODE_BTN_W = 72
+local ANIM_BTN_W = 48
 local LABEL_W = 88
 local HINT_H = 16
 
@@ -39,13 +40,25 @@ local function modeButtons()
   }
 end
 
+local function animButtons()
+  return {
+    { id = "on", label = "On", w = ANIM_BTN_W, h = BTN_H },
+    { id = "off", label = "Off", w = ANIM_BTN_W, h = BTN_H },
+  }
+end
+
 local function layout(rect, contentY, session)
   local buttons = modeButtons()
   local buttonsX = rect.x + PANE_PAD_X + LABEL_W
   widgets.layoutRow(buttonsX, contentY, buttons, BTN_GAP)
   local modeBlockH = BTN_H
 
-  local tileY = contentY + modeBlockH + GAP
+  local animY = contentY + modeBlockH + GAP
+  local animBtns = animButtons()
+  widgets.layoutRow(buttonsX, animY, animBtns, BTN_GAP)
+  local animBlockH = BTN_H
+
+  local tileY = animY + animBlockH + GAP
   local tileField = {
     id = "tile",
     label = "Tile:",
@@ -98,6 +111,7 @@ local function layout(rect, contentY, session)
 
   return {
     modeButtons = buttons,
+    animButtons = animBtns,
     tileField = tileField,
     rowsField = rowsField,
     colsField = colsField,
@@ -107,12 +121,13 @@ local function layout(rect, contentY, session)
 end
 
 function M.measure(config)
-  local contentH = BTN_H + GAP + FIELD_H + GAP + FIELD_H + GAP + FIELD_H + GAP + BTN_H + GAP + HINT_H
+  local contentH = BTN_H + GAP + BTN_H + GAP + FIELD_H + GAP + FIELD_H + GAP + FIELD_H + GAP + BTN_H + GAP + HINT_H
   local contentW = config.paneWidth or 360
   local modeW = LABEL_W + MODE_BTN_W * 2 + BTN_GAP
+  local animW = LABEL_W + ANIM_BTN_W * 2 + BTN_GAP
   local fieldRowW = PANE_PAD_X * 2 + LABEL_W + 120
 
-  return math.max(contentW, modeW + PANE_PAD_X * 2, fieldRowW), contentH
+  return math.max(contentW, modeW + PANE_PAD_X * 2, animW + PANE_PAD_X * 2, fieldRowW), contentH
 end
 
 function M.draw(rect, contentY, theme, _config, session)
@@ -131,6 +146,18 @@ function M.draw(rect, contentY, theme, _config, session)
 
   for _, button in ipairs(ui.modeButtons) do
     widgets.drawButton(button, theme, session.draftGridMode == button.id)
+  end
+
+  local animY = contentY + BTN_H + GAP
+  love.graphics.print(
+    "Animate:",
+    rect.x + PANE_PAD_X,
+    animY + math.floor((BTN_H - fontH) / 2)
+  )
+  for _, button in ipairs(ui.animButtons) do
+    local selected = (session.draftStepAnimEnabled and button.id == "on")
+      or (not session.draftStepAnimEnabled and button.id == "off")
+    widgets.drawButton(button, theme, selected)
   end
 
   widgets.drawField(ui.tileField.label, ui.tileField, theme, false, session)
@@ -172,6 +199,14 @@ function M.mousepressed(rect, contentY, session, x, y)
   for _, button in ipairs(ui.modeButtons) do
     if widgets.hitButton(button, x, y) then
       session.draftGridMode = button.id
+      session.draftGridFocus = nil
+      return
+    end
+  end
+
+  for _, button in ipairs(ui.animButtons) do
+    if widgets.hitButton(button, x, y) then
+      session.draftStepAnimEnabled = button.id == "on"
       session.draftGridFocus = nil
       return
     end
@@ -262,10 +297,12 @@ function M.apply(session, config)
   end
 
   local mode = session.draftGridMode == "forced" and "forced" or "auto"
+  local stepAnimEnabled = session.draftStepAnimEnabled ~= false
   if mode == "auto" then
     return {
       mode = "auto",
       tileSize = tileSize,
+      stepAnimEnabled = stepAnimEnabled,
     }
   end
 
@@ -283,6 +320,7 @@ function M.apply(session, config)
     forcedRows = rows,
     forcedCols = cols,
     forcedTileSize = tileSize,
+    stepAnimEnabled = stepAnimEnabled,
   }
 end
 

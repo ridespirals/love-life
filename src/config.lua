@@ -19,6 +19,7 @@ local config = {
   paneBackdropAlpha = 0.55,
   paneScreenMargin = 8,
   stepAnimEnabled = true,
+  stepAnimMinTileSize = 6,
   stepAnimPreviewSec = 0.08,
   stepAnimCommitSec = 0.12,
   previewDotScale = 0.15,

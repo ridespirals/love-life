@@ -14,6 +14,7 @@ function M.create(opts)
     draftRows = nil,
     draftCols = nil,
     draftGridFocus = nil,
+    draftStepAnimEnabled = nil,
     draftRulePresetId = nil,
     draftRuleString = nil,
     draftRuleName = nil,
@@ -61,6 +62,7 @@ function M.resetGridDraft(session, config)
   session.draftTileSize = tostring(config.tileSize)
   session.draftRows = tostring(config.rows)
   session.draftCols = tostring(config.cols)
+  session.draftStepAnimEnabled = config.stepAnimEnabled ~= false
   session.draftGridFocus = nil
   text_field.onFocus(session, session.draftTileSize)
 end

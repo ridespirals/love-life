@@ -6,6 +6,7 @@ local test = require("tests.spec_helper").test
 
 local config = {
   stepAnimEnabled = true,
+  tileSize = 24,
   stepAnimPreviewSec = 0.1,
   stepAnimCommitSec = 0.2,
 }
@@ -45,9 +46,49 @@ test("update advances preview to commit to grid commit", function()
 end)
 
 test("disabled begin requests immediate commit", function()
-  local state = stepAnimation.create({ stepAnimEnabled = false })
+  local state = stepAnimation.create({ stepAnimEnabled = false, tileSize = 24 })
   assert.equal(stepAnimation.begin(state), "commit_immediate")
   assert.isTrue(stepAnimation.isIdle(state))
+end)
+
+test("effectiveEnabled is false when tile size is below minimum", function()
+  assert.isFalse(stepAnimation.effectiveEnabled({
+    stepAnimEnabled = true,
+    tileSize = 5,
+    stepAnimMinTileSize = 6,
+  }))
+  assert.isTrue(stepAnimation.effectiveEnabled({
+    stepAnimEnabled = true,
+    tileSize = 6,
+    stepAnimMinTileSize = 6,
+  }))
+end)
+
+test("create disables animation when tile size is below minimum", function()
+  local state = stepAnimation.create({
+    stepAnimEnabled = true,
+    tileSize = 4,
+    stepAnimMinTileSize = 6,
+  })
+  assert.isFalse(state.enabled)
+  assert.equal(stepAnimation.begin(state), "commit_immediate")
+end)
+
+test("syncEnabled cancels in-flight animation when tile size drops below minimum", function()
+  local state = stepAnimation.create({
+    stepAnimEnabled = true,
+    tileSize = 24,
+    stepAnimPreviewSec = 0.1,
+    stepAnimCommitSec = 0.2,
+  })
+  stepAnimation.begin(state)
+  stepAnimation.syncEnabled(state, {
+    stepAnimEnabled = true,
+    tileSize = 4,
+    stepAnimMinTileSize = 6,
+  })
+  assert.isTrue(stepAnimation.isIdle(state))
+  assert.isFalse(state.enabled)
 end)
 
 test("begin while animating is ignored", function()
@@ -75,6 +116,7 @@ end)
 test("speedScale greater than 1 completes phases faster", function()
   local state = stepAnimation.create({
     stepAnimEnabled = true,
+    tileSize = 24,
     stepAnimPreviewSec = 0.1,
     stepAnimCommitSec = 0.1,
   })
@@ -100,6 +142,7 @@ end)
 test("stepAnimSec splits into preview and commit when phases omitted", function()
   local state = stepAnimation.create({
     stepAnimEnabled = true,
+    tileSize = 24,
     stepAnimSec = 0.3,
   })
   stepAnimation.begin(state)

@@ -113,7 +113,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - **Idle / paused:** `current` on pseudo-3D tiles plus tiny square markers where `current ~= next` (unobtrusive next-state preview).
 - **Step/play:** preview phase animates the marker; commit phase grows/shrinks the square to the new state; `grid.step` runs when both phases complete.
 - **Rendering:** square morphs (not circles); alive tiles extruded (`tileDepthAlivePx`); dead tiles flat or shallow (`tileDepthDeadPx`).
-- Config: `stepAnimEnabled`, `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`. Fast mode scales morph speed and step interval.
+- Config: `stepAnimEnabled`, `stepAnimMinTileSize`, `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`. Fast mode scales morph speed and step interval. Animations are skipped when `stepAnimEnabled` is false or `tileSize` is below `stepAnimMinTileSize` (default 6); Settings pane exposes the On/Off preference.
 - Shipped defaults (see `src/config.lua`): `tileSize` 24, preview min 4px / scale 0.15, alive depth 3px, dead depth 0.
 
 ## Conway Rules Reference

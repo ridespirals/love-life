@@ -4,7 +4,7 @@ Covers the Settings pane for tile size, rows, cols, and the auto-fit vs. forced/
 
 See [`README.md`](README.md) for the cross-area roadmap. Extends [`02-rendering-and-animation.md`](02-rendering-and-animation.md) window layout math and `src/layout.lua` (also touched by [`03-playback.md`](03-playback.md) auto-fit resize). Has an **open interaction** with [`08-camera-and-viewport.md`](08-camera-and-viewport.md) (Phase 6 backlog) — see below.
 
-**Status:** ✓ shipped — Settings pane with Auto/Forced toggle, tile/rows/cols fields, Apply; `layout.computeBoardLayout` letterbox centering; auto resize refits grid, forced resize only recenters.
+**Status:** ✓ shipped — Settings pane with Auto/Forced toggle, Animate On/Off, tile/rows/cols fields, Apply; `layout.computeBoardLayout` letterbox centering; auto resize refits grid, forced resize only recenters. Step morph animations honor `stepAnimEnabled` and are skipped when tile size is below `stepAnimMinTileSize` (default 6).
 
 ## Development order
 
@@ -17,7 +17,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Extends [`02-rendering-
 
 ### Phase 5 — Grid settings pane (auto vs forced) ✓
 
-**Delivers:** Settings pane for tile size, rows, cols, auto-fit toggle.
+**Delivers:** Settings pane for tile size, rows, cols, auto-fit toggle, and step animation On/Off.
 
 Extend `src/layout.lua`:
 

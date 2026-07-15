@@ -23,21 +23,33 @@ end)
 test("resetGridDraft copies applied grid dimensions", function()
   local state = session.create({ gridMode = "forced" })
   state.gridMode = "forced"
-  local cfg = { tileSize = 8, rows = 80, cols = 80 }
+  local cfg = { tileSize = 8, rows = 80, cols = 80, stepAnimEnabled = false }
   session.resetGridDraft(state, cfg)
   assert.equal(state.draftGridMode, "forced")
   assert.equal(state.draftTileSize, "8")
   assert.equal(state.draftRows, "80")
   assert.equal(state.draftCols, "80")
+  assert.isFalse(state.draftStepAnimEnabled)
 end)
 
 test("settings apply accepts auto mode with tile size", function()
   local state = session.create()
   state.draftGridMode = "auto"
   state.draftTileSize = "16"
+  state.draftStepAnimEnabled = true
   local applied = settings_pane.apply(state, {})
   assert.equal(applied.mode, "auto")
   assert.equal(applied.tileSize, 16)
+  assert.isTrue(applied.stepAnimEnabled)
+end)
+
+test("settings apply returns step animation preference", function()
+  local state = session.create()
+  state.draftGridMode = "auto"
+  state.draftTileSize = "12"
+  state.draftStepAnimEnabled = false
+  local applied = settings_pane.apply(state, {})
+  assert.isFalse(applied.stepAnimEnabled)
 end)
 
 test("settings apply accepts forced mode with rows cols and tile", function()

@@ -18,11 +18,27 @@ function M.create(config)
   return {
     phase = PHASE_IDLE,
     elapsed = 0,
-    enabled = config.stepAnimEnabled ~= false,
+    enabled = M.effectiveEnabled(config),
     previewSec = previewSec,
     commitSec = commitSec,
     speedScale = 1,
   }
+end
+
+function M.effectiveEnabled(config)
+  if config.stepAnimEnabled == false then
+    return false
+  end
+  local minTile = config.stepAnimMinTileSize or 6
+  return (config.tileSize or 0) >= minTile
+end
+
+function M.syncEnabled(state, config)
+  local enabled = M.effectiveEnabled(config)
+  if state.enabled and not enabled then
+    M.cancel(state)
+  end
+  state.enabled = enabled
 end
 
 function M.setSpeedScale(state, scale)
