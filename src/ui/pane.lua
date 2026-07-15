@@ -14,16 +14,10 @@ local paneModules = {
   rule = require("src.ui.panes.rule_pane"),
   theme = require("src.ui.panes.theme_pane"),
   pattern = require("src.ui.panes.pattern_pane"),
+  settings = require("src.ui.panes.settings_pane"),
 }
 
 local paneDefs = {
-  settings = {
-    title = "Settings",
-    lines = {
-      "Grid mode, tile size, auto-fit — Phase 5.",
-      "Fullscreen: F11 or Alt+Enter",
-    },
-  },
 }
 
 local function getPaneDef(state)
@@ -352,6 +346,23 @@ function M.textinput(state, session, text)
     return
   end
   return mod.textinput(session, text)
+end
+
+function M.mousemoved(state, session, x, y, theme, config)
+  local mod = getPaneModule(state)
+  if not mod or not mod.mousemoved then
+    return
+  end
+  local rect = M.getRect(config, state)
+  local contentY = rect.y + PANE_PAD_Y + TITLE_GAP
+  mod.mousemoved(rect, contentY, session, x, y)
+end
+
+function M.mousereleased(state, session)
+  local mod = getPaneModule(state)
+  if mod and mod.mousereleased then
+    mod.mousereleased(session)
+  end
 end
 
 return M

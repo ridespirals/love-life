@@ -1,5 +1,6 @@
 local rules = require("src.rules")
 local widgets = require("src.ui.pane_widgets")
+local text_field = require("src.ui.text_field")
 
 local M = {}
 
@@ -48,14 +49,17 @@ end
 
 local function layout(rect, contentY, session)
   local presetButtons = buildPresetButtons()
-  local x = rect.x + PANE_PAD_X
-  local _, _, presetBlockH = widgets.layoutGrid(x, contentY, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
+  local presetsX = rect.x + PANE_PAD_X + LABEL_W
+  local presetMaxW = math.max(PRESET_MIN_W, rect.w - PANE_PAD_X * 2 - LABEL_W)
+  local _, _, presetBlockH = widgets.layoutGrid(presetsX, contentY, presetButtons, BTN_GAP, presetMaxW)
 
   local fieldY = contentY + presetBlockH + GAP
   local field = {
-    x = rect.x + PANE_PAD_X,
+    label = "Rulestring:",
+    labelX = rect.x + PANE_PAD_X,
+    x = rect.x + PANE_PAD_X + LABEL_W,
     y = fieldY,
-    w = rect.w - PANE_PAD_X * 2,
+    w = rect.w - PANE_PAD_X * 2 - LABEL_W,
     h = FIELD_H,
     value = session.draftRuleString or "",
     focused = session.draftRuleFocus == "rulestring",
@@ -113,24 +117,38 @@ end
 
 function M.measure(config)
   local presetButtons = buildPresetButtons()
-  local _, presetW, presetBlockH = widgets.layoutGrid(0, 0, presetButtons, BTN_GAP, PRESET_ROW_MAX_W)
+  local presetMaxW = math.max(PRESET_MIN_W, (config.paneWidth or 360) - PANE_PAD_X * 2 - LABEL_W)
+  local _, presetW, presetBlockH = widgets.layoutGrid(0, 0, presetButtons, BTN_GAP, presetMaxW)
 
   local contentH = presetBlockH + GAP + FIELD_H + GAP + FIELD_H + GAP + BTN_H
   local contentW = config.paneWidth or 360
   local btnRowW = PANE_PAD_X * 2 + APPLY_W + SAVE_W + DELETE_W + BTN_GAP * 2
+  local presetRowW = PANE_PAD_X * 2 + LABEL_W + presetW
+  local fieldRowW = PANE_PAD_X * 2 + LABEL_W + 120
 
-  return math.max(contentW, presetW + PANE_PAD_X * 2, btnRowW), contentH
+  return math.max(contentW, presetRowW, fieldRowW, btnRowW), contentH
 end
 
 function M.draw(rect, contentY, theme, _config, session)
   local ui = layout(rect, contentY, session)
 
+  local fontH = 12
+  if love and love.graphics and love.graphics.getFont then
+    fontH = love.graphics.getFont():getHeight()
+  end
+  love.graphics.setColor(theme.alive[1], theme.alive[2], theme.alive[3], 1)
+  love.graphics.print(
+    "Preset:",
+    rect.x + PANE_PAD_X,
+    contentY + math.floor((BTN_H - fontH) / 2)
+  )
+
   for _, button in ipairs(ui.presetButtons) do
     widgets.drawButton(button, theme, session.draftRulePresetId == button.id)
   end
 
-  widgets.drawField("Rulestring:", ui.field, theme)
-  widgets.drawField(ui.nameField.label, ui.nameField, theme)
+  widgets.drawField(ui.field.label, ui.field, theme, false, session)
+  widgets.drawField(ui.nameField.label, ui.nameField, theme, false, session)
   widgets.drawButton(ui.apply, theme, false)
   widgets.drawButton(ui.save, theme, false)
   widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
@@ -162,21 +180,40 @@ function M.mousepressed(rect, contentY, session, x, y)
 
   if widgets.hitField(ui.field, x, y) then
     session.draftRuleFocus = "rulestring"
+    widgets.focusField(session, session.draftRuleString or "", ui.field, x)
     return
   end
   if widgets.hitField(ui.nameField, x, y) then
     session.draftRuleFocus = "name"
+    widgets.focusField(session, session.draftRuleName or "", ui.nameField, x)
     return
   end
 
   session.draftRuleFocus = false
+  text_field.pointerUp(session)
+end
+
+function M.mousemoved(rect, contentY, session, x, y)
+  if not session.fieldDragging then
+    return
+  end
+  local ui = layout(rect, contentY, session)
+  if session.draftRuleFocus == "rulestring" then
+    text_field.pointerDrag(session, session.draftRuleString or "", ui.field, x)
+  elseif session.draftRuleFocus == "name" then
+    text_field.pointerDrag(session, session.draftRuleName or "", ui.nameField, x)
+  end
+end
+
+function M.mousereleased(session)
+  text_field.pointerUp(session)
 end
 
 function M.textinput(session, text)
   if session.draftRuleFocus == "name" then
     local ch = text
     if ch:match("^[%w%s_%-]$") then
-      session.draftRuleName = (session.draftRuleName or "") .. ch
+      session.draftRuleName = text_field.insert(session, session.draftRuleName or "", ch)
     end
     return
   end
@@ -187,16 +224,16 @@ function M.textinput(session, text)
 
   local ch = text:upper()
   if ch:match("^[%dB/S]$") then
-    session.draftRuleString = (session.draftRuleString or "") .. ch
+    session.draftRuleString = text_field.insert(session, session.draftRuleString or "", ch)
     session.draftRulePresetId = matchPresetId(session.draftRuleString)
   end
 end
 
 function M.keypressed(session, key)
   if session.draftRuleFocus == "name" then
-    if key == "backspace" then
-      local value = session.draftRuleName or ""
-      session.draftRuleName = value:sub(1, #value - 1)
+    local value, consumed = text_field.keypressed(session, session.draftRuleName or "", key)
+    if consumed then
+      session.draftRuleName = value
       return true
     end
     return false
@@ -206,9 +243,9 @@ function M.keypressed(session, key)
     return false
   end
 
-  if key == "backspace" then
-    local value = session.draftRuleString or ""
-    session.draftRuleString = value:sub(1, #value - 1)
+  local value, consumed = text_field.keypressed(session, session.draftRuleString or "", key)
+  if consumed then
+    session.draftRuleString = value
     session.draftRulePresetId = matchPresetId(session.draftRuleString)
     return true
   end

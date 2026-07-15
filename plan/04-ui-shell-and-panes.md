@@ -82,7 +82,8 @@ Session object in `src/session.lua` (shipped field names):
 | `draftRulePresetId`, `draftRuleString`, `draftRuleFocus` | In-progress rule edits before Apply |
 | `draftThemePresetId`, `draftThemeColors`, `draftThemeFocus` | In-progress theme edits (auto-applied when valid) |
 | `draftPatternId` | Selected catalog id in pattern pane |
-| `gridMode` | `"auto"` (default) or `"forced"` (Phase 5) — forced size fields not yet on session |
+| `gridMode` | `"auto"` (default) or `"forced"` ✓ |
+| `draftGridMode`, `draftTileSize`, `draftRows`, `draftCols`, `draftGridFocus` | In-progress grid edits before Apply ✓ |
 
 - **Commit to simulation** (asymmetric by pane):
 
@@ -91,7 +92,7 @@ Session object in `src/session.lua` (shipped field names):
 | Theme | On preset click, or when hex draft becomes valid | Live color swap; **playback continues**; **pane stays open** |
 | Rule | **Apply** button | **Pause**; cancel in-flight step animation; swap rule; `grid.computeNext` (board cells preserved); pane closes |
 | Pattern (Phase 4 ✓) | Apply / Clear | **Pause**; Apply reloads pattern onto board; Clear blanks for drawing |
-| Grid settings (Phase 5) | Apply | **Pause**; rebuild grid; reload active pattern |
+| Grid settings (Phase 5 ✓) | Apply | **Pause**; rebuild grid; reload active pattern (`custom` → blank) |
 
 Opening a pane never pauses playback. Panes block playback **keyboard** shortcuts only — not the `love.update` timer (see [`03-playback.md`](03-playback.md)). Closing a pane (Esc / × / outside click) does **not** discard mid-edit drafts until the pane is reopened (drafts then reset from the applied state via `syncDraftForPane`). Explicit **Discard** is Phase 3.
 - **Save** — write to userspace; assign stable `id` (slug from name). See [`05-persistence.md`](05-persistence.md).

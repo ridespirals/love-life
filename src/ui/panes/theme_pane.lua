@@ -1,6 +1,7 @@
 local themes = require("src.themes")
 local color = require("src.color")
 local widgets = require("src.ui.pane_widgets")
+local text_field = require("src.ui.text_field")
 
 local M = {}
 
@@ -146,7 +147,7 @@ function M.draw(rect, contentY, theme, _config, session)
     widgets.drawColorSwatch(field.swatch, draftPreviewColor(colors, field.id), theme)
   end
 
-  widgets.drawField(ui.nameField.label, ui.nameField, theme)
+  widgets.drawField(ui.nameField.label, ui.nameField, theme, false, session)
   widgets.drawButton(ui.save, theme, false)
   widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
 end
@@ -182,10 +183,24 @@ function M.mousepressed(rect, contentY, session, x, y)
 
   if widgets.hitField(ui.nameField, x, y) then
     session.draftThemeFocus = "name"
+    widgets.focusField(session, session.draftThemeName or "", ui.nameField, x)
     return
   end
 
   session.draftThemeFocus = nil
+  text_field.pointerUp(session)
+end
+
+function M.mousemoved(rect, contentY, session, x, y)
+  if not session.fieldDragging or session.draftThemeFocus ~= "name" then
+    return
+  end
+  local ui = layout(rect, contentY, session)
+  text_field.pointerDrag(session, session.draftThemeName or "", ui.nameField, x)
+end
+
+function M.mousereleased(session)
+  text_field.pointerUp(session)
 end
 
 function M.textinput(session, text)
@@ -194,7 +209,7 @@ function M.textinput(session, text)
   end
   local ch = text
   if ch:match("^[%w%s_%-]$") then
-    session.draftThemeName = (session.draftThemeName or "") .. ch
+    session.draftThemeName = text_field.insert(session, session.draftThemeName or "", ch)
   end
 end
 
@@ -202,9 +217,9 @@ function M.keypressed(session, key)
   if session.draftThemeFocus ~= "name" then
     return false
   end
-  if key == "backspace" then
-    local value = session.draftThemeName or ""
-    session.draftThemeName = value:sub(1, #value - 1)
+  local value, consumed = text_field.keypressed(session, session.draftThemeName or "", key)
+  if consumed then
+    session.draftThemeName = value
     return true
   end
   return false

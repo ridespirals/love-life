@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, playback timer state, auto-fit resize math, step morph timing, status bar/pane hit regions, session drafts, theme registry, and userspace serialize/save round-trips.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, playback timer state, step morph timing, status bar/pane hit regions, session drafts, theme registry, and userspace serialize/save round-trips.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -66,6 +66,8 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `paneHeight` | Minimum docked pane height when open (pixels; default `120`; grows with content) |
 | `paneBackdropAlpha` | Dim overlay strength over the full window when a pane is open (0–1; default `0.55`) |
 | `paneScreenMargin` | Minimum inset from window edges when positioning panes (default `8`) |
+| `gridMode` | `"auto"` (refit rows/cols on resize) or `"forced"` (fixed grid, letterboxed) |
+| `forcedRows`, `forcedCols`, `forcedTileSize` | Starting hints for forced mode (defaults mirror `rows`/`cols`/`tileSize`) |
 | `stepAnimEnabled` | Enable step morph animation (`true`) |
 | `stepAnimPreviewSec` | Preview-marker phase duration (seconds; default `0.08`) |
 | `stepAnimCommitSec` | Square grow/shrink commit phase (seconds; default `0.12`) |
@@ -98,7 +100,9 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.3.0** — Phase 3 userspace save/load (rules, themes, patterns); HSV color picker; Phase 4 pattern picker + paused board drawing (left-drag toggle, right-drag erase, Save to userspace).
 
-**Next:** Phase 5 grid settings — see [`plan/07-grid-settings.md`](plan/07-grid-settings.md).
+**v1.4.0** — Phase 5 grid settings: Auto vs Forced mode, tile/rows/cols Apply, letterboxed forced grid.
+
+**Next:** Phase 6 camera/viewport (backlog) — see [`plan/08-camera-and-viewport.md`](plan/08-camera-and-viewport.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -118,6 +122,8 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Board drawing (paused only):** when playback is paused and no pane/color picker is open, **left-click/drag** toggles cells alive along the stroke; **right-click/drag** erases. Drawing marks the applied pattern as `custom` until you Apply a catalog entry or Save.
 
+**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Apply** pauses playback and rebuilds the grid from the active pattern (`custom` → blank board). Fullscreen hint: F11 or Alt+Enter.
+
 ## Controls
 
 - `space`: toggle play/pause (disabled while a pane is open — mouse Play/Pause still work)
@@ -133,7 +139,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
 - **Board (paused):** left-click/drag toggle cells alive; right-click/drag erase
 
-Resizing the window or toggling fullscreen recomputes grid dimensions to fill the viewport and restarts from the applied pattern (unsaved `custom` → `defaultPattern`; generation resets to 0, playback pauses).
+Resizing the window or toggling fullscreen: in **auto** mode, recomputes grid dimensions and restarts from the applied pattern (unsaved `custom` → blank board; generation resets to 0, playback pauses). In **forced** mode, only recenters the board — dimensions unchanged.
 
 ## RLE Support
 
@@ -154,7 +160,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. In-game settings UI shell + rule/theme/pattern pickers + userspace save/load + board drawing (Phases 1–4 ✓); grid settings planned (Phase 5 — see [`plan/README.md`](plan/README.md))
+5. In-game settings UI + rule/theme/pattern pickers + userspace save/load + board drawing + grid modes (Phases 1–5 ✓); camera/toolbar backlog (Phases 6–8 — see [`plan/README.md`](plan/README.md))
 6. Video export (deferred)
 
 ### Attribution

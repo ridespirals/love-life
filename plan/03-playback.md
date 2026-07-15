@@ -57,7 +57,7 @@ See [`README.md`](README.md) for the cross-area roadmap.
 | File | Status | Phase |
 |------|--------|-------|
 | `src/playback.lua` | exists | M3-A ✓; Phase 0 defers `grid.step` until morph completes |
-| `src/layout.lua` | exists | Post-M3 ✓ auto-fit sizing; Phase 5 adds forced layout |
+| `src/layout.lua` | exists | Post-M3 ✓ auto-fit sizing; Phase 5 ✓ `computeBoardLayout` letterbox |
 | `tests/playback_spec.lua` | exists | M3-A ✓ |
 | `tests/layout_spec.lua` | exists | Post-M3 ✓ resize math |
 

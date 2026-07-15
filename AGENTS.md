@@ -3,14 +3,14 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Phase 4 ✓ (pattern picker + board drawing); **Phase 5** (grid settings) is next. v1.3.0 ready to tag.
+- **Current phase:** Phase 5 ✓ (grid settings); **Phase 6** (camera/viewport, backlog) is next unless resequenced. v1.4.0 ready to tag.
 - **Active branch:** `main`
 - **Last merge:** PR #3 `phase-2-rule-theme` (rule/theme pickers + swatches + `layoutGrid`).
 - **Backlog captured (not started, not sequenced):** camera/viewport, floating toolbar (pan/draw/zoom), controller input layer, reusable button transition fx — see "Backlog: camera, toolbar, controller" below and `plan/08-camera-and-viewport.md`, `plan/09-toolbar-and-drawing-tools.md`, `plan/10-controller-input.md`.
 - A separate `moonscript` experiment branch exists (full logic port to MoonScript); the evaluation doc lived on that branch and is **not** part of the primary Lua roadmap — ignore unless explicitly revisited.
 
 ## Handoff (start here after restart)
-- **Run:** `lua tests/run.lua` (15 specs) · `love .` (visual smoke)
+- **Run:** `lua tests/run.lua` (16 specs) · `love .` (visual smoke)
 - **Shipped UI shell (Phase 1):** `src/ui/pane.lua` (pane docked above opener, full-window dim spotlight), clickable status-bar chips, `Settings` button, `src/session.lua` scaffold; grid does not shift when a pane opens.
 - **Shipped pickers (Phase 2):** `src/ui/panes/rule_pane.lua`, `theme_pane.lua` — rule pane has preset buttons, text field, Apply; theme pane auto-applies on preset click or valid hex edit (live swap, pane stays open) with **color swatches** beside each draft field; `src/ui/pane_widgets.lua` shared controls including `layoutGrid`.
 - **Shipped persistence (Phase 3):** `src/userdata.lua` (serialize/save/load under LÖVE save dir); `rules`/`themes`/`patterns` merge user presets; Rule/Theme/Pattern panes have Name + Save / Delete (built-ins read-only).
@@ -19,7 +19,8 @@
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
-- **Phase 5 scope:** Grid settings pane (auto vs forced letterbox). See `plan/07-grid-settings.md`.
+- **Shipped grid settings (Phase 5):** `src/ui/panes/settings_pane.lua` — Auto/Forced mode, tile/rows/cols fields, Apply; `layout.computeBoardLayout` letterbox centering; auto resize refits grid, forced resize only recenters.
+- **Phase 6+ scope:** Camera/viewport, floating toolbar, controller input — backlog. See `plan/08-camera-and-viewport.md`.
 - **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.
 
 ## Execution Order
@@ -39,12 +40,12 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **Phase 2** ✓ | Rule and theme pickers (rule Apply; theme auto-apply) |
 | **Phase 3** ✓ | Userspace save/load (`src/userdata.lua`) |
 | **Phase 4** ✓ | Pattern picker + board drawing |
-| **Phase 5** | Grid settings (auto vs forced, letterbox) |
+| **Phase 5** ✓ | Grid settings (auto vs forced, letterbox) |
 | **Phase 6** (backlog) | Camera & viewport — pan/zoom, world ≠ visible area (`src/camera.lua`) |
 | **Phase 7** (backlog) | Floating toolbar — pan tool, draw tool, zoom +/− (`src/ui/toolbar.lua`) |
 | **Phase 8** (backlog) | Controller input layer — unified mouse/keyboard/gamepad actions (`src/input/controller.lua`) |
 
-Phase 0 ✓ · Phase 1 ✓ · Phase 2 ✓ · Phase 3 ✓ · Phase 4 ✓. **Next:** Phase 5 (grid settings). Phases 6–8 are backlog items captured for later — not sequenced yet, and camera work (6) may end up pulled earlier since it touches the same coordinate math as Phase 5. See `plan/README.md` for release slices and the full recommended implementation order.
+Phase 0 ✓ · Phase 1 ✓ · Phase 2 ✓ · Phase 3 ✓ · Phase 4 ✓ · Phase 5 ✓. **Next:** Phase 6 (camera/viewport, backlog) or resequence per `plan/README.md`.
 
 See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoints, vision diagram, and file-level detail split by application area).
 
@@ -60,7 +61,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 
 ## Post-1.0 Product Direction
 - Status bar becomes the **primary control surface**: clickable chips open docked panes above the bar.
-- **Draft vs save:** Theme drafts auto-apply while editing; Rule and Pattern use explicit Apply; Grid (Phase 5) will too. Save writes to the LÖVE save directory (`patterns/`, `rules/`, `themes/`).
+- **Draft vs save:** Theme drafts auto-apply while editing; Rule, Pattern, and Grid use explicit Apply. Save writes to the LÖVE save directory (`patterns/`, `rules/`, `themes/`).
 - **Grid modes:** `"auto"` (current resize behavior) or `"forced"` (fixed rows/cols/tileSize with letterbox centering).
 - **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto-fit + pattern restart).
 - Board drawing and editing require paused playback.
@@ -103,7 +104,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - **M3-C** ✓: RLE parser and file resolution in `src/patterns.lua` (`.lua` first, then `.rle`).
 - **Fast mode:** hold `f` → Play button shows `Play +`, step interval `0.05` via `playback.setStepInterval`.
 - `stepInterval` = seconds between auto-generations when playing (config default `0.10`; not shown on status bar).
-- **Resize:** `love.resize` rebuilds the grid to fill the viewport and restarts from the applied pattern (unsaved `custom` falls back to `defaultPattern`).
+- **Resize:** In **auto** mode, `love.resize` refits rows/cols and restarts from the applied pattern (unsaved `custom` → blank board). In **forced** mode, resize only recenters the letterboxed board; dimensions stay fixed until Settings Apply.
 - **Panes open:** playback timer keeps running; only keyboard shortcuts are blocked. Theme selection auto-applies (does not pause). Rule Apply pauses and recomputes `next` under the new rulestring.
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
@@ -146,7 +147,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - `src/ui/color_picker.lua`: modal HSV (saturation×value square + hue bar) dialog.
 - `src/input/board.lua`: screen-to-cell + click drawing (**Phase 4**; behavior superseded by Phase 7 Draw tool once that lands).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**; **Phase 0** defers `grid.step` until morph completes).
-- `src/layout.lua`: viewport-to-grid sizing (`computeGridSize`; **Phase 5** adds forced letterbox layout).
+- `src/layout.lua`: viewport-to-grid sizing (`computeGridSize`; **Phase 5** ✓ forced letterbox via `computeBoardLayout`).
 - `src/util.lua`: shared helpers (`wrap`).
 - `src/camera.lua`: world↔screen transforms, pan/zoom state (**Phase 6**, backlog).
 - `src/ui/toolbar.lua`: always-visible floating panel — pan/draw tool buttons, zoom +/− (**Phase 7**, backlog).
@@ -160,7 +161,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - Run `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE).
 - GitHub Actions (`.github/workflows/test.yml`) runs the same suite on push to `main` and on pull requests.
 - **Release:** `.github/workflows/release.yml` runs on tag push `v*` — tests gate, stages game files, builds `.love` + platform packages via `nhartland/love-build@v1`, publishes to GitHub Releases via `softprops/action-gh-release@v2`.
-- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`; **Phase 6–8 backlog** will add `camera_spec`, `toolbar_spec`, `controller_spec` (mocked input dispatch), and `button_fx_spec`.
+- **Specs:** `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`; **Phase 6–8 backlog** will add `camera_spec`, `toolbar_spec`, `controller_spec` (mocked input dispatch), and `button_fx_spec`.
 - **Covered modules:** `grid`, `rules`, `patterns`, `rle`, `playback`, `layout`, `statusbar`, `step_animation`, `pane`, `session`, `themes`, `userdata`, `color`, `board` (plus post-1.0 modules as phases land).
 - Defer renderer/LÖVE integration tests.
 

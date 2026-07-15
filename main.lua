@@ -12,6 +12,7 @@ local rule_pane = require("src.ui.panes.rule_pane")
 local theme_pane = require("src.ui.panes.theme_pane")
 local board = require("src.input.board")
 local layout = require("src.layout")
+local settings_pane = require("src.ui.panes.settings_pane")
 local stepAnimation = require("src.step_animation")
 local userdata = require("src.userdata")
 local color_picker = require("src.ui.color_picker")
@@ -40,6 +41,8 @@ local function syncDraftForPane(id)
     session.resetThemeDraft(sessionState, theme, themes)
   elseif id == "pattern" then
     session.resetPatternDraft(sessionState, sessionState.appliedPatternId)
+  elseif id == "settings" then
+    session.resetGridDraft(sessionState, config)
   end
 end
 
@@ -255,23 +258,15 @@ local function syncFastMode()
   applyAnimSpeed()
 end
 
-local function resetSimulation(opts)
-  stepAnimation.cancel(animState)
-
-  if opts and opts.resize then
-    local windowWidth, windowHeight = love.graphics.getDimensions()
-    config.rows, config.cols = layout.computeGridSize(
-      windowWidth,
-      windowHeight,
-      config.tileSize,
-      config.statusBarHeight
-    )
-    world = grid.create(config.rows, config.cols)
-  end
-
-  -- Restart reloads the applied pattern; unsaved drawings ("custom") fall
-  -- back to defaultPattern.
+local function reloadAppliedPattern()
   local patternId = sessionState.appliedPatternId
+  if patternId == "custom" then
+    grid.clear(world)
+    grid.computeNext(world, activeRule)
+    playback.restart(playbackState)
+    generation = 0
+    return
+  end
   if not patterns.exists(patternId) then
     patternId = config.defaultPattern
   end
@@ -281,6 +276,31 @@ local function resetSimulation(opts)
   playback.restart(playbackState)
   generation = 0
   sessionState.appliedPatternId = patternId
+end
+
+local function applyAutoGridSize()
+  local windowWidth, windowHeight = love.graphics.getDimensions()
+  config.rows, config.cols = layout.computeGridSize(
+    windowWidth,
+    windowHeight,
+    config.tileSize,
+    config.statusBarHeight
+  )
+end
+
+local function resetSimulation(opts)
+  stepAnimation.cancel(animState)
+
+  if opts and opts.resize then
+    if sessionState.gridMode == "auto" then
+      applyAutoGridSize()
+      world = grid.create(config.rows, config.cols)
+    end
+  elseif opts and opts.rebuild then
+    world = grid.create(config.rows, config.cols)
+  end
+
+  reloadAppliedPattern()
 end
 
 local function restartWorld()
@@ -386,7 +406,36 @@ local function tryBeginBoardStroke(x, y, button)
 end
 
 local function rebuildWorldForWindow()
-  resetSimulation({ resize = true })
+  if sessionState.gridMode == "auto" then
+    resetSimulation({ resize = true })
+  end
+end
+
+local function applyGridSettings()
+  local settings = settings_pane.apply(sessionState, config)
+  if not settings then
+    return
+  end
+
+  playback.pause(playbackState)
+  stepAnimation.cancel(animState)
+  sessionState.gridMode = settings.mode
+  config.gridMode = settings.mode
+  config.tileSize = settings.tileSize
+
+  if settings.mode == "forced" then
+    config.forcedRows = settings.forcedRows
+    config.forcedCols = settings.forcedCols
+    config.forcedTileSize = settings.forcedTileSize
+    config.rows = settings.rows
+    config.cols = settings.cols
+  else
+    applyAutoGridSize()
+  end
+
+  resetSimulation({ rebuild = true })
+  session.resetGridDraft(sessionState, config)
+  pane.close(paneState)
 end
 
 local function toggleFullscreen()
@@ -408,13 +457,22 @@ function love.load()
     ruleId = config.activeRule,
     themeId = config.activeTheme,
     patternId = config.defaultPattern,
+    gridMode = config.gridMode or "auto",
   })
   paneState = pane.create()
   colorPickerState = color_picker.create()
   boardState = board.create()
   fastMode = false
   applyAnimSpeed()
-  rebuildWorldForWindow()
+  if sessionState.gridMode == "forced" then
+    config.rows = config.forcedRows
+    config.cols = config.forcedCols
+    config.tileSize = config.forcedTileSize
+    world = grid.create(config.rows, config.cols)
+    reloadAppliedPattern()
+  else
+    rebuildWorldForWindow()
+  end
 end
 
 function love.resize()
@@ -585,6 +643,8 @@ function love.mousepressed(x, y, button)
       savePatternDraft()
     elseif action == "delete_pattern" then
       deletePatternDraft()
+    elseif action == "apply_grid" then
+      applyGridSettings()
     elseif action == "open_color_picker" then
       openColorPickerForField(sessionState.colorPickField)
     end
@@ -618,6 +678,10 @@ end
 function love.mousemoved(x, y)
   color_picker.mousemoved(colorPickerState, x, y)
 
+  if pane.isOpen(paneState) then
+    pane.mousemoved(paneState, sessionState, x, y, theme, config)
+  end
+
   if board.isDrawing(boardState) then
     local row, col = boardCellAt(x, y)
     if row and board.continueStroke(boardState, world, row, col) then
@@ -634,6 +698,10 @@ function love.mousereleased(x, y, button)
 
   if button ~= 1 then
     return
+  end
+
+  if pane.isOpen(paneState) then
+    pane.mousereleased(paneState, sessionState)
   end
 
   color_picker.mousereleased(colorPickerState)

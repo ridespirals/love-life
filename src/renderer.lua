@@ -1,5 +1,6 @@
 local stepAnimation = require("src.step_animation")
 local themes = require("src.themes")
+local layout = require("src.layout")
 
 local M = {}
 
@@ -48,19 +49,14 @@ end
 
 function M.getLayout(config)
   local windowWidth, windowHeight = love.graphics.getDimensions()
-  local boardWidth = config.cols * config.tileSize
-  local boardHeight = config.rows * config.tileSize
-  local viewportHeight = windowHeight - config.statusBarHeight
-  local offsetX = math.floor((windowWidth - boardWidth) / 2)
-  local offsetY = math.floor((viewportHeight - boardHeight) / 2)
-
-  return {
-    offsetX = offsetX,
-    offsetY = offsetY,
-    boardWidth = boardWidth,
-    boardHeight = boardHeight,
-    tileSize = config.tileSize,
-  }
+  return layout.computeBoardLayout(
+    windowWidth,
+    windowHeight,
+    config.rows,
+    config.cols,
+    config.tileSize,
+    config.statusBarHeight
+  )
 end
 
 local function setColor(color)

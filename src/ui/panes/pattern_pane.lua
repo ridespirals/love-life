@@ -1,5 +1,6 @@
 local patterns = require("src.patterns")
 local widgets = require("src.ui.pane_widgets")
+local text_field = require("src.ui.text_field")
 
 local M = {}
 
@@ -125,7 +126,7 @@ function M.draw(rect, contentY, theme, _config, session)
     widgets.drawButton(button, theme, session.draftPatternId == button.id)
   end
 
-  widgets.drawField(ui.nameField.label, ui.nameField, theme)
+  widgets.drawField(ui.nameField.label, ui.nameField, theme, false, session)
   widgets.drawButton(ui.apply, theme, false)
   widgets.drawButton(ui.clear, theme, false)
   widgets.drawButton(ui.save, theme, false)
@@ -162,10 +163,24 @@ function M.mousepressed(rect, contentY, session, x, y)
 
   if widgets.hitField(ui.nameField, x, y) then
     session.draftPatternFocus = "name"
+    widgets.focusField(session, session.draftPatternName or "", ui.nameField, x)
     return
   end
 
   session.draftPatternFocus = nil
+  text_field.pointerUp(session)
+end
+
+function M.mousemoved(rect, contentY, session, x, y)
+  if not session.fieldDragging or session.draftPatternFocus ~= "name" then
+    return
+  end
+  local ui = layout(rect, contentY, session)
+  text_field.pointerDrag(session, session.draftPatternName or "", ui.nameField, x)
+end
+
+function M.mousereleased(session)
+  text_field.pointerUp(session)
 end
 
 function M.textinput(session, text)
@@ -174,7 +189,7 @@ function M.textinput(session, text)
   end
   local ch = text
   if ch:match("^[%w%s_%-]$") then
-    session.draftPatternName = (session.draftPatternName or "") .. ch
+    session.draftPatternName = text_field.insert(session, session.draftPatternName or "", ch)
   end
 end
 
@@ -182,9 +197,9 @@ function M.keypressed(session, key)
   if session.draftPatternFocus ~= "name" then
     return false
   end
-  if key == "backspace" then
-    local value = session.draftPatternName or ""
-    session.draftPatternName = value:sub(1, #value - 1)
+  local value, consumed = text_field.keypressed(session, session.draftPatternName or "", key)
+  if consumed then
+    session.draftPatternName = value
     return true
   end
   return false

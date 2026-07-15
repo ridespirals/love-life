@@ -1,3 +1,5 @@
+local text_field = require("src.ui.text_field")
+
 local M = {}
 
 local function setColor(color, alpha)
@@ -56,7 +58,8 @@ function M.hitButton(button, x, y)
   return x >= button.x and x <= button.x + button.w and y >= button.y and y <= button.y + button.h
 end
 
-function M.drawField(label, field, theme)
+function M.drawField(label, field, theme, disabled, session)
+  local alpha = disabled and 0.35 or 1
   local labelY = field.y - 14
   if field.labelX then
     local fontH = 12
@@ -65,16 +68,28 @@ function M.drawField(label, field, theme)
     end
     labelY = field.y + math.floor((field.h - fontH) / 2)
   end
-  setColor(theme.alive, 1)
+  setColor(theme.alive, alpha)
   love.graphics.print(label, field.labelX or field.x, labelY)
-  if field.focused then
+  if field.focused and not disabled then
     setColor(theme.alive, 0.2)
     love.graphics.rectangle("fill", field.x, field.y, field.w, field.h)
   end
-  setColor(theme.grid, 1)
+  setColor(theme.grid, alpha)
   love.graphics.rectangle("line", field.x + 0.5, field.y + 0.5, field.w, field.h)
-  setColor(theme.alive, 1)
-  love.graphics.print(field.value, field.x + 4, field.y + 3)
+  text_field.drawContents(field, field.value, theme, session, disabled)
+end
+
+function M.focusField(session, value, field, mouseX)
+  local extend = false
+  if love and love.keyboard then
+    extend = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+  end
+  if extend and session.fieldSelAnchor ~= nil then
+    text_field.pointerDown(session, value, field, mouseX, true)
+  else
+    text_field.onFocus(session, value)
+    text_field.pointerDown(session, value, field, mouseX, false)
+  end
 end
 
 function M.drawColorSwatch(swatch, color, theme)
