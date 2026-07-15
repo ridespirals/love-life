@@ -63,9 +63,9 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - Status bar becomes the **primary control surface**: clickable chips open docked panes above the bar.
 - **Draft vs save:** Theme drafts auto-apply while editing; Rule, Pattern, and Grid use explicit Apply. Save writes to the LÖVE save directory (`patterns/`, `rules/`, `themes/`).
 - **Grid modes:** `"auto"` (current resize behavior) or `"forced"` (fixed rows/cols/tileSize with letterbox centering).
-- **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto-fit + pattern restart).
+- **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto mode migrates live board; forced mode recenters only).
 - Board drawing and editing require paused playback.
-- **Playback continuity:** opening a pane does **not** pause the simulation. Theme selection auto-applies as a live visual swap while play continues. Rule **Apply** pauses and recomputes next-state preview (cells preserved). Pattern **Apply** (Phase 4) and grid **Apply** (Phase 5) pause and reload the board. Only block playback **keyboard** shortcuts while a pane has focus—not the timer in `love.update`.
+- **Playback continuity:** opening a pane does **not** pause the simulation. Theme selection auto-applies as a live visual swap while play continues. Rule **Apply** pauses and recomputes next-state preview (cells preserved). Pattern **Apply** pauses and reloads the board. Grid **Apply** rebuilds dimensions while preserving the live board and playback. Only block playback **keyboard** shortcuts while a pane has focus—not the timer in `love.update`.
 
 ## Backlog: camera, floating toolbar, controller input (Phases 6–8, not started)
 - **Camera/viewport (Phase 6):** separate the simulated world from the visible viewport so patterns can grow beyond the window. Adds `src/camera.lua` (world↔screen transforms, pan, zoom). **Hard constraint:** the initial view at load must remain pixel-identical to today's centered zoom=1 board.
@@ -104,7 +104,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - **M3-C** ✓: RLE parser and file resolution in `src/patterns.lua` (`.lua` first, then `.rle`).
 - **Fast mode:** hold `f` → Play button shows `Play +`, step interval `0.05` via `playback.setStepInterval`.
 - `stepInterval` = seconds between auto-generations when playing (config default `0.10`; not shown on status bar).
-- **Resize:** In **auto** mode, `love.resize` refits rows/cols and restarts from the applied pattern (unsaved `custom` → blank board). In **forced** mode, resize only recenters the letterboxed board; dimensions stay fixed until Settings Apply.
+- **Resize:** In **auto** mode, `love.resize` refits rows/cols and migrates the live board (playback and generation continue). In **forced** mode, resize only recenters the letterboxed board; dimensions stay fixed until Settings Apply.
 - **Panes open:** playback timer keeps running; only keyboard shortcuts are blocked. Theme selection auto-applies (does not pause). Rule Apply pauses and recomputes `next` under the new rulestring.
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 

@@ -81,4 +81,24 @@ function M.isAlive(world, row, col)
   return world.current[row][col]
 end
 
+-- Rebuild buffers at new dimensions, centering the previous board in the
+-- new grid so an in-progress simulation survives grid setting changes.
+function M.resize(world, newRows, newCols)
+  local newWorld = M.create(newRows, newCols)
+  local rowOffset = math.floor((newRows - world.rows) / 2)
+  local colOffset = math.floor((newCols - world.cols) / 2)
+
+  for row = 1, world.rows do
+    for col = 1, world.cols do
+      local destRow = row + rowOffset
+      local destCol = col + colOffset
+      if destRow >= 1 and destRow <= newRows and destCol >= 1 and destCol <= newCols then
+        newWorld.current[destRow][destCol] = world.current[row][col]
+      end
+    end
+  end
+
+  return newWorld
+end
+
 return M

@@ -405,9 +405,31 @@ local function tryBeginBoardStroke(x, y, button)
   return true
 end
 
+local function migrateWorldToGridSize()
+  if not world then
+    return false
+  end
+
+  local oldRows, oldCols = world.rows, world.cols
+  if config.rows == oldRows and config.cols == oldCols then
+    return false
+  end
+
+  stepAnimation.cancel(animState)
+  world = grid.resize(world, config.rows, config.cols)
+  grid.computeNext(world, activeRule)
+  return true
+end
+
 local function rebuildWorldForWindow()
   if sessionState.gridMode == "auto" then
-    resetSimulation({ resize = true })
+    applyAutoGridSize()
+    if not world then
+      world = grid.create(config.rows, config.cols)
+      reloadAppliedPattern()
+      return
+    end
+    migrateWorldToGridSize()
   end
 end
 
@@ -417,8 +439,6 @@ local function applyGridSettings()
     return
   end
 
-  playback.pause(playbackState)
-  stepAnimation.cancel(animState)
   sessionState.gridMode = settings.mode
   config.gridMode = settings.mode
   config.tileSize = settings.tileSize
@@ -433,7 +453,13 @@ local function applyGridSettings()
     applyAutoGridSize()
   end
 
-  resetSimulation({ rebuild = true })
+  if not world then
+    world = grid.create(config.rows, config.cols)
+    grid.computeNext(world, activeRule)
+  else
+    migrateWorldToGridSize()
+  end
+
   session.resetGridDraft(sessionState, config)
   pane.close(paneState)
 end

@@ -122,7 +122,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Board drawing (paused only):** when playback is paused and no pane/color picker is open, **left-click/drag** toggles cells alive along the stroke; **right-click/drag** erases. Drawing marks the applied pattern as `custom` until you Apply a catalog entry or Save.
 
-**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Apply** pauses playback and rebuilds the grid from the active pattern (`custom` → blank board). Fullscreen hint: F11 or Alt+Enter.
+**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Apply** rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
 
 ## Controls
 
@@ -139,7 +139,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
 - **Board (paused):** left-click/drag toggle cells alive; right-click/drag erase
 
-Resizing the window or toggling fullscreen: in **auto** mode, recomputes grid dimensions and restarts from the applied pattern (unsaved `custom` → blank board; generation resets to 0, playback pauses). In **forced** mode, only recenters the board — dimensions unchanged.
+Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimensions and migrates the live board (playback and generation continue). In **forced** mode, only recenters the board — dimensions unchanged.
 
 ## RLE Support
 
