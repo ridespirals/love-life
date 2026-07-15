@@ -15,7 +15,9 @@ function M.create(opts)
     draftThemeColors = nil,
     draftThemeName = nil,
     draftThemeFocus = nil,
-    draftPatternId = nil,
+    draftPatternId = opts.patternId,
+    draftPatternName = opts.patternId,
+    draftPatternFocus = nil,
   }
 end
 
@@ -24,6 +26,12 @@ function M.resetRuleDraft(session, rule)
   session.draftRuleString = rule.rulestring
   session.draftRuleName = rule.name
   session.draftRuleFocus = false
+end
+
+function M.resetPatternDraft(session, patternId)
+  session.draftPatternId = patternId
+  session.draftPatternName = patternId
+  session.draftPatternFocus = nil
 end
 
 function M.resetThemeDraft(session, theme, themes)

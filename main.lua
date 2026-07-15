@@ -10,6 +10,7 @@ local pane = require("src.ui.pane")
 local session = require("src.session")
 local rule_pane = require("src.ui.panes.rule_pane")
 local theme_pane = require("src.ui.panes.theme_pane")
+local board = require("src.input.board")
 local layout = require("src.layout")
 local stepAnimation = require("src.step_animation")
 local userdata = require("src.userdata")
@@ -28,6 +29,7 @@ local fastPlayMouse = false
 local paneState
 local sessionState
 local colorPickerState
+local boardState
 local FAST_STEP_INTERVAL = 0.05
 local FAST_ANIM_SPEED_MULTIPLIER = 4
 
@@ -36,6 +38,8 @@ local function syncDraftForPane(id)
     session.resetRuleDraft(sessionState, activeRule)
   elseif id == "theme" then
     session.resetThemeDraft(sessionState, theme, themes)
+  elseif id == "pattern" then
+    session.resetPatternDraft(sessionState, sessionState.appliedPatternId)
   end
 end
 
@@ -265,15 +269,120 @@ local function resetSimulation(opts)
     world = grid.create(config.rows, config.cols)
   end
 
-  patterns.apply(world, config.defaultPattern)
+  -- Restart reloads the applied pattern; unsaved drawings ("custom") fall
+  -- back to defaultPattern.
+  local patternId = sessionState.appliedPatternId
+  if not patterns.exists(patternId) then
+    patternId = config.defaultPattern
+  end
+
+  patterns.apply(world, patternId)
   grid.computeNext(world, activeRule)
   playback.restart(playbackState)
   generation = 0
-  sessionState.appliedPatternId = config.defaultPattern
+  sessionState.appliedPatternId = patternId
 end
 
 local function restartWorld()
   resetSimulation()
+end
+
+local function applyPatternDraft()
+  local id = sessionState.draftPatternId
+  if not id or not patterns.exists(id) then
+    return
+  end
+
+  -- Apply policy: pause and reload the board from the picked pattern.
+  playback.pause(playbackState)
+  stepAnimation.cancel(animState)
+  patterns.apply(world, id)
+  grid.computeNext(world, activeRule)
+  generation = 0
+  sessionState.appliedPatternId = id
+  pane.close(paneState)
+end
+
+local function clearBoard()
+  -- "New pattern" workflow: blank paused board, ready for drawing.
+  playback.pause(playbackState)
+  stepAnimation.cancel(animState)
+  grid.clear(world)
+  grid.computeNext(world, activeRule)
+  generation = 0
+  sessionState.appliedPatternId = "custom"
+  pane.close(paneState)
+end
+
+local function savePatternDraft()
+  local id = userdata.slugify(sessionState.draftPatternName or "")
+  if id == "" then
+    return
+  end
+  if patterns.isBuiltin(id) then
+    return
+  end
+
+  local exported = patterns.fromWorld(world)
+  local saved = userdata.save("patterns", id, {
+    id = id,
+    name = sessionState.draftPatternName,
+    cells = exported.cells,
+  })
+  if not saved then
+    return
+  end
+
+  patterns.loadUser(userdata)
+  sessionState.appliedPatternId = id
+  session.resetPatternDraft(sessionState, id)
+end
+
+local function deletePatternDraft()
+  local id = sessionState.draftPatternId
+  if not patterns.isUser(id) then
+    return
+  end
+
+  userdata.delete("patterns", id)
+  patterns.loadUser(userdata)
+
+  if sessionState.appliedPatternId == id then
+    sessionState.appliedPatternId = config.defaultPattern
+    resetSimulation()
+  end
+  session.resetPatternDraft(sessionState, sessionState.appliedPatternId)
+end
+
+local function canDrawOnBoard()
+  return not playbackState.running
+    and not pane.isOpen(paneState)
+    and not color_picker.isOpen(colorPickerState)
+    and stepAnimation.isIdle(animState)
+end
+
+local function boardCellAt(x, y)
+  return board.screenToCell(x, y, renderer.getLayout(config), world)
+end
+
+local function markBoardEdited()
+  grid.computeNext(world, activeRule)
+  sessionState.appliedPatternId = "custom"
+end
+
+local function tryBeginBoardStroke(x, y, button)
+  if not canDrawOnBoard() then
+    return false
+  end
+
+  local row, col = boardCellAt(x, y)
+  if not row then
+    return false
+  end
+
+  board.beginStroke(boardState, world, row, col, button)
+  markBoardEdited()
+  return true
 end
 
 local function rebuildWorldForWindow()
@@ -289,6 +398,7 @@ function love.load()
   userdata.ensureDirs()
   rules.loadUser(userdata)
   themes.loadUser(userdata)
+  patterns.loadUser(userdata)
 
   activeRule = rules.get(config.activeRule)
   theme = themes.get(config.activeTheme)
@@ -301,6 +411,7 @@ function love.load()
   })
   paneState = pane.create()
   colorPickerState = color_picker.create()
+  boardState = board.create()
   fastMode = false
   applyAnimSpeed()
   rebuildWorldForWindow()
@@ -412,6 +523,11 @@ function love.textinput(text)
 end
 
 function love.mousepressed(x, y, button)
+  if button == 2 then
+    tryBeginBoardStroke(x, y, 2)
+    return
+  end
+
   if button ~= 1 then
     return
   end
@@ -461,14 +577,24 @@ function love.mousepressed(x, y, button)
       saveThemeDraft()
     elseif action == "delete_theme" then
       deleteThemeDraft()
+    elseif action == "apply_pattern" then
+      applyPatternDraft()
+    elseif action == "clear_board" then
+      clearBoard()
+    elseif action == "save_pattern" then
+      savePatternDraft()
+    elseif action == "delete_pattern" then
+      deletePatternDraft()
     elseif action == "open_color_picker" then
       openColorPickerForField(sessionState.colorPickField)
     end
     return
   end
 
+  local dismissedPane = false
   if pane.isOpen(paneState) then
     pane.close(paneState)
+    dismissedPane = true
   end
 
   if hit == "play" then
@@ -482,18 +608,36 @@ function love.mousepressed(x, y, button)
   elseif hit == "restart" then
     restartWorld()
   end
+  if hit or dismissedPane then
+    return
+  end
+
+  tryBeginBoardStroke(x, y, 1)
 end
 
 function love.mousemoved(x, y)
   color_picker.mousemoved(colorPickerState, x, y)
+
+  if board.isDrawing(boardState) then
+    local row, col = boardCellAt(x, y)
+    if row and board.continueStroke(boardState, world, row, col) then
+      markBoardEdited()
+    end
+  end
 end
 
 function love.mousereleased(x, y, button)
+  if button == 2 then
+    board.endStroke(boardState)
+    return
+  end
+
   if button ~= 1 then
     return
   end
 
   color_picker.mousereleased(colorPickerState)
+  board.endStroke(boardState)
 
   if fastPlayMouse then
     fastPlayMouse = false

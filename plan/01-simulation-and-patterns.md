@@ -164,14 +164,15 @@ return {
 | `src/config.lua` | exists | M2-A `activeRule`; M2-B `defaultPattern` |
 | `src/grid.lua` | exists | M2-A ✓ rules param; M2-B ✓ removed `seedGlider` |
 | `src/rules.lua` | exists | M2-A ✓ |
-| `src/patterns.lua` | exists | M2-B ✓; M3-C ✓ shared stamp + RLE resolution |
+| `src/patterns.lua` | exists | M2-B ✓; M3-C ✓ shared stamp + RLE resolution; Phase 4 ✓ `fromWorld`, `loadUser`, user merge |
 | `src/patterns/rle.lua` | exists | M3-C ✓ |
 | `src/util.lua` | exists | Post-M3 ✓ shared `wrap` helper |
 | `patterns/*.lua` | exists (core) | M2-B ✓ |
 | `patterns/*.rle` | exists (`pulsar`, `gosper_glider_gun`, `lifeview`) | M3-C ✓ |
 | `tests/grid_spec.lua` | exists | M2-A update for rules param |
 | `tests/rules_spec.lua` | exists | M2-A ✓ |
-| `tests/patterns_spec.lua` | exists | M2-B ✓; M3-C ✓ RLE load path |
+| `tests/patterns_spec.lua` | exists | M2-B ✓; M3-C ✓ RLE load path; Phase 4 ✓ `fromWorld`, `loadUser` |
+| `tests/board_spec.lua` | exists | Phase 4 ✓ |
 | `tests/rle_spec.lua` | exists | M3-C ✓ |
 
 ## TODO tracking

@@ -9,9 +9,9 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 ## Plan status
 
 - **Branch:** `main`
-- **Version:** v1.2.0 tagged; Phase 2 ✓ (merged via PR #3)
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load)
-- **Next:** Phase 4 pattern picker + board drawing → Phase 5
+- **Version:** v1.3.0 ready to tag; Phase 4 ✓
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load), Phase 4 (pattern picker + board drawing)
+- **Next:** Phase 5 grid settings
 - **Backlog (not started, not sequenced):** Phase 6 (camera/viewport), Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer), reusable button transition fx
 
 ## Directory map
@@ -61,7 +61,7 @@ flowchart TD
   P1[Phase 1 UI shell ✓]
   P2[Phase 2 Rule/Theme pickers ✓]
   P3[Phase 3 Userspace save/load ✓]
-  P4[Phase 4 Pattern picker + drawing]
+  P4[Phase 4 Pattern picker + drawing ✓]
   P5[Phase 5 Grid settings pane]
   P6[Phase 6 Camera and viewport]
   P7[Phase 7 Floating toolbar: pan and draw tools]
@@ -79,7 +79,7 @@ flowchart TD
 
 ### Recommended implementation order (post-1.0)
 
-Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 ✓. Phase 3 ✓. **Start Phase 4 next.**
+Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 ✓. Phase 3 ✓. Phase 4 ✓. **Start Phase 5 next.**
 
 | Step | Phase | Rationale |
 |------|-------|-----------|
@@ -89,9 +89,9 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 �
 | 4 | **2 — Rule + theme pickers** ✓ | Rule Apply + theme auto-apply; validates pane UX without disk I/O |
 | 5 | **3a — `userdata.lua`** ✓ | Persistence API + catalog merge + unit tests |
 | 6 | **3b — Save UI** ✓ | Save / Delete on rule + theme panes |
-| 7 | **4a — Pattern picker** | Catalog list + Load (no drawing yet); **next** |
-| 8 | **4b — Board drawing** | Superseded in mechanism by Phase 7's Draw tool once that lands — see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) |
-| 9 | **5 — Grid settings** | Auto vs forced letterbox last; changes global resize policy |
+| 7 | **4a — Pattern picker** ✓ | Catalog list + Apply |
+| 8 | **4b — Board drawing** ✓ | Paused left/right drag drawing; superseded in mechanism by Phase 7 Draw tool once that lands |
+| 9 | **5 — Grid settings** | Auto vs forced letterbox last; changes global resize policy — **next** |
 | 10 | **6 — Camera & viewport** (backlog) | See sequencing note above — may move earlier |
 | 11 | **7 — Floating toolbar** (backlog) | Depends on Phase 6 coordinate transforms |
 | 12 | **8 — Controller input** (backlog) | Deliberately separate from mouse/keyboard UI work |
@@ -102,8 +102,8 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phase 1 ✓. Phase 2 �
 |---------|----------|
 | v1.1 | Fullscreen (1a) + Phase 0 animation (square preview→commit, 3D tiles) — shipped |
 | v1.2 | Phase 1 shell + Phase 2 pickers (rule Apply; theme auto-apply) — shipped |
-| v1.3 | Phase 3 persistence + Phase 4a pattern picker |
-| v1.4 | Phase 4b board drawing + Phase 5 grid settings |
+| v1.3 | Phase 3 persistence + HSV color picker + Phase 4 pattern picker + board drawing — ready to tag |
+| v1.4 | Phase 5 grid settings |
 
 ## Entry point files
 

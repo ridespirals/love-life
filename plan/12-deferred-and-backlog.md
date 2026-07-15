@@ -27,7 +27,7 @@ Items explicitly not scheduled, historical items superseded by a phase that now 
 The items below remain tracked for history; implementation is covered by Phases 0–8 unless noted as deferred above.
 
 - ~~Step backward via generation **history stack**~~ — **deferred** (needs `grid.clone` / snapshot helper, see [`03-playback.md`](03-playback.md))
-- ~~Click-to-toggle cells~~ — **Phase 4** (board drawing, see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md); mechanism later superseded by Phase 7 Draw tool)
+- ~~Click-to-toggle cells~~ — **Phase 4** ✓ (board drawing, see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md); mechanism later superseded by Phase 7 Draw tool)
 - ~~Pattern picker UI (cycle/load catalog at runtime)~~ — **Phase 4**
 - ~~Runtime rule / theme switching (keyboard/UI picker)~~ — **Phases 2–3** (see [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md), [`05-persistence.md`](05-persistence.md))
 - ~~More built-in rule presets and themes~~ — **Phase 3** userspace + optional built-in expansion

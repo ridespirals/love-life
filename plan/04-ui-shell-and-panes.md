@@ -81,7 +81,7 @@ Session object in `src/session.lua` (shipped field names):
 | `appliedRuleId`, `appliedThemeId`, `appliedPatternId` | Last applied catalog ids (Theme chip label uses live `theme.name`, kept in sync with `appliedThemeId`) |
 | `draftRulePresetId`, `draftRuleString`, `draftRuleFocus` | In-progress rule edits before Apply |
 | `draftThemePresetId`, `draftThemeColors`, `draftThemeFocus` | In-progress theme edits (auto-applied when valid) |
-| `draftPatternId` | Scaffold for Phase 4 |
+| `draftPatternId` | Selected catalog id in pattern pane |
 | `gridMode` | `"auto"` (default) or `"forced"` (Phase 5) — forced size fields not yet on session |
 
 - **Commit to simulation** (asymmetric by pane):
@@ -90,7 +90,7 @@ Session object in `src/session.lua` (shipped field names):
 |------|------|----------|
 | Theme | On preset click, or when hex draft becomes valid | Live color swap; **playback continues**; **pane stays open** |
 | Rule | **Apply** button | **Pause**; cancel in-flight step animation; swap rule; `grid.computeNext` (board cells preserved); pane closes |
-| Pattern (Phase 4) | Apply / Load | **Pause**; reload pattern onto board; reset generation |
+| Pattern (Phase 4 ✓) | Apply / Clear | **Pause**; Apply reloads pattern onto board; Clear blanks for drawing |
 | Grid settings (Phase 5) | Apply | **Pause**; rebuild grid; reload active pattern |
 
 Opening a pane never pauses playback. Panes block playback **keyboard** shortcuts only — not the `love.update` timer (see [`03-playback.md`](03-playback.md)). Closing a pane (Esc / × / outside click) does **not** discard mid-edit drafts until the pane is reopened (drafts then reset from the applied state via `syncDraftForPane`). Explicit **Discard** is Phase 3.
@@ -245,8 +245,8 @@ No `conf.lua` change required — `resizable = true` already set.
 - [x] **Phase 2** — Rule and theme pickers (rule Apply; theme auto-apply)
 
 ### Superseded by later phases (mark complete when phase ships)
-- [ ] Add click-to-toggle cell state → Phase 4 (see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md))
-- [ ] Pattern picker UI (cycle/load catalog entries at runtime) → Phase 4
+- [x] Add click-to-toggle cell state → Phase 4 (see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md))
+- [x] Pattern picker UI (cycle/load catalog entries at runtime) → Phase 4
 - [x] Add runtime rule switching (keyboard/UI picker) → Phases 2–3
 - [x] Add runtime theme switching (keyboard/UI picker) → Phases 2–3
 - [ ] Add more built-in rule presets beyond `conway`, `ant_colony` → Phase 3 userspace

@@ -48,7 +48,7 @@ test("getHeight is zero when closed and at least min height when open", function
   local state = pane.create()
   assert.equal(pane.getHeight(config, state), 0)
   pane.open(state, "pattern", anchor)
-  assert.equal(pane.getHeight(config, state), 120)
+  assert.isTrue(pane.getHeight(config, state) >= 120)
 end)
 
 test("hitTestClose detects close button when pane open", function()

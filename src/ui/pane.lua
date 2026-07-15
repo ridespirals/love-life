@@ -13,15 +13,10 @@ local titleFont
 local paneModules = {
   rule = require("src.ui.panes.rule_pane"),
   theme = require("src.ui.panes.theme_pane"),
+  pattern = require("src.ui.panes.pattern_pane"),
 }
 
 local paneDefs = {
-  pattern = {
-    title = "Patterns",
-    lines = {
-      "Pattern catalog, New / Edit / Save — Phase 4.",
-    },
-  },
   settings = {
     title = "Settings",
     lines = {

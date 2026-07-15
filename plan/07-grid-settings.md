@@ -4,7 +4,7 @@ Covers the Settings pane for tile size, rows, cols, and the auto-fit vs. forced/
 
 See [`README.md`](README.md) for the cross-area roadmap. Extends [`02-rendering-and-animation.md`](02-rendering-and-animation.md) window layout math and `src/layout.lua` (also touched by [`03-playback.md`](03-playback.md) auto-fit resize). Has an **open interaction** with [`08-camera-and-viewport.md`](08-camera-and-viewport.md) (Phase 6 backlog) — see below.
 
-**Status:** not started; comes after Phase 4.
+**Status:** not started; comes after Phase 4 ✓.
 
 ## Development order
 

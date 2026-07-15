@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec`), `src/themes.lua`, and `src/userdata.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, playback timer state, auto-fit resize math, step morph timing, status bar/pane hit regions, session drafts, theme registry, and userspace serialize/save round-trips.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, playback timer state, auto-fit resize math, step morph timing, status bar/pane hit regions, session drafts, theme registry, and userspace serialize/save round-trips.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -96,9 +96,9 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.2.0** — Phase 1 settings UI shell + Phase 2 rule/theme pickers (rule Apply; theme auto-apply).
 
-**Phase 3 ✓** — userspace save/load for rules and themes (`src/userdata.lua`; Save/Delete on panes; built-ins protected).
+**v1.3.0** — Phase 3 userspace save/load (rules, themes, patterns); HSV color picker; Phase 4 pattern picker + paused board drawing (left-drag toggle, right-drag erase, Save to userspace).
 
-**Next:** Phase 4 pattern picker + board drawing — see [`plan/06-pattern-picker-and-drawing.md`](plan/06-pattern-picker-and-drawing.md).
+**Next:** Phase 5 grid settings — see [`plan/07-grid-settings.md`](plan/07-grid-settings.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -112,7 +112,11 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept). Enter a **Name** and **Save** to keep a custom rule in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved rule.
 
-**Theme pane:** pick a preset or click a color field/swatch to open the **HSV color picker** (saturation×value square + hue bar). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. Leave `accent` blank / clearable via a white default pick to fall back to plain shadow shading. **Save** / **Delete** work like the rule pane for user themes.
+**Theme pane:** pick a preset or click a color field/swatch to open the **HSV color picker** (saturation×value square + hue bar + value slider). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. Leave `accent` blank / clearable via a white default pick to fall back to plain shadow shading. **Save** / **Delete** work like the rule pane for user themes.
+
+**Pattern pane:** pick a catalog preset, then **Apply** (pauses playback and reloads the board from that pattern). **Clear** blanks the board for drawing. Enter a **Name** and **Save** to store the current board in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved pattern. Unsaved edits show as `Pattern: custom` on the status bar.
+
+**Board drawing (paused only):** when playback is paused and no pane/color picker is open, **left-click/drag** toggles cells alive along the stroke; **right-click/drag** erases. Drawing marks the applied pattern as `custom` until you Apply a catalog entry or Save.
 
 ## Controls
 
@@ -120,15 +124,16 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation
-- `r`: restart (reload `defaultPattern`, pause playback)
+- `r`: restart (reload applied pattern; unsaved `custom` falls back to `defaultPattern`, pause playback)
 - `Esc` or click outside the pane: close open settings pane
 - Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)
 - `F11` or `Alt+Enter`: toggle fullscreen (restarts simulation, same as window resize)
 - `q`: quit app
 - Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)
 - Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
+- **Board (paused):** left-click/drag toggle cells alive; right-click/drag erase
 
-Resizing the window or toggling fullscreen recomputes grid dimensions to fill the viewport and restarts the simulation from `defaultPattern` (generation resets to 0, playback pauses).
+Resizing the window or toggling fullscreen recomputes grid dimensions to fill the viewport and restarts from the applied pattern (unsaved `custom` → `defaultPattern`; generation resets to 0, playback pauses).
 
 ## RLE Support
 
@@ -149,7 +154,7 @@ Resizing the window or toggling fullscreen recomputes grid dimensions to fill th
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. In-game settings UI shell + rule/theme pickers + userspace save/load (Phases 1–3 ✓); pattern editor planned (Phases 4–5 — see [`plan/README.md`](plan/README.md))
+5. In-game settings UI shell + rule/theme/pattern pickers + userspace save/load + board drawing (Phases 1–4 ✓); grid settings planned (Phase 5 — see [`plan/README.md`](plan/README.md))
 6. Video export (deferred)
 
 ### Attribution

@@ -199,6 +199,25 @@ test("rules loadUser merges user presets and protects builtins", function()
   end)
 end)
 
+test("validate accepts pattern records with cells table", function()
+  local valid = userdata.validate("patterns", {
+    id = "my_block",
+    name = "My Block",
+    cells = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 } },
+  })
+  assert.equal(valid.id, "my_block")
+  assert.equal(#valid.cells, 4)
+end)
+
+test("validate rejects pattern records without cells", function()
+  local ok, err = userdata.validate("patterns", {
+    id = "bad",
+    name = "Bad",
+  })
+  assert.equal(ok, nil)
+  assert.isTrue(err ~= nil)
+end)
+
 test("themes loadUser merges user presets with optional accent", function()
   withLoveMock(memoryFilesystem(), function()
     userdata.save("themes", "ink", {

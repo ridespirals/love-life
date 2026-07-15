@@ -34,7 +34,7 @@ All user-created assets live under the LÖVE save directory (shareable, outside 
 
 ```
 <saveDirectory>/
-  patterns/<id>.lua      # { id, name, cells = {{col,row}, ...} } (Phase 4)
+  patterns/<id>.lua      # { id, name, cells = {{col,row}, ...} } (Phase 4 ✓)
   rules/<id>.lua         # { id, name, rulestring = "B3/S23" }
   themes/<id>.lua        # { id, name, alive, dead, grid, background, accent? } hex strings
 ```
@@ -44,7 +44,7 @@ Module: `src/userdata.lua`
 - `ensureDirs()`, `list(type)`, `load(type, id)`, `save(type, id, data)`, `delete(type, id)`
 - Pure-Lua serialization helpers (testable without LÖVE) + thin `love.filesystem` IO wrapper
 
-**Catalog merge:** `rules.loadUser` / `themes.loadUser`:
+**Catalog merge:** `rules.loadUser` / `themes.loadUser` / `patterns.loadUser`:
 - Built-ins first, then user entries from save dir
 - Built-in ids never overwritten by user files
 - `list()` returns merged ids; `get(id)` checks built-in → user → fallback
