@@ -438,6 +438,34 @@ local function applyGridSettings()
   pane.close(paneState)
 end
 
+local function dispatchPaneAction(action)
+  if action == "apply_rule" then
+    applyRuleDraft()
+  elseif action == "apply_theme" then
+    applyThemeDraft()
+  elseif action == "save_rule" then
+    saveRuleDraft()
+  elseif action == "delete_rule" then
+    deleteRuleDraft()
+  elseif action == "save_theme" then
+    saveThemeDraft()
+  elseif action == "delete_theme" then
+    deleteThemeDraft()
+  elseif action == "apply_pattern" then
+    applyPatternDraft()
+  elseif action == "clear_board" then
+    clearBoard()
+  elseif action == "save_pattern" then
+    savePatternDraft()
+  elseif action == "delete_pattern" then
+    deletePatternDraft()
+  elseif action == "apply_grid" then
+    applyGridSettings()
+  elseif action == "open_color_picker" then
+    openColorPickerForField(sessionState.colorPickField)
+  end
+end
+
 local function toggleFullscreen()
   local fullscreen, fstype = love.window.getFullscreen()
   love.window.setFullscreen(not fullscreen, fstype or "desktop")
@@ -534,6 +562,10 @@ function love.keypressed(key)
 
   if pane.isOpen(paneState) then
     local paneAction = pane.keypressed(paneState, sessionState, key)
+    if type(paneAction) == "string" then
+      dispatchPaneAction(paneAction)
+      return
+    end
     if paneAction then
       return
     end
@@ -623,31 +655,7 @@ function love.mousepressed(x, y, button)
 
   if pane.hitTestPane(config, paneState, x, y) then
     local action = pane.mousepressed(paneState, sessionState, x, y, theme, config)
-    if action == "apply_rule" then
-      applyRuleDraft()
-    elseif action == "apply_theme" then
-      applyThemeDraft()
-    elseif action == "save_rule" then
-      saveRuleDraft()
-    elseif action == "delete_rule" then
-      deleteRuleDraft()
-    elseif action == "save_theme" then
-      saveThemeDraft()
-    elseif action == "delete_theme" then
-      deleteThemeDraft()
-    elseif action == "apply_pattern" then
-      applyPatternDraft()
-    elseif action == "clear_board" then
-      clearBoard()
-    elseif action == "save_pattern" then
-      savePatternDraft()
-    elseif action == "delete_pattern" then
-      deletePatternDraft()
-    elseif action == "apply_grid" then
-      applyGridSettings()
-    elseif action == "open_color_picker" then
-      openColorPickerForField(sessionState.colorPickField)
-    end
+    dispatchPaneAction(action)
     return
   end
 

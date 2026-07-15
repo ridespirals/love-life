@@ -230,6 +230,10 @@ function M.textinput(session, text)
 end
 
 function M.keypressed(session, key)
+  if key == "return" and session.draftRuleFocus then
+    return "apply_rule"
+  end
+
   if session.draftRuleFocus == "name" then
     local value, consumed = text_field.keypressed(session, session.draftRuleName or "", key)
     if consumed then

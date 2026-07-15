@@ -194,6 +194,10 @@ function M.textinput(session, text)
 end
 
 function M.keypressed(session, key)
+  if key == "return" and session.draftPatternFocus == "name" then
+    return "apply_pattern"
+  end
+
   if session.draftPatternFocus ~= "name" then
     return false
   end

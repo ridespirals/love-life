@@ -235,6 +235,10 @@ function M.textinput(session, text)
 end
 
 function M.keypressed(session, key)
+  if key == "return" and session.draftGridFocus then
+    return "apply_grid"
+  end
+
   local focus = session.draftGridFocus
   if not focus then
     return false
