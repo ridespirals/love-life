@@ -43,7 +43,8 @@ See [`README.md`](README.md) for the cross-area roadmap. Related: [`01-simulatio
 - **Auto-fit grid:** at load and on every resize, `rows` and `cols` are recomputed as `floor(viewport / tileSize)` (minimum `1×1`), where viewport height excludes `statusBarHeight`. (Layout math itself lives in `src/layout.lua`; forced/letterbox mode is Phase 5, see [`07-grid-settings.md`](07-grid-settings.md).)
 - Board pixel size = `cols * tileSize` × `rows * tileSize`.
 - Renderer computes board offset from `love.graphics.getDimensions()` so centering survives resize.
-- **Resize restarts simulation:** rebuild world, reapply `defaultPattern`, reset generation and playback (tradeoff: no cell-state preservation on resize).
+- **Resize behavior (Phase 5 ✓):** in **auto** mode, window resize refits `rows`/`cols` and migrates the live board (`grid.resize`); playback and generation continue. **Restart** reloads the applied pattern. Forced mode recenters only until Settings Apply changes dimensions — see [`07-grid-settings.md`](07-grid-settings.md).
+- **Historical (pre–Phase 5):** resize restarted from `defaultPattern` with generation reset.
 - **Hard constraint for Phase 6 (camera, backlog):** the load-time view must remain pixel-identical to this behavior at zoom = 1 — see [`08-camera-and-viewport.md`](08-camera-and-viewport.md).
 
 ### Coordinate conventions

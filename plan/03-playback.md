@@ -23,7 +23,7 @@ See [`README.md`](README.md) for the cross-area roadmap.
 - **Generation counter** ✓ — status bar shows `Gen: N` (display lives in [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md)).
 - **Fast mode** ✓ — hold `f` for `Play +` label and `0.05` step interval via `playback.setStepInterval`.
 - **Restart control** ✓ — `r` key and status bar Restart button.
-- **Auto-fit grid on load and resize** ✓ — `src/layout.lua` computes `rows`/`cols` from window size and `tileSize`; `love.load` and `love.resize` rebuild world and restart from `defaultPattern` (generation and playback reset). See [`07-grid-settings.md`](07-grid-settings.md) for the Phase 5 forced-mode alternative.
+- **Auto-fit grid on load and resize** ✓ — `src/layout.lua` computes `rows`/`cols` from window size and `tileSize`. In **auto** mode, `love.load` and `love.resize` refit dimensions and **migrate** the live board via `grid.resize` (playback and generation continue). **Restart** still reloads from the applied pattern. See [`07-grid-settings.md`](07-grid-settings.md) for forced-mode letterboxing.
 - **Deferred (superseded by Phase 5):** `Shift+Up`/`Shift+Down` tile-size hotkeys — grid settings pane replaces ad-hoc hotkeys.
 
 ## Design decisions (locked)

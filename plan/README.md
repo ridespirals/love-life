@@ -9,7 +9,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 ## Plan status
 
 - **Branch:** `main`
-- **Version:** v1.4.0 ready to tag; Phase 5 ✓
+- **Version:** v1.4.0 shipped; Phase 5 ✓
 - **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load), Phase 4 (pattern picker + board drawing), Phase 5 (grid settings)
 - **Next:** Phase 6 camera/viewport (backlog, may be resequenced)
 - **Backlog (not started, not sequenced):** Phase 6 (camera/viewport), Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer), reusable button transition fx
@@ -103,7 +103,7 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phases 1–5 ✓. **Ba
 | v1.1 | Fullscreen (1a) + Phase 0 animation (square preview→commit, 3D tiles) — shipped |
 | v1.2 | Phase 1 shell + Phase 2 pickers (rule Apply; theme auto-apply) — shipped |
 | v1.3 | Phase 3 persistence + HSV color picker + Phase 4 pattern picker + board drawing — shipped |
-| v1.4 | Phase 5 grid settings — ready to tag |
+| v1.4 | Phase 5 grid settings + text-field UX + animation toggle — shipped |
 
 ## Entry point files
 

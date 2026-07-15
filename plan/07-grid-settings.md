@@ -32,7 +32,7 @@ computeBoardLayout(windowW, windowH, rows, cols, tileSize, statusBarHeight)
 
 **Auto mode:** window resize → recompute rows/cols from `tileSize` (current `main.lua` `rebuildWorldForWindow`, see [`03-playback.md`](03-playback.md)).
 
-**Forced mode:** resize only recenters/letterboxes; **does not** change rows/cols/tileSize. Changing forced values in Settings pane rebuilds grid (restart from active pattern; `custom` → blank board).
+**Forced mode:** resize only recenters/letterboxes; **does not** change rows/cols/tileSize. Changing forced values in Settings pane rebuilds grid dimensions via `grid.resize` (live board centered and cropped; playback and generation continue).
 
 Config additions in `src/config.lua`: `gridMode`, `forcedRows`, `forcedCols`, `forcedTileSize` (defaults mirror current hints).
 
@@ -55,6 +55,8 @@ Config additions in `src/config.lua`: `gridMode`, `forcedRows`, `forcedCols`, `f
 |-----|---------|-------|
 | `gridMode` | `"auto"` | Phase 5 ✓ |
 | `forcedRows`, `forcedCols`, `forcedTileSize` | mirror hints | Phase 5 ✓ |
+| `stepAnimEnabled` | `true` | Phase 5 ✓ |
+| `stepAnimMinTileSize` | `6` | Phase 5 ✓ |
 
 ## Planned files
 
@@ -68,5 +70,5 @@ Config additions in `src/config.lua`: `gridMode`, `forcedRows`, `forcedCols`, `f
 ### Phase 5 ✓
 - [x] **Phase 5** — Grid settings pane (auto vs forced, letterbox)
 - [x] `computeBoardLayout` letterbox centering
-- [x] Settings pane Auto/Forced + tile/rows/cols Apply
+- [x] Settings pane Auto/Forced + Animate On/Off + tile/rows/cols Apply
 - [x] Auto resize refits; forced resize recenters only

@@ -30,8 +30,8 @@ Pre-built downloads are published on [GitHub Releases](https://github.com/ridesp
 **Maintainers:** after merging to `main`, tag and push to trigger the release workflow:
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.4.0
+git push origin v1.4.0
 ```
 
 CI runs tests, builds packages via [`.github/workflows/release.yml`](.github/workflows/release.yml), and publishes assets with [action-gh-release](https://github.com/softprops/action-gh-release).
@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, playback timer state, step morph timing, status bar/pane hit regions, session drafts, theme registry, and userspace serialize/save round-trips.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/ui/text_field.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, playback timer state, step morph timing, status bar/pane hit regions, session drafts, text-field editing, theme registry, and userspace serialize/save round-trips.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -101,7 +101,7 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.3.0** — Phase 3 userspace save/load (rules, themes, patterns); HSV color picker; Phase 4 pattern picker + paused board drawing (left-drag toggle, right-drag erase, Save to userspace).
 
-**v1.4.0** — Phase 5 grid settings: Auto vs Forced mode, tile/rows/cols Apply, letterboxed forced grid.
+**v1.4.0** — Phase 5 grid settings (Auto/Forced, tile/rows/cols, Animate On/Off); shared text-field editing (caret, selection); Enter applies rule/pattern/grid drafts; grid Apply and auto resize migrate the live board without pausing or resetting generation; step morphs skip when disabled or tile size is below 6 px.
 
 **Next:** Phase 6 camera/viewport (backlog) — see [`plan/08-camera-and-viewport.md`](plan/08-camera-and-viewport.md).
 
@@ -113,17 +113,17 @@ Deferred: history stack (step backward), RLE export, import UI, **pattern groupi
 
 **Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play).
 
-While a pane is open, playback **keyboard** shortcuts are disabled; the simulation **keeps running** if it was already playing. Text input works in Rule/Theme fields. Press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
+While a pane is open, playback **keyboard** shortcuts are disabled; the simulation **keeps running** if it was already playing. Text fields support caret, selection, and clipboard-style editing. Press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
 
-**Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept). Enter a **Name** and **Save** to keep a custom rule in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved rule.
+**Rule pane:** pick a preset or edit the `Bx/Sy` rulestring, then **Apply** (pauses playback and recomputes next-state preview; board cells are kept). **Enter** in a text field also applies. Enter a **Name** and **Save** to keep a custom rule in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved rule.
 
 **Theme pane:** pick a preset or click a color field/swatch to open the **HSV color picker** (saturation×value square + hue bar + value slider). Themes apply immediately (live swap while playback continues); the pane stays open so you can browse. Leave `accent` blank / clearable via a white default pick to fall back to plain shadow shading. **Save** / **Delete** work like the rule pane for user themes.
 
-**Pattern pane:** pick a catalog preset, then **Apply** (pauses playback and reloads the board from that pattern). **Clear** blanks the board for drawing. Enter a **Name** and **Save** to store the current board in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved pattern. Unsaved edits show as `Pattern: custom` on the status bar.
+**Pattern pane:** pick a catalog preset, then **Apply** (pauses playback and reloads the board from that pattern). **Enter** in a text field also applies. **Clear** blanks the board for drawing. Enter a **Name** and **Save** to store the current board in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved pattern. Unsaved edits show as `Pattern: custom` on the status bar.
 
 **Board drawing (paused only):** when playback is paused and no pane/color picker is open, **left-click/drag** toggles cells alive along the stroke; **right-click/drag** erases. Drawing marks the applied pattern as `custom` until you Apply a catalog entry or Save.
 
-**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
+**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** (or **Enter** in a text field) rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
 
 ## Controls
 
@@ -134,7 +134,8 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - `r`: restart (reload applied pattern; unsaved `custom` falls back to `defaultPattern`, pause playback)
 - `Esc` or click outside the pane: close open settings pane
 - Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)
-- `F11` or `Alt+Enter`: toggle fullscreen (restarts simulation, same as window resize)
+- `F11` or `Alt+Enter`: toggle fullscreen (in auto mode, refits grid and migrates the live board; forced mode recenters only)
+- `Enter` (in a pane text field): apply rule, pattern, or grid draft (same as each pane's Apply button)
 - `q`: quit app
 - Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)
 - Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
@@ -154,7 +155,7 @@ Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimens
 ## Features
 
 1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on load and resize)
-2. **Step animation** — idle preview dots for next state; on step, square preview → commit morph with pseudo-3D tiles
+2. **Step animation** — idle preview dots for next state; on step, square preview → commit morph with pseudo-3D tiles (toggle in Settings; skipped below 6 px tile size)
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)
   - `B` digits: neighbor counts that birth a dead cell

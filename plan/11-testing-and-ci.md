@@ -21,7 +21,7 @@ See [`README.md`](README.md) for the cross-area roadmap.
 | Full UI | Manual smoke per phase |
 | Fullscreen | Manual smoke — F11 toggle, grid auto-fit, playback after exit (no unit tests; `love.window` is LÖVE-only) |
 
-Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 16 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 6–8 backlog adds `camera_spec`, `toolbar_spec`, `controller_spec`, `button_fx_spec`.
+Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 17 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 6–8 backlog adds `camera_spec`, `toolbar_spec`, `controller_spec`, `button_fx_spec`.
 
 Defer renderer/LÖVE integration tests.
 
@@ -61,7 +61,7 @@ Defer renderer/LÖVE integration tests.
 | Phase 2 ✓ | Switch rules/themes via panes without config edit |
 | Phase 3 ✓ | Custom theme persists across relaunch |
 | Phase 4 ✓ | Draw pattern, save, reload from list |
-| Phase 5 ✓ | Forced grid letterboxed; auto-fit on toggle back |
+| Phase 5 ✓ | Forced grid letterboxed; auto-fit on toggle back; grid Apply preserves board; animation toggle; `text_field_spec` green |
 | Phase 6 (backlog) | Initial view matches current output at zoom=1/pan=0; pan/zoom render correctly; `camera_spec` round-trips `worldToScreen`/`screenToWorld` |
 | Phase 7 (backlog) | Toolbar visible at all times independent of panes; Pan drag moves view; Draw left/right click+drag toggles cells and pauses sim; Zoom +/− centers on current view |
 | Phase 8 (backlog) | Gamepad button/stick mappings drive the same actions as mouse/keyboard; deadzone respected; `controller_spec` green |

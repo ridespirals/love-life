@@ -83,7 +83,7 @@ Session object in `src/session.lua` (shipped field names):
 | `draftThemePresetId`, `draftThemeColors`, `draftThemeFocus` | In-progress theme edits (auto-applied when valid) |
 | `draftPatternId` | Selected catalog id in pattern pane |
 | `gridMode` | `"auto"` (default) or `"forced"` ✓ |
-| `draftGridMode`, `draftTileSize`, `draftRows`, `draftCols`, `draftGridFocus` | In-progress grid edits before Apply ✓ |
+| `draftGridMode`, `draftTileSize`, `draftRows`, `draftCols`, `draftGridFocus`, `draftStepAnimEnabled` | In-progress grid edits before Apply ✓ |
 
 - **Commit to simulation** (asymmetric by pane):
 
@@ -92,7 +92,7 @@ Session object in `src/session.lua` (shipped field names):
 | Theme | On preset click, or when hex draft becomes valid | Live color swap; **playback continues**; **pane stays open** |
 | Rule | **Apply** button | **Pause**; cancel in-flight step animation; swap rule; `grid.computeNext` (board cells preserved); pane closes |
 | Pattern (Phase 4 ✓) | Apply / Clear | **Pause**; Apply reloads pattern onto board; Clear blanks for drawing |
-| Grid settings (Phase 5 ✓) | Apply | Rebuild grid; preserve live board and playback |
+| Grid settings (Phase 5 ✓) | Apply (or Enter in a field) | Rebuild grid; preserve live board and playback |
 
 Opening a pane never pauses playback. Panes block playback **keyboard** shortcuts only — not the `love.update` timer (see [`03-playback.md`](03-playback.md)). Closing a pane (Esc / × / outside click) does **not** discard mid-edit drafts until the pane is reopened (drafts then reset from the applied state via `syncDraftForPane`). Explicit **Discard** is Phase 3.
 - **Save** — write to userspace; assign stable `id` (slug from name). See [`05-persistence.md`](05-persistence.md).
@@ -105,9 +105,9 @@ Board drawing writes to `draftPattern` / live `world.current` while paused (neve
 - Panes capture mouse/keyboard while open (typing in rule field must not trigger play shortcuts). **Do not** auto-pause playback when a pane opens.
 - `Esc` closes top pane.
 - Drawing/editing requires **paused** playback.
-- Resize restart policy:
-  - **Auto mode:** keep current restart-on-resize behavior.
-  - **Forced mode:** resize only recenters; changing grid fields restarts from active pattern/draft.
+- Resize policy (Phase 5 ✓):
+  - **Auto mode:** refit `rows`/`cols` on resize; migrate live board (`grid.resize`); playback and generation continue.
+  - **Forced mode:** resize only recenters; Settings Apply changes dimensions and migrates the live board.
 
 ---
 
@@ -137,8 +137,8 @@ flowchart LR
   keyPress["F11 or Alt+Enter"] --> toggleFS["love.window.setFullscreen"]
   toggleFS --> loveResize["love.resize"]
   loveResize --> rebuild["rebuildWorldForWindow"]
-  rebuild --> autoFit["layout.computeGridSize"]
-  rebuild --> restart["defaultPattern + gen 0"]
+  rebuild --> autoFit["layout.computeGridSize (auto) or letterbox (forced)"]
+  rebuild --> migrate["grid.resize — preserve live board"]
 ```
 
 Toggle helper in `main.lua`:
@@ -152,7 +152,7 @@ end
 
 Use `"desktop"` fullscreen mode (borderless desktop resolution; works well with resizable/auto-fit grid).
 
-**Tradeoff (unchanged):** toggling fullscreen restarts the simulation, same as manual window resize. On macOS, Option+Return may not map to Alt+Enter; F11 remains the primary cross-platform shortcut.
+**Tradeoff (Phase 5 ✓):** toggling fullscreen triggers `love.resize`. In **auto** mode the grid refits and the live board migrates (playback continues). In **forced** mode only letterbox centering updates. On macOS, Option+Return may not map to Alt+Enter; F11 remains the primary cross-platform shortcut.
 
 No `conf.lua` change required — `resizable = true` already set.
 
