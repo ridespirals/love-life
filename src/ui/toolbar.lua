@@ -5,7 +5,7 @@ local M = {}
 
 local TOOLS = {
   { id = "pan", kind = "tool", tooltip = "Mouse mode: pan screen" },
-  { id = "draw", kind = "tool", tooltip = "Mouse mode: draw" },
+  { id = "draw", kind = "tool", tooltip = "Mouse mode: draw\nLeft-click: Living cell. Right-click: Dead cell." },
   { id = "zoom_in", kind = "action", tooltip = "Zoom In" },
   { id = "zoom_out", kind = "action", tooltip = "Zoom out" },
 }

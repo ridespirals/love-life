@@ -3,6 +3,7 @@ local M = {}
 
 local PAD_X = 8
 local PAD_Y = 5
+local LINE_GAP = 2
 local CURSOR_GAP_X = 14
 local CURSOR_GAP_Y = 18
 local AVOID_GAP = 6
@@ -15,14 +16,29 @@ local function overlaps(ax, ay, aw, ah, bx, by, bw, bh)
   return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 end
 
+local function splitLines(text)
+  local lines = {}
+  for line in (text .. "\n"):gmatch("(.-)\n") do
+    lines[#lines + 1] = line
+  end
+  return lines
+end
+
 local function measure(text)
   local font = love.graphics.getFont()
-  return font:getWidth(text), font:getHeight()
+  local lines = splitLines(text)
+  local width = 0
+  local lineH = font:getHeight()
+  for _, line in ipairs(lines) do
+    width = math.max(width, font:getWidth(line))
+  end
+  local height = #lines * lineH + math.max(0, #lines - 1) * LINE_GAP
+  return width, height, lines, lineH
 end
 
 -- Place tooltip near the cursor; if it would cover avoidRect, tuck it below that rect.
 function M.layout(text, mouseX, mouseY, avoidRect, screenW, screenH)
-  local textW, textH = measure(text)
+  local textW, textH, lines, lineH = measure(text)
   local w = textW + PAD_X * 2
   local h = textH + PAD_Y * 2
   local x = mouseX + CURSOR_GAP_X
@@ -46,7 +62,7 @@ function M.layout(text, mouseX, mouseY, avoidRect, screenW, screenH)
     y = 4
   end
 
-  return { x = x, y = y, w = w, h = h, text = text }
+  return { x = x, y = y, w = w, h = h, text = text, lines = lines, lineH = lineH }
 end
 
 function M.draw(theme, text, mouseX, mouseY, avoidRect)
@@ -62,7 +78,11 @@ function M.draw(theme, text, mouseX, mouseY, avoidRect)
   setColor(theme.grid, 1)
   love.graphics.rectangle("line", box.x + 0.5, box.y + 0.5, box.w, box.h)
   setColor(theme.alive, 1)
-  love.graphics.print(box.text, box.x + PAD_X, box.y + PAD_Y)
+  local textY = box.y + PAD_Y
+  for _, line in ipairs(box.lines) do
+    love.graphics.print(line, box.x + PAD_X, textY)
+    textY = textY + box.lineH + LINE_GAP
+  end
 end
 
 return M
