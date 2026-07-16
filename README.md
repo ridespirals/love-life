@@ -30,8 +30,8 @@ Pre-built downloads are published on [GitHub Releases](https://github.com/ridesp
 **Maintainers:** after merging to `main`, tag and push to trigger the release workflow:
 
 ```bash
-git tag v1.4.0
-git push origin v1.4.0
+git tag v1.5.0
+git push origin v1.5.0
 ```
 
 CI runs tests, builds packages via [`.github/workflows/release.yml`](.github/workflows/release.yml), and publishes assets with [action-gh-release](https://github.com/softprops/action-gh-release).
@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/ui/text_field.lua`, `src/ui/button_fx.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, playback timer state, step morph timing, status bar/pane hit regions, session drafts, text-field editing, Play/Pause button fx math, theme registry, and userspace serialize/save round-trips.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/camera.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/ui/text_field.lua`, `src/ui/button_fx.lua`, `src/ui/toolbar.lua`, `src/ui/tooltip.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, camera transforms, playback timer state, step morph timing, status bar/pane/toolbar hit regions, session drafts, text-field editing, button fx and tooltip math, theme registry, and userspace serialize/save round-trips.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -83,9 +83,8 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `buttonFxExpandPx` | How far outlines grow outward from the button (default `10`) |
 | `cameraZoomMin` | `0.25` | Zoom out floor |
 | `cameraZoomMax` | `4` | Zoom in ceiling |
-| `cameraZoomStep` | `1.25` | Multiplier per zoom key / future toolbar +/− |
+| `cameraZoomStep` | `1.25` | Multiplier per zoom key / toolbar +/− / scroll wheel |
 | `cameraDefaultZoom` | `1` | Load / reset zoom |
-| `cameraPanStepPx` | `40` | Screen pixels per Shift+Arrow pan (debug keys) |
 | `toolbarMargin` | `12` | Floating toolbar inset from window corner |
 | `toolbarButtonSize` | `32` | Toolbar button side length (px) |
 | `accentBlendAlive` | Blend toward theme `accent` on alive-tile extrusion shadows (0–1; default `0.72`) |
@@ -113,11 +112,13 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.3.0** — Phase 3 userspace save/load (rules, themes, patterns); HSV color picker; Phase 4 pattern picker + paused board drawing (left-drag toggle, right-drag erase, Save to userspace).
 
-**v1.4.0** — Phase 5 grid settings (Auto/Forced, tile/rows/cols, Animate On/Off); shared text-field editing (caret, selection); Enter applies rule/pattern/grid drafts; grid Apply and auto resize migrate the live board without pausing or resetting generation; step morphs skip when disabled or tile size is below 6 px.
+**v1.4.0** — Phase 5 grid settings (Auto/Forced, tile/rows/cols, Animate On/Off); shared text-field editing; Enter-to-Apply; non-interrupting grid Apply; step morph min tile size gate.
 
-**Next:** Phase 8 controller input (backlog) — see [`plan/10-controller-input.md`](plan/10-controller-input.md). Camera + floating toolbar (Phases 6–7) are on the working branch.
+**v1.4.1** — Play/Pause/Step/Restart button transition fx (expanding outline + trails).
 
-**Board drawing:** select the **Draw** tool on the floating toolbar (upper-left); selecting it pauses. Left-drag paints alive; right-drag erases. **Pan** tool click-drags the camera without pausing. **Zoom +/−** scale around the view center.
+**v1.5.0** — Phase 6 camera (pan/zoom, letterbox-identical load view, cursor-anchored scroll-wheel zoom); Phase 7 floating toolbar (Pan default, Draw, Zoom +/−, tooltips, hover); Draw tool gates board painting; shared hover wash on status bar and pane buttons.
+
+**Next:** Phase 8 controller input (backlog) — see [`plan/10-controller-input.md`](plan/10-controller-input.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -137,7 +138,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Board drawing:** select **Draw** on the floating toolbar (pauses). Left-click/drag paints alive; right-click/drag erases. Unsaved edits show as `Pattern: custom` until you Apply a catalog entry or Save.
 
-**Floating toolbar (upper-left):** Pan (default; drag view), Draw (paint cells), Zoom + / −. Hover tooltips follow the cursor. Always visible; does not dim the board.
+**Floating toolbar (upper-left):** Pan (default; drag view), Draw (paint cells), Zoom + / −. Hover tooltips follow the cursor. Scroll wheel zooms toward the cursor. Always visible; does not dim the board.
 
 **Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** (or **Enter** in a text field) rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
 
@@ -179,7 +180,7 @@ Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimens
   - `S` digits: neighbor counts that let a live cell survive
   - Classic: `B3/S23` — birth on 3; survive on 2 or 3
   - Ant Colony: `B3/S234` — birth on 3; survive on 2, 3, or 4
-5. In-game settings UI + rule/theme/pattern pickers + userspace save/load + board drawing + grid modes (Phases 1–5 ✓); camera/toolbar backlog (Phases 6–8 — see [`plan/README.md`](plan/README.md))
+5. In-game settings UI + rule/theme/pattern pickers + userspace save/load + board drawing + grid modes + camera/toolbar (Phases 1–7 ✓); controller backlog (Phase 8 — see [`plan/README.md`](plan/README.md))
 6. Video export (deferred)
 
 ### Attribution

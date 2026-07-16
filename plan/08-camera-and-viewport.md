@@ -24,8 +24,8 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 | `src/camera.lua` | Camera state (`x`, `y` world-space center, `zoom`); `worldToScreen`, `screenToWorld`, `pan`, `zoomBy`, `reset`, `computeLayout` ✓ |
 | `src/renderer.lua` | `getLayout(config, camera)` → camera-driven offsets + zoomed tile size ✓ |
 | `src/input/board.lua` | Unchanged API; receives camera layout from `main.lua` ✓ |
-| `main.lua` | Camera lifecycle; reset on grid rebuild; debug keys ✓ |
-| `src/config.lua` | `cameraZoomMin/Max/Step`, `cameraDefaultZoom`, `cameraPanStepPx` ✓ |
+| `main.lua` | Camera lifecycle; reset on grid rebuild; scroll-wheel zoom ✓ |
+| `src/config.lua` | `cameraZoomMin/Max/Step`, `cameraDefaultZoom` ✓ |
 | `tests/camera_spec.lua` | Round-trip transforms; zoom clamping; letterbox parity at zoom=1 ✓ |
 
 **Mechanics:**
@@ -49,7 +49,6 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 | `cameraZoomMin` | `0.25` | Phase 6 ✓ |
 | `cameraZoomMax` | `4` | Phase 6 ✓ |
 | `cameraZoomStep` | `1.25` | Phase 6 ✓ |
-| `cameraPanStepPx` | `40` | Phase 6 ✓ (debug keys) |
 
 ## Planned files
 

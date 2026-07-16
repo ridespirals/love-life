@@ -8,12 +8,11 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 
 ## Plan status
 
-- **Branch:** `main`
-- **Version:** v1.4.0 shipped; Phases 6–7 camera + toolbar ✓
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0–7, button fx
-- **Next:** Phase 8 controller input (backlog), or release slice for camera/toolbar
+- **Branch:** `phase67-camera-and-world` (merge to `main` for v1.5.0)
+- **Version:** v1.5.0 ready to tag; Phases 6–7 ✓
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0–7, button fx (v1.4.1), scroll-wheel zoom
+- **Next:** Phase 8 controller input (backlog)
 - **Backlog (not started):** Phase 8 (controller input layer)
-- **Shipped outside phase sequence:** Play/Pause/Step/Restart button transition fx (`src/ui/button_fx.lua`)
 
 ## Directory map
 
@@ -41,8 +40,8 @@ Each doc contains its own **Development order** section for the steps within it.
 | **M1** ✓ | — | Grid render, themes, preview dots, toroidal stepping foundation |
 | **M2** | A → B → C | Configurable rules, pattern loader, status bar stats display |
 | **M3** | A → B → C | Playback engine, controls/docs, RLE import |
-| **Post-1.0** | 0 → 5 | Step animation, settings UI shell, pickers, userspace, board drawing, grid modes |
-| **Backlog** | 6 → 8 | Camera/viewport (pan/zoom), always-visible floating toolbar (pan/draw tools, zoom controls), controller input layer (mouse/keyboard/gamepad) |
+| **Post-1.0** | 0 → 7 | Step animation, settings UI, pickers, userspace, board drawing, grid modes, camera, toolbar |
+| **Backlog** | 8 | Controller input layer (mouse/keyboard/gamepad) |
 | **Deferred** | — | History stack, RLE export, import UI, video export |
 
 ## Execution order (all areas)
@@ -76,7 +75,7 @@ flowchart TD
   P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> DEF
 ```
 
-**Sequencing note:** Phases 6–7 shipped (camera + toolbar). Phase 8 controller remains backlog.
+**Sequencing note:** Phases 6–7 shipped in v1.5.0. Phase 8 controller remains backlog.
 
 ### Recommended implementation order (post-1.0)
 
@@ -104,8 +103,8 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phases 1–5 ✓. **Ba
 | v1.1 | Fullscreen (1a) + Phase 0 animation (square preview→commit, 3D tiles) — shipped |
 | v1.2 | Phase 1 shell + Phase 2 pickers (rule Apply; theme auto-apply) — shipped |
 | v1.3 | Phase 3 persistence + HSV color picker + Phase 4 pattern picker + board drawing — shipped |
-| v1.4 | Phase 5 grid settings + text-field UX + animation toggle — shipped |
-| v1.5 | Phase 6 camera + Phase 7 toolbar + button fx — ready when tagged |
+| v1.4 | Phase 5 grid settings + text-field UX + animation toggle — shipped (`v1.4.0`); button fx — shipped (`v1.4.1`) |
+| v1.5 | Phase 6 camera + Phase 7 toolbar + scroll-wheel zoom + tooltips/hover — ready to tag |
 
 ## Entry point files
 
@@ -115,7 +114,6 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phases 1–5 ✓. **Ba
 
 Most open design questions are area-specific and live inline in the relevant doc (e.g. camera/letterbox overlap in [`08-camera-and-viewport.md`](08-camera-and-viewport.md), toolbar icon strategy in [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md)). Genuinely cross-area items:
 
-- **Phase 6–8 sequencing** relative to Phases 3–5 — see sequencing note above.
 - **LÖVE 12 (when released):** revisit `Font:setBold()` for pane titles (see [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md)); evaluate CI/release Lua-and-LÖVE version bump (see [`11-testing-and-ci.md`](11-testing-and-ci.md)).
 
 ## Working agreement

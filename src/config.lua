@@ -31,7 +31,6 @@ local config = {
   cameraZoomMin = 0.25,
   cameraZoomMax = 4,
   cameraZoomStep = 1.25,
-  cameraPanStepPx = 40,
   toolbarMargin = 12,
   toolbarButtonSize = 32,
   previewDotScale = 0.15,
