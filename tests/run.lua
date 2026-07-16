@@ -26,6 +26,7 @@ local specs = {
   "tests/text_field_spec.lua",
   "tests/button_fx_spec.lua",
   "tests/camera_spec.lua",
+  "tests/toolbar_spec.lua",
 }
 
 local passed = 0

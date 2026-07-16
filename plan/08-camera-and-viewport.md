@@ -4,14 +4,14 @@ Decouples the simulated world from the on-screen viewport: pan/zoom, world ≠ v
 
 See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts with [`02-rendering-and-animation.md`](02-rendering-and-animation.md) (replaces the static layout offset math), [`07-grid-settings.md`](07-grid-settings.md) (open overlap with forced/letterbox mode), [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md) (Phase 7 depends on this phase's coordinate transforms), [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) (board drawing needs the same `screenToCell` math).
 
-**Status:** in progress — `src/camera.lua` + renderer/board wiring + temporary debug keys; Phase 7 will replace debug keys with toolbar UI.
+**Status:** ✓ shipped — `src/camera.lua` + renderer/board wiring; Phase 7 toolbar replaced temporary debug keys.
 
 ## Development order
 
 1. Build `src/camera.lua` in isolation (pure Lua, unit-testable) — no rendering changes yet. ✓
 2. Swap `src/renderer.lua`'s static `getLayout` offset math for camera-driven per-tile transforms, verifying the load-time view is unchanged. ✓
-3. Add temporary debug keys for pan/zoom to validate before Phase 7 ships a real UI. ✓
-4. Phase 7 toolbar replaces debug keys (not started).
+3. Add temporary debug keys for pan/zoom to validate before Phase 7 ships a real UI. ✓ (removed once Phase 7 landed)
+4. Phase 7 toolbar replaces debug keys. ✓
 
 ---
 
@@ -33,11 +33,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 - Pan moves the camera center in world-space pixels; zoom scales tile render size around view center (Phase 7 toolbar +/− will use the same anchor; cursor-anchored scroll-wheel zoom is deferred).
 - World stays toroidal for simulation; rendering past board edges is still an open question — currently empty background.
 
-**Temporary debug keys (until Phase 7):**
-- `Shift+Arrows` — pan
-- `=` / `-` — zoom in / out (view center)
-- `0` — reset camera to centered zoom=1
-
+**Temporary debug keys:** removed — use the Phase 7 floating toolbar (Pan / Zoom +/−) instead.
 **Checkpoint:** `love .` at load looks unchanged from today; pan and zoom move/scale the view without altering simulation state; `camera_spec` green. ✓
 
 ## Open design considerations
@@ -67,6 +63,6 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 
 ## TODO tracking
 
-### Phase 6 ✓ (core) / Phase 7 for UI
-- [x] **Phase 6 core** — Camera & viewport (`src/camera.lua`, renderer/board wiring, debug keys)
-- [ ] Phase 7 toolbar replaces temporary pan/zoom keys
+### Phase 6 ✓
+- [x] **Phase 6** — Camera & viewport (`src/camera.lua`, renderer/board wiring)
+- [x] Phase 7 toolbar replaced temporary pan/zoom debug keys

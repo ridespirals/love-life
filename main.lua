@@ -14,6 +14,7 @@ local board = require("src.input.board")
 local layout = require("src.layout")
 local camera = require("src.camera")
 local settings_pane = require("src.ui.panes.settings_pane")
+local toolbar = require("src.ui.toolbar")
 local stepAnimation = require("src.step_animation")
 local buttonFx = require("src.ui.button_fx")
 local userdata = require("src.userdata")
@@ -28,6 +29,9 @@ local animState
 local controlFx
 local lastPlaybackRunning
 local cameraState
+local panDrag
+local hoverRow
+local hoverCol
 local generation = 0
 local fastMode = false
 local fastKeyboard = false
@@ -391,10 +395,47 @@ local function deletePatternDraft()
 end
 
 local function canDrawOnBoard()
-  return not playbackState.running
+  return sessionState.activeTool == "draw"
+    and not playbackState.running
     and not pane.isOpen(paneState)
     and not color_picker.isOpen(colorPickerState)
     and stepAnimation.isIdle(animState)
+end
+
+local function canPanBoard()
+  return sessionState.activeTool == "pan"
+    and not pane.isOpen(paneState)
+    and not color_picker.isOpen(colorPickerState)
+end
+
+local function setActiveTool(toolId)
+  if sessionState.activeTool == toolId then
+    sessionState.activeTool = nil
+    return
+  end
+  sessionState.activeTool = toolId
+  if toolId == "draw" then
+    playback.pause(playbackState)
+  end
+end
+
+local function handleToolbarHit(hit)
+  if hit == "pan" or hit == "draw" then
+    setActiveTool(hit)
+    return true
+  end
+  if hit == "zoom_in" then
+    camera.zoomAtViewCenter(cameraState, cameraState.zoomStep)
+    return true
+  end
+  if hit == "zoom_out" then
+    camera.zoomAtViewCenter(cameraState, 1 / cameraState.zoomStep)
+    return true
+  end
+  if hit == "panel" then
+    return true
+  end
+  return false
 end
 
 local function boardCellAt(x, y)
@@ -593,6 +634,10 @@ end
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
   renderer.draw(world, theme, config, animState, cameraState)
+  if sessionState.activeTool == "draw" and hoverRow then
+    renderer.drawHover(config, cameraState, hoverRow, hoverCol, theme)
+  end
+  toolbar.draw(theme, config, sessionState)
   statusbar.draw(
     world,
     theme,
@@ -659,31 +704,7 @@ function love.keypressed(key)
   elseif key == "s" then
     playback.play(playbackState)
   elseif key == "n" or key == "right" then
-    local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
-    if shift and key == "right" then
-      local step = (config.cameraPanStepPx or 40) / cameraState.zoom
-      camera.pan(cameraState, step, 0)
-    else
-      stepForward()
-    end
-  elseif key == "left" or key == "up" or key == "down" then
-    local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
-    if shift then
-      local step = (config.cameraPanStepPx or 40) / cameraState.zoom
-      if key == "left" then
-        camera.pan(cameraState, -step, 0)
-      elseif key == "up" then
-        camera.pan(cameraState, 0, -step)
-      else
-        camera.pan(cameraState, 0, step)
-      end
-    end
-  elseif key == "=" or key == "+" then
-    camera.zoomAtViewCenter(cameraState, cameraState.zoomStep)
-  elseif key == "-" then
-    camera.zoomAtViewCenter(cameraState, 1 / cameraState.zoomStep)
-  elseif key == "0" then
-    resetCamera()
+    stepForward()
   elseif key == "r" then
     restartWorld()
   elseif key == "f" then
@@ -715,17 +736,27 @@ function love.textinput(text)
 end
 
 function love.mousepressed(x, y, button)
+  if color_picker.isOpen(colorPickerState) then
+    if button == 1 and color_picker.mousepressed(colorPickerState, x, y) then
+      consumeColorPickerResult()
+    end
+    return
+  end
+
+  local toolbarHit = toolbar.hitTest(config, x, y)
+  if toolbarHit then
+    if button == 1 then
+      handleToolbarHit(toolbarHit)
+    end
+    return
+  end
+
   if button == 2 then
     tryBeginBoardStroke(x, y, 2)
     return
   end
 
   if button ~= 1 then
-    return
-  end
-
-  if color_picker.mousepressed(colorPickerState, x, y) then
-    consumeColorPickerResult()
     return
   end
 
@@ -782,6 +813,11 @@ function love.mousepressed(x, y, button)
     return
   end
 
+  if canPanBoard() then
+    panDrag = { lastX = x, lastY = y }
+    return
+  end
+
   tryBeginBoardStroke(x, y, 1)
 end
 
@@ -792,15 +828,33 @@ function love.mousemoved(x, y)
     pane.mousemoved(paneState, sessionState, x, y, theme, config)
   end
 
+  if panDrag then
+    camera.panScreen(cameraState, x - panDrag.lastX, y - panDrag.lastY)
+    panDrag.lastX = x
+    panDrag.lastY = y
+    hoverRow, hoverCol = nil, nil
+    return
+  end
+
   if board.isDrawing(boardState) then
     local row, col = boardCellAt(x, y)
     if row and board.continueStroke(boardState, world, row, col) then
       markBoardEdited()
     end
   end
+
+  if sessionState.activeTool == "draw" and not pane.isOpen(paneState) and not color_picker.isOpen(colorPickerState) then
+    hoverRow, hoverCol = boardCellAt(x, y)
+  else
+    hoverRow, hoverCol = nil, nil
+  end
 end
 
 function love.mousereleased(x, y, button)
+  if button == 1 then
+    panDrag = nil
+  end
+
   if button == 2 then
     board.endStroke(boardState)
     return

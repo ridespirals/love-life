@@ -86,6 +86,8 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `cameraZoomStep` | `1.25` | Multiplier per zoom key / future toolbar +/− |
 | `cameraDefaultZoom` | `1` | Load / reset zoom |
 | `cameraPanStepPx` | `40` | Screen pixels per Shift+Arrow pan (debug keys) |
+| `toolbarMargin` | `12` | Floating toolbar inset from window corner |
+| `toolbarButtonSize` | `32` | Toolbar button side length (px) |
 | `accentBlendAlive` | Blend toward theme `accent` on alive-tile extrusion shadows (0–1; default `0.72`) |
 | `accentBlendDead` | Blend toward theme `accent` on dead tiles and pane chrome (0–1; default `0.42`) |
 
@@ -113,7 +115,9 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.4.0** — Phase 5 grid settings (Auto/Forced, tile/rows/cols, Animate On/Off); shared text-field editing (caret, selection); Enter applies rule/pattern/grid drafts; grid Apply and auto resize migrate the live board without pausing or resetting generation; step morphs skip when disabled or tile size is below 6 px.
 
-**Next:** Phase 6 camera/viewport (in progress) — see [`plan/08-camera-and-viewport.md`](plan/08-camera-and-viewport.md). Temporary debug: `Shift+Arrows` pan, `=`/`-` zoom, `0` reset view.
+**Next:** Phase 8 controller input (backlog) — see [`plan/10-controller-input.md`](plan/10-controller-input.md). Camera + floating toolbar (Phases 6–7) are on the working branch.
+
+**Board drawing:** select the **Draw** tool on the floating toolbar (upper-left); selecting it pauses. Left-drag paints alive; right-drag erases. **Pan** tool click-drags the camera without pausing. **Zoom +/−** scale around the view center.
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -131,7 +135,9 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Pattern pane:** pick a catalog preset, then **Apply** (pauses playback and reloads the board from that pattern). **Enter** in a text field also applies. **Clear** blanks the board for drawing. Enter a **Name** and **Save** to store the current board in the LÖVE save directory (built-ins cannot be overwritten). **Delete** removes a user-saved pattern. Unsaved edits show as `Pattern: custom` on the status bar.
 
-**Board drawing (paused only):** when playback is paused and no pane/color picker is open, **left-click/drag** toggles cells alive along the stroke; **right-click/drag** erases. Drawing marks the applied pattern as `custom` until you Apply a catalog entry or Save.
+**Board drawing:** select **Draw** on the floating toolbar (pauses). Left-click/drag paints alive; right-click/drag erases. Unsaved edits show as `Pattern: custom` until you Apply a catalog entry or Save.
+
+**Floating toolbar (upper-left):** Pan (drag view), Draw (paint cells), Zoom + / −. Always visible; does not dim the board.
 
 **Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** (or **Enter** in a text field) rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
 
@@ -141,9 +147,6 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation
-- `Shift+Arrows`: pan camera (temporary Phase 6 debug; Phase 7 toolbar will replace)
-- `=` / `-`: zoom camera in / out (view center)
-- `0`: reset camera to centered zoom=1
 - `r`: restart (reload applied pattern; unsaved `custom` falls back to `defaultPattern`, pause playback)
 - `Esc` or click outside the pane: close open settings pane
 - Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)
@@ -152,7 +155,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - `q`: quit app
 - Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)
 - Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
-- **Board (paused):** left-click/drag toggle cells alive; right-click/drag erase
+- **Toolbar:** Pan / Draw / Zoom+/− (mouse); Draw required to paint cells
 
 Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimensions and migrates the live board (playback and generation continue). In **forced** mode, only recenters the board — dimensions unchanged.
 

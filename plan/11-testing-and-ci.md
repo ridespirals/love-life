@@ -21,7 +21,7 @@ See [`README.md`](README.md) for the cross-area roadmap.
 | Full UI | Manual smoke per phase |
 | Fullscreen | Manual smoke — F11 toggle, grid auto-fit, playback after exit (no unit tests; `love.window` is LÖVE-only) |
 
-Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 19 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `button_fx_spec`, `camera_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 7–8 backlog adds `toolbar_spec`, `controller_spec`.
+Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 20 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `button_fx_spec`, `camera_spec`, `toolbar_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 8 backlog adds `controller_spec`.
 
 Defer renderer/LÖVE integration tests.
 
@@ -62,8 +62,8 @@ Defer renderer/LÖVE integration tests.
 | Phase 3 ✓ | Custom theme persists across relaunch |
 | Phase 4 ✓ | Draw pattern, save, reload from list |
 | Phase 5 ✓ | Forced grid letterboxed; auto-fit on toggle back; grid Apply preserves board; animation toggle; `text_field_spec` green |
-| Phase 6 (in progress) | Initial view matches letterbox at zoom=1/pan=0; Shift+Arrows pan; `=`/`-` zoom; `camera_spec` green |
-| Phase 7 (backlog) | Toolbar visible at all times independent of panes; Pan drag moves view; Draw left/right click+drag toggles cells and pauses sim; Zoom +/− centers on current view |
+| Phase 6 ✓ | Initial view matches letterbox at zoom=1; pan/zoom via camera; `camera_spec` green |
+| Phase 7 ✓ | Toolbar always visible; Pan drag; Draw paints + pauses on select; Zoom +/− |
 | Phase 8 (backlog) | Gamepad button/stick mappings drive the same actions as mouse/keyboard; deadzone respected; `controller_spec` green |
 
 ### M1 visual checklist (regression)
