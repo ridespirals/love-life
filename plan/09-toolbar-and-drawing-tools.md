@@ -1,16 +1,16 @@
-# Floating toolbar: pan & draw tools, zoom controls (Phase 7, backlog)
+# Floating toolbar: pan & draw tools, zoom controls (Phase 7)
 
-An always-visible floating panel — suggested upper-left, configurable position/margin — separate from the docked-pane system ([`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md), `src/ui/pane.lua`): it never dims the background and isn't opened/closed by a status bar chip; it's simply always on screen.
+An always-visible floating panel — upper-left, configurable position/margin — separate from the docked-pane system ([`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md), `src/ui/pane.lua`): it never dims the background and isn't opened/closed by a status bar chip; it's simply always on screen.
 
 See [`README.md`](README.md) for the cross-area roadmap. Depends on [`08-camera-and-viewport.md`](08-camera-and-viewport.md) (drag-to-pan and hover-to-cell both need camera transforms). Supersedes part of [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) (Phase 4's originally-planned always-on board click-to-draw).
 
-**Status:** backlog — not started; depends on Phase 6 for correct coordinate mapping.
+**Status:** ✓ shipped — toolbar frame, Pan/Draw tools, Zoom +/−; temporary Phase 6 debug keys removed.
 
 ## Development order
 
-1. Ship the toolbar frame + Pan tool first (simplest — pure camera pan, no world mutation).
-2. Add the Draw tool (needs cell interpolation for fast drags, and the pause-on-select behavior).
-3. Add Zoom +/− last (thin wrapper over `camera.zoomBy`, already exercised by Phase 6 debug keys).
+1. Ship the toolbar frame + Pan tool first (simplest — pure camera pan, no world mutation). ✓
+2. Add the Draw tool (needs cell interpolation for fast drags, and the pause-on-select behavior). ✓
+3. Add Zoom +/− last (thin wrapper over `camera.zoomBy`, already exercised by Phase 6 debug keys). ✓
 
 ---
 
@@ -18,44 +18,45 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on [`08-camera-
 
 | File | Work |
 |------|------|
-| `src/ui/toolbar.lua` | Draw + hit-test for tool buttons (Pan, Draw) and Zoom +/−; active-tool highlight |
-| `src/session.lua` | `activeTool` field (`nil` / `"pan"` / `"draw"`) — extends the scaffold from [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md) |
-| `main.lua` | Route board mouse input through the active tool when the cursor is over the board and no pane/toolbar hit consumes it |
-| `src/config.lua` | `toolbarMargin`, `toolbarButtonSize`, `cameraZoomStep` (shared with Phase 6) |
-| `tests/toolbar_spec.lua` | Hit-test regions; tool toggle state |
+| `src/ui/toolbar.lua` | Draw + hit-test for tool buttons (Pan, Draw) and Zoom +/−; glyph icons ✓ |
+| `src/session.lua` | `activeTool` field (`nil` / `"pan"` / `"draw"`) ✓ |
+| `main.lua` | Route board mouse input through the active tool; zoom actions; draw hover ✓ |
+| `src/config.lua` | `toolbarMargin`, `toolbarButtonSize`; shared `cameraZoomStep` ✓ |
+| `tests/toolbar_spec.lua` | Hit-test regions ✓ |
 
 **Tools:**
-- **Pan (hand icon):** click-and-drag on the board moves the camera by the drag delta (screen px ÷ zoom). Does **not** pause playback — it's view-only, no world mutation.
-- **Draw (pencil icon):** hover highlights the cell under the cursor. **Left-click** (and left-click-drag) sets alive on every cell the cursor crosses while held; **right-click** (and right-click-drag) sets dead the same way. Drag paths need cell interpolation between mouse-move samples (e.g. Bresenham) so fast drags don't skip cells. **Selecting the Draw tool pauses the simulation** — the tool button is always available; choosing it is what triggers the pause (refines the existing "drawing requires paused playback" rule to be explicit rather than implied by pane state).
-- **Zoom +/−:** adjust `camera.zoom` by `cameraZoomStep`, clamped to `cameraZoomMin`/`cameraZoomMax`, anchored on the **current view center** (not the cursor). Step size configurable now, tunable later.
+- **Pan (crosshair/arrows glyph):** click-and-drag on the board moves the camera by the drag delta (screen px ÷ zoom). Does **not** pause playback.
+- **Draw (pencil glyph):** hover highlights the cell under the cursor. **Left-click** / drag paints alive; **right-click** / drag paints dead (interpolated strokes via `board.continueStroke`). **Selecting Draw pauses the simulation.** Clicking the active tool again deselects it.
+- **Zoom +/−:** adjust `camera.zoom` by `cameraZoomStep`, clamped, anchored on the **current view center**.
 
-**Icon rendering:** no icon/image asset pipeline exists yet. First pass can use simple drawn glyphs (like the pane's `×` close glyph) or basic vector shapes (hand/pencil silhouettes via `love.graphics` primitives); revisit if a sprite sheet is wanted later.
+**Icon rendering:** drawn glyphs via `love.graphics` primitives (no sprite sheet).
 
-**Supersedes:** Phase 4's originally-planned `src/input/board.lua` "click-to-draw when paused" behavior (see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md)) — board drawing now lives behind this Draw tool instead of an implicit always-on click handler.
+**Supersedes:** Phase 4 always-on paused board drawing — drawing now requires the Draw tool. Phase 6 temporary Shift+Arrow / `=`/`-`/`0` debug keys removed in favor of the toolbar.
 
-**Checkpoint:** toolbar visible at all times, independent of any open pane; Pan drag moves the view; Draw left/right click and drag toggle cells and pause playback; Zoom +/− changes scale around the current view center.
+**Checkpoint:** ✓ toolbar visible at all times; Pan drag moves the view; Draw left/right click and drag paint cells and pause on select; Zoom +/− scales around view center.
 
 ## Open design considerations
-- **Toolbar icon strategy:** drawn glyphs/vector shapes vs. a future sprite sheet for Pan/Draw tool icons.
-- **Zoom anchor policy:** anchors on view center per the current request; cursor-anchored scroll-wheel zoom is an adjacent idea not yet requested/scoped — see [`12-deferred-and-backlog.md`](12-deferred-and-backlog.md).
+- **Toolbar icon strategy:** drawn glyphs now; optional future sprite sheet.
+- **Zoom anchor policy:** toolbar +/− use view center; scroll-wheel zoom uses cursor anchor ✓ — see [`08-camera-and-viewport.md`](08-camera-and-viewport.md).
 
 ## Config keys (this area)
 
 | Key | Default | Phase |
 |-----|---------|-------|
-| `toolbarMargin`, `toolbarButtonSize` | TBD | Phase 7 (backlog) |
+| `toolbarMargin` | `12` | Phase 7 ✓ |
+| `toolbarButtonSize` | `32` | Phase 7 ✓ |
 
 ## Planned files
 
 | File | Status | Phase |
 |------|--------|-------|
-| `src/ui/toolbar.lua` | planned (backlog) | Phase 7 |
-| `tests/toolbar_spec.lua` | planned (backlog) | Phase 7 |
+| `src/ui/toolbar.lua` | exists | Phase 7 ✓ |
+| `tests/toolbar_spec.lua` | exists | Phase 7 ✓ |
 
 ## Validation
-- Toolbar visible at all times independent of panes; Pan drag moves view; Draw left/right click+drag toggles cells and pauses sim; Zoom +/− centers on current view.
+- Toolbar visible at all times independent of panes; Pan drag moves view; Draw left/right click+drag paints cells and pauses sim; Zoom +/− centers on current view. ✓
 
 ## TODO tracking
 
-### Phase 7 (backlog, not started)
-- [ ] **Phase 7** — Floating toolbar: pan & draw tools, zoom +/− (backlog; always-visible panel, `src/ui/toolbar.lua`)
+### Phase 7 ✓
+- [x] **Phase 7** — Floating toolbar: pan & draw tools, zoom +/− (`src/ui/toolbar.lua`)

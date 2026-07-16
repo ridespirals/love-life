@@ -31,6 +31,9 @@ function M.create(opts)
     fieldSelEnd = nil,
     fieldSelAnchor = 0,
     fieldDragging = false,
+    activeTool = opts.activeTool or "pan",
+    pointerX = nil,
+    pointerY = nil,
   }
 end
 

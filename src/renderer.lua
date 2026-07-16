@@ -1,6 +1,7 @@
 local stepAnimation = require("src.step_animation")
 local themes = require("src.themes")
 local layout = require("src.layout")
+local camera = require("src.camera")
 
 local M = {}
 
@@ -47,8 +48,12 @@ local function clampDepth(depth, tileSize)
   return math.min(depth, math.floor(tileSize / 3))
 end
 
-function M.getLayout(config)
+function M.getLayout(config, cam)
   local windowWidth, windowHeight = love.graphics.getDimensions()
+  local viewH = windowHeight - config.statusBarHeight
+  if cam then
+    return camera.computeLayout(cam, config, windowWidth, viewH)
+  end
   return layout.computeBoardLayout(
     windowWidth,
     windowHeight,
@@ -165,6 +170,21 @@ local function drawIdleCell(x, y, tileSize, theme, config, alive, change, previe
   drawExtrudedTile(x, y, tileSize, theme, alive, tileDepth(config, alive))
   drawNextStatePreview(x, y, tileSize, theme, config, alive, change, previewSize)
 end
+
+function M.drawHover(config, cam, row, col, theme)
+  if not row or not col or not theme then
+    return
+  end
+  local boardLayout = M.getLayout(config, cam)
+  local tileSize = boardLayout.tileSize
+  local x = boardLayout.offsetX + (col - 1) * tileSize
+  local y = boardLayout.offsetY + (row - 1) * tileSize
+  love.graphics.setColor(theme.alive[1], theme.alive[2], theme.alive[3], 0.35)
+  love.graphics.rectangle("fill", x, y, tileSize, tileSize)
+  love.graphics.setColor(theme.alive[1], theme.alive[2], theme.alive[3], 0.9)
+  love.graphics.rectangle("line", x + 0.5, y + 0.5, tileSize, tileSize)
+end
+
 local function drawCell(world, theme, config, layout, row, col, animState)
   local tileSize = layout.tileSize
   local x = layout.offsetX + (col - 1) * tileSize
@@ -202,24 +222,24 @@ local function drawCell(world, theme, config, layout, row, col, animState)
   end
 end
 
-function M.draw(world, theme, config, animState)
-  local layout = M.getLayout(config)
-  local tileSize = layout.tileSize
+function M.draw(world, theme, config, animState, cam)
+  local boardLayout = M.getLayout(config, cam)
+  local tileSize = boardLayout.tileSize
 
   for row = 1, world.rows do
     for col = 1, world.cols do
-      drawCell(world, theme, config, layout, row, col, animState)
+      drawCell(world, theme, config, boardLayout, row, col, animState)
     end
   end
 
   setColor(theme.grid)
   for col = 0, world.cols do
-    local x = layout.offsetX + col * tileSize + 0.5
-    love.graphics.line(x, layout.offsetY + 0.5, x, layout.offsetY + layout.boardHeight + 0.5)
+    local x = boardLayout.offsetX + col * tileSize + 0.5
+    love.graphics.line(x, boardLayout.offsetY + 0.5, x, boardLayout.offsetY + boardLayout.boardHeight + 0.5)
   end
   for row = 0, world.rows do
-    local y = layout.offsetY + row * tileSize + 0.5
-    love.graphics.line(layout.offsetX + 0.5, y, layout.offsetX + layout.boardWidth + 0.5, y)
+    local y = boardLayout.offsetY + row * tileSize + 0.5
+    love.graphics.line(boardLayout.offsetX + 0.5, y, boardLayout.offsetX + boardLayout.boardWidth + 0.5, y)
   end
 end
 

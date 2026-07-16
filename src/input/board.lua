@@ -8,7 +8,7 @@ function M.create()
   }
 end
 
--- Inverse of renderer.getLayout tile math: window pixel -> 1-based cell.
+-- Inverse of camera/renderer layout tile math: window pixel -> 1-based cell.
 function M.screenToCell(x, y, layout, world)
   local col = math.floor((x - layout.offsetX) / layout.tileSize) + 1
   local row = math.floor((y - layout.offsetY) / layout.tileSize) + 1

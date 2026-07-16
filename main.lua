@@ -12,7 +12,10 @@ local rule_pane = require("src.ui.panes.rule_pane")
 local theme_pane = require("src.ui.panes.theme_pane")
 local board = require("src.input.board")
 local layout = require("src.layout")
+local camera = require("src.camera")
 local settings_pane = require("src.ui.panes.settings_pane")
+local toolbar = require("src.ui.toolbar")
+local tooltip = require("src.ui.tooltip")
 local stepAnimation = require("src.step_animation")
 local buttonFx = require("src.ui.button_fx")
 local userdata = require("src.userdata")
@@ -26,6 +29,10 @@ local playbackState
 local animState
 local controlFx
 local lastPlaybackRunning
+local cameraState
+local panDrag
+local hoverRow
+local hoverCol
 local generation = 0
 local fastMode = false
 local fastKeyboard = false
@@ -389,14 +396,51 @@ local function deletePatternDraft()
 end
 
 local function canDrawOnBoard()
-  return not playbackState.running
+  return sessionState.activeTool == "draw"
+    and not playbackState.running
     and not pane.isOpen(paneState)
     and not color_picker.isOpen(colorPickerState)
     and stepAnimation.isIdle(animState)
 end
 
+local function canPanBoard()
+  return sessionState.activeTool == "pan"
+    and not pane.isOpen(paneState)
+    and not color_picker.isOpen(colorPickerState)
+end
+
+local function setActiveTool(toolId)
+  if sessionState.activeTool == toolId then
+    sessionState.activeTool = nil
+    return
+  end
+  sessionState.activeTool = toolId
+  if toolId == "draw" then
+    playback.pause(playbackState)
+  end
+end
+
+local function handleToolbarHit(hit)
+  if hit == "pan" or hit == "draw" then
+    setActiveTool(hit)
+    return true
+  end
+  if hit == "zoom_in" then
+    camera.zoomAtViewCenter(cameraState, cameraState.zoomStep)
+    return true
+  end
+  if hit == "zoom_out" then
+    camera.zoomAtViewCenter(cameraState, 1 / cameraState.zoomStep)
+    return true
+  end
+  if hit == "panel" then
+    return true
+  end
+  return false
+end
+
 local function boardCellAt(x, y)
-  return board.screenToCell(x, y, renderer.getLayout(config), world)
+  return board.screenToCell(x, y, renderer.getLayout(config, cameraState), world)
 end
 
 local function markBoardEdited()
@@ -423,6 +467,12 @@ local function syncAnimEnabled()
   stepAnimation.syncEnabled(animState, config)
 end
 
+local function resetCamera()
+  if cameraState then
+    camera.resetToBoard(cameraState, config)
+  end
+end
+
 local function migrateWorldToGridSize()
   if not world then
     return false
@@ -437,6 +487,7 @@ local function migrateWorldToGridSize()
   world = grid.resize(world, config.rows, config.cols)
   grid.computeNext(world, activeRule)
   syncAnimEnabled()
+  resetCamera()
   return true
 end
 
@@ -446,6 +497,7 @@ local function rebuildWorldForWindow()
     if not world then
       world = grid.create(config.rows, config.cols)
       reloadAppliedPattern()
+      resetCamera()
       return
     end
     migrateWorldToGridSize()
@@ -483,6 +535,7 @@ local function applyGridSettings()
   end
 
   syncAnimEnabled()
+  resetCamera()
   session.resetGridDraft(sessionState, config)
   pane.close(paneState)
 end
@@ -531,6 +584,7 @@ function love.load()
   playbackState = playback.create(config.stepInterval)
   animState = stepAnimation.create(config)
   controlFx = buttonFx.create(config)
+  cameraState = camera.create(config)
   lastPlaybackRunning = nil
   sessionState = session.create({
     ruleId = config.activeRule,
@@ -552,6 +606,7 @@ function love.load()
   else
     rebuildWorldForWindow()
   end
+  resetCamera()
 end
 
 function love.resize()
@@ -579,7 +634,11 @@ end
 
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
-  renderer.draw(world, theme, config, animState)
+  renderer.draw(world, theme, config, animState, cameraState)
+  if sessionState.activeTool == "draw" and hoverRow then
+    renderer.drawHover(config, cameraState, hoverRow, hoverCol, theme)
+  end
+  toolbar.draw(theme, config, sessionState)
   statusbar.draw(
     world,
     theme,
@@ -588,7 +647,9 @@ function love.draw()
     generation,
     sessionState.appliedPatternId,
     fastMode,
-    paneState
+    paneState,
+    sessionState.pointerX,
+    sessionState.pointerY
   )
   if buttonFx.isAnimating(controlFx) and controlFx.targetId then
     local fxButton = statusbar.getButton(config, fastMode, controlFx.targetId)
@@ -610,6 +671,11 @@ function love.draw()
     )
   end
   color_picker.draw(colorPickerState, theme, config)
+
+  local tip = toolbar.tooltipAt(config, sessionState.pointerX, sessionState.pointerY)
+  if tip then
+    tooltip.draw(theme, tip.text, sessionState.pointerX, sessionState.pointerY, tip.rect)
+  end
 end
 
 function love.keypressed(key)
@@ -678,17 +744,27 @@ function love.textinput(text)
 end
 
 function love.mousepressed(x, y, button)
+  if color_picker.isOpen(colorPickerState) then
+    if button == 1 and color_picker.mousepressed(colorPickerState, x, y) then
+      consumeColorPickerResult()
+    end
+    return
+  end
+
+  local toolbarHit = toolbar.hitTest(config, x, y)
+  if toolbarHit then
+    if button == 1 then
+      handleToolbarHit(toolbarHit)
+    end
+    return
+  end
+
   if button == 2 then
     tryBeginBoardStroke(x, y, 2)
     return
   end
 
   if button ~= 1 then
-    return
-  end
-
-  if color_picker.mousepressed(colorPickerState, x, y) then
-    consumeColorPickerResult()
     return
   end
 
@@ -745,14 +821,30 @@ function love.mousepressed(x, y, button)
     return
   end
 
+  if canPanBoard() then
+    panDrag = { lastX = x, lastY = y }
+    return
+  end
+
   tryBeginBoardStroke(x, y, 1)
 end
 
 function love.mousemoved(x, y)
+  sessionState.pointerX = x
+  sessionState.pointerY = y
+
   color_picker.mousemoved(colorPickerState, x, y)
 
   if pane.isOpen(paneState) then
     pane.mousemoved(paneState, sessionState, x, y, theme, config)
+  end
+
+  if panDrag then
+    camera.panScreen(cameraState, x - panDrag.lastX, y - panDrag.lastY)
+    panDrag.lastX = x
+    panDrag.lastY = y
+    hoverRow, hoverCol = nil, nil
+    return
   end
 
   if board.isDrawing(boardState) then
@@ -761,9 +853,43 @@ function love.mousemoved(x, y)
       markBoardEdited()
     end
   end
+
+  if sessionState.activeTool == "draw" and not pane.isOpen(paneState) and not color_picker.isOpen(colorPickerState) then
+    hoverRow, hoverCol = boardCellAt(x, y)
+  else
+    hoverRow, hoverCol = nil, nil
+  end
+end
+
+function love.wheelmoved(_dx, dy)
+  if dy == 0 then
+    return
+  end
+  if color_picker.isOpen(colorPickerState) or pane.isOpen(paneState) then
+    return
+  end
+
+  local mx = sessionState.pointerX
+  local my = sessionState.pointerY
+  if mx == nil or my == nil then
+    mx, my = love.mouse.getPosition()
+  end
+
+  local windowW, windowH = love.graphics.getDimensions()
+  local viewH = windowH - config.statusBarHeight
+  if my >= viewH then
+    return
+  end
+
+  local worldX, worldY = camera.screenToWorld(cameraState, mx, my, windowW, viewH)
+  camera.zoomBy(cameraState, cameraState.zoomStep ^ dy, worldX, worldY)
 end
 
 function love.mousereleased(x, y, button)
+  if button == 1 then
+    panDrag = nil
+  end
+
   if button == 2 then
     board.endStroke(boardState)
     return

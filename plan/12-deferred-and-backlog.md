@@ -18,7 +18,7 @@ Items explicitly not scheduled, historical items superseded by a phase that now 
 
 ## Adjacent ideas surfaced while scoping Phases 6–8 (not committed, not scoped)
 
-- Scroll-wheel zoom anchored at the cursor (vs. the toolbar's view-center-anchored +/−) — see [`08-camera-and-viewport.md`](08-camera-and-viewport.md), [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md)
+- ~~Scroll-wheel zoom anchored at the cursor~~ — ✓ shipped (cursor-anchored; toolbar +/− still use view center)
 - Keyboard/WASD or arrow-key camera panning (independent of gamepad stick panning) — see [`10-controller-input.md`](10-controller-input.md)
 - Minimap / overview of the full world when zoomed in past 1:1
 

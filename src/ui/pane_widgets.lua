@@ -42,10 +42,13 @@ function M.layoutGrid(x, y, items, gap, maxRowW)
   return items, usedW, totalH
 end
 
-function M.drawButton(button, theme, selected, disabled)
+function M.drawButton(button, theme, selected, disabled, hovered)
   local alpha = disabled and 0.35 or 1
   if selected and not disabled then
     setColor(theme.alive, 0.25)
+    love.graphics.rectangle("fill", button.x, button.y, button.w, button.h)
+  elseif hovered and not disabled then
+    setColor(theme.alive, 0.14)
     love.graphics.rectangle("fill", button.x, button.y, button.w, button.h)
   end
   setColor(theme.grid, alpha)
@@ -56,6 +59,22 @@ end
 
 function M.hitButton(button, x, y)
   return x >= button.x and x <= button.x + button.w and y >= button.y and y <= button.y + button.h
+end
+
+function M.isHovered(button, session)
+  if not session or session.pointerX == nil or session.pointerY == nil then
+    return false
+  end
+  return M.hitButton(button, session.pointerX, session.pointerY)
+end
+
+-- Shared hover wash for status-bar chips, toolbar buttons, etc.
+function M.drawHoverWash(rect, theme, amount)
+  if not rect then
+    return
+  end
+  setColor(theme.alive, amount or 0.14)
+  love.graphics.rectangle("fill", rect.x, rect.y, rect.w, rect.h)
 end
 
 function M.drawField(label, field, theme, disabled, session)

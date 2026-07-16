@@ -14,14 +14,14 @@ See [`README.md`](README.md) for the cross-area roadmap.
 | `layout` forced letterbox math | Extend `tests/layout_spec.lua` (Phase 5, see [`07-grid-settings.md`](07-grid-settings.md)) |
 | `patterns.fromWorld` | Unit test (Phase 4, see [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md)) |
 | Pane hit regions | Extend `tests/statusbar_spec.lua` with mock geometry |
-| `camera` world↔screen transforms | Pure Lua unit tests (Phase 6, see [`08-camera-and-viewport.md`](08-camera-and-viewport.md)) |
+| `camera` world↔screen transforms | Pure Lua unit tests ✓ (Phase 6, see [`08-camera-and-viewport.md`](08-camera-and-viewport.md)) |
 | `toolbar` hit-test regions | Pure Lua unit tests (Phase 7, see [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md)) |
 | `controller` action dispatch | Mocked input events, no real `love.joystick` (Phase 8, see [`10-controller-input.md`](10-controller-input.md)) |
 | `button_fx` timer/trail math | Pure Lua unit tests ✓ (see [`02-rendering-and-animation.md`](02-rendering-and-animation.md)) |
 | Full UI | Manual smoke per phase |
 | Fullscreen | Manual smoke — F11 toggle, grid auto-fit, playback after exit (no unit tests; `love.window` is LÖVE-only) |
 
-Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 18 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `button_fx_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 6–8 backlog adds `camera_spec`, `toolbar_spec`, `controller_spec`.
+Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 21 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `button_fx_spec`, `camera_spec`, `toolbar_spec`, `tooltip_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 8 backlog adds `controller_spec`.
 
 Defer renderer/LÖVE integration tests.
 
@@ -62,8 +62,8 @@ Defer renderer/LÖVE integration tests.
 | Phase 3 ✓ | Custom theme persists across relaunch |
 | Phase 4 ✓ | Draw pattern, save, reload from list |
 | Phase 5 ✓ | Forced grid letterboxed; auto-fit on toggle back; grid Apply preserves board; animation toggle; `text_field_spec` green |
-| Phase 6 (backlog) | Initial view matches current output at zoom=1/pan=0; pan/zoom render correctly; `camera_spec` round-trips `worldToScreen`/`screenToWorld` |
-| Phase 7 (backlog) | Toolbar visible at all times independent of panes; Pan drag moves view; Draw left/right click+drag toggles cells and pauses sim; Zoom +/− centers on current view |
+| Phase 6 ✓ | Initial view matches letterbox at zoom=1; pan/zoom via camera + scroll wheel; `camera_spec` green |
+| Phase 7 ✓ | Toolbar always visible; Pan drag; Draw paints + pauses on select; Zoom +/−; tooltips/hover |
 | Phase 8 (backlog) | Gamepad button/stick mappings drive the same actions as mouse/keyboard; deadzone respected; `controller_spec` green |
 
 ### M1 visual checklist (regression)

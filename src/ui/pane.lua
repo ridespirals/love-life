@@ -1,4 +1,5 @@
 local themes = require("src.themes")
+local widgets = require("src.ui.pane_widgets")
 
 local M = {}
 
@@ -315,6 +316,9 @@ function M.draw(state, theme, config, session)
   end
 
   local close = M.getCloseButton(config, state)
+  if session and widgets.isHovered(close, session) then
+    widgets.drawHoverWash(close, theme, 0.14)
+  end
   setColor(theme.grid, 1)
   love.graphics.rectangle("line", close.x + 0.5, close.y + 0.5, close.w, close.h)
   setColor(theme.alive, 1)
