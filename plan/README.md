@@ -9,11 +9,11 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 ## Plan status
 
 - **Branch:** `main`
-- **Version:** v1.4.0 shipped; Phase 5 ✓
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load), Phase 4 (pattern picker + board drawing), Phase 5 (grid settings)
-- **Next:** Phase 6 camera/viewport (backlog, may be resequenced)
-- **Backlog (not started, not sequenced):** Phase 6 (camera/viewport), Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer)
-- **Shipped outside phase sequence:** Play/Pause button transition fx (`src/ui/button_fx.lua`)
+- **Version:** v1.4.0 shipped; Phase 6 camera in progress
+- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load), Phase 4 (pattern picker + board drawing), Phase 5 (grid settings), button fx
+- **Next / in progress:** Phase 6 camera/viewport (core transforms + debug keys; toolbar UI is Phase 7)
+- **Backlog (not started, not sequenced):** Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer)
+- **Shipped outside phase sequence:** Play/Pause/Step/Restart button transition fx (`src/ui/button_fx.lua`)
 
 ## Directory map
 
@@ -26,7 +26,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 | [`05-persistence.md`](05-persistence.md) | Userspace save/load | Phase 3 — `src/userdata.lua`, merged catalogs |
 | [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) | Pattern picker + drawing | Phase 4 — pattern pane, board drawing, deferred catalog grouping |
 | [`07-grid-settings.md`](07-grid-settings.md) | Grid settings | Phase 5 — auto vs forced grid mode, letterboxing |
-| [`08-camera-and-viewport.md`](08-camera-and-viewport.md) | Camera & viewport | Phase 6 (backlog) — pan/zoom, world ≠ visible area |
+| [`08-camera-and-viewport.md`](08-camera-and-viewport.md) | Camera & viewport | Phase 6 — pan/zoom, world ≠ visible area (in progress) |
 | [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md) | Floating toolbar | Phase 7 (backlog) — pan/draw tools, zoom +/− |
 | [`10-controller-input.md`](10-controller-input.md) | Controller input | Phase 8 (backlog) — unified mouse/keyboard/gamepad action layer |
 | [`11-testing-and-ci.md`](11-testing-and-ci.md) | Testing & CI | Testing strategy, GitHub Actions (test + release), validation checklists |
@@ -76,7 +76,7 @@ flowchart TD
   P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> DEF
 ```
 
-**Sequencing note (backlog, not decided):** Phases 6–8 are captured for planning but not yet scheduled. Camera work (Phase 6, see [`08-camera-and-viewport.md`](08-camera-and-viewport.md)) touches the same coordinate math as Phase 4b board drawing ([`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md)) and Phase 5 forced grid/letterbox ([`07-grid-settings.md`](07-grid-settings.md)) — it may make sense to pull Phase 6 earlier to avoid rework, but that reordering is **not decided here**; revisit when picking up Phase 4 or 5.
+**Sequencing note:** Phase 6 camera core is in progress on `main`. Phase 7 toolbar will replace temporary debug pan/zoom keys.
 
 ### Recommended implementation order (post-1.0)
 
@@ -93,7 +93,7 @@ Phase 0 ✓ and 1a fullscreen ✓ are complete on `main`. Phases 1–5 ✓. **Ba
 | 7 | **4a — Pattern picker** ✓ | Catalog list + Apply |
 | 8 | **4b — Board drawing** ✓ | Paused left/right drag drawing; superseded in mechanism by Phase 7 Draw tool once that lands |
 | 9 | **5 — Grid settings** ✓ | Auto vs forced letterbox; auto resize refits, forced recenters only |
-| 10 | **6 — Camera & viewport** (backlog) | See sequencing note above — may move earlier — **next candidate** |
+| 10 | **6 — Camera & viewport** (in progress) | Core transforms + debug keys; toolbar UI in Phase 7 |
 | 11 | **7 — Floating toolbar** (backlog) | Depends on Phase 6 coordinate transforms |
 | 12 | **8 — Controller input** (backlog) | Deliberately separate from mouse/keyboard UI work |
 

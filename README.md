@@ -81,6 +81,11 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `buttonFxTrailCount` | Number of delayed trail copies after the lead outline (default `3`) |
 | `buttonFxTrailSpacingSec` | Delay between trail copies (default `0.05`) |
 | `buttonFxExpandPx` | How far outlines grow outward from the button (default `10`) |
+| `cameraZoomMin` | `0.25` | Zoom out floor |
+| `cameraZoomMax` | `4` | Zoom in ceiling |
+| `cameraZoomStep` | `1.25` | Multiplier per zoom key / future toolbar +/− |
+| `cameraDefaultZoom` | `1` | Load / reset zoom |
+| `cameraPanStepPx` | `40` | Screen pixels per Shift+Arrow pan (debug keys) |
 | `accentBlendAlive` | Blend toward theme `accent` on alive-tile extrusion shadows (0–1; default `0.72`) |
 | `accentBlendDead` | Blend toward theme `accent` on dead tiles and pane chrome (0–1; default `0.42`) |
 
@@ -108,7 +113,7 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.4.0** — Phase 5 grid settings (Auto/Forced, tile/rows/cols, Animate On/Off); shared text-field editing (caret, selection); Enter applies rule/pattern/grid drafts; grid Apply and auto resize migrate the live board without pausing or resetting generation; step morphs skip when disabled or tile size is below 6 px.
 
-**Next:** Phase 6 camera/viewport (backlog) — see [`plan/08-camera-and-viewport.md`](plan/08-camera-and-viewport.md).
+**Next:** Phase 6 camera/viewport (in progress) — see [`plan/08-camera-and-viewport.md`](plan/08-camera-and-viewport.md). Temporary debug: `Shift+Arrows` pan, `=`/`-` zoom, `0` reset view.
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
 
@@ -136,6 +141,9 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - `s`: play
 - `p`: pause
 - `n` or `Right Arrow`: step forward one generation
+- `Shift+Arrows`: pan camera (temporary Phase 6 debug; Phase 7 toolbar will replace)
+- `=` / `-`: zoom camera in / out (view center)
+- `0`: reset camera to centered zoom=1
 - `r`: restart (reload applied pattern; unsaved `custom` falls back to `defaultPattern`, pause playback)
 - `Esc` or click outside the pane: close open settings pane
 - Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)

@@ -1,36 +1,44 @@
-# Camera & viewport (Phase 6, backlog)
+# Camera & viewport (Phase 6)
 
 Decouples the simulated world from the on-screen viewport: pan/zoom, world ≠ visible area.
 
 See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts with [`02-rendering-and-animation.md`](02-rendering-and-animation.md) (replaces the static layout offset math), [`07-grid-settings.md`](07-grid-settings.md) (open overlap with forced/letterbox mode), [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md) (Phase 7 depends on this phase's coordinate transforms), [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) (board drawing needs the same `screenToCell` math).
 
-**Status:** backlog — not started; sequencing relative to Phases 4–5 is an open question (see sequencing note in [`README.md`](README.md)).
+**Status:** in progress — `src/camera.lua` + renderer/board wiring + temporary debug keys; Phase 7 will replace debug keys with toolbar UI.
 
 ## Development order
 
-1. Build `src/camera.lua` in isolation (pure Lua, unit-testable) — no rendering changes yet.
-2. Swap `src/renderer.lua`'s static `getLayout` offset math for camera-driven per-tile transforms, verifying the load-time view is unchanged.
-3. Add temporary debug keys for pan/zoom to validate before Phase 7 ships a real UI.
+1. Build `src/camera.lua` in isolation (pure Lua, unit-testable) — no rendering changes yet. ✓
+2. Swap `src/renderer.lua`'s static `getLayout` offset math for camera-driven per-tile transforms, verifying the load-time view is unchanged. ✓
+3. Add temporary debug keys for pan/zoom to validate before Phase 7 ships a real UI. ✓
+4. Phase 7 toolbar replaces debug keys (not started).
 
 ---
 
 **Motivation:** decouples the simulated world from the on-screen viewport. Some patterns (spaceships, guns, rakes) grow well beyond a window-sized board; a camera lets the world be arbitrarily large while the view pans/zooms independently. **Hard constraint:** the initial view (load-time render) must look pixel-identical to today's centered, zoom = 1 board — this is a regression requirement, not just a nice-to-have.
 
-**Delivers:** `src/camera.lua` (pure Lua, unit-testable) with world↔screen coordinate transforms; renderer (and later, input code) read through the camera instead of raw `layout.getLayout` offsets.
+**Delivers:** `src/camera.lua` (pure Lua, unit-testable) with world↔screen coordinate transforms; renderer and board input read through the camera instead of raw letterbox offsets alone.
 
 | File | Work |
 |------|------|
-| `src/camera.lua` | Camera state (`x`, `y` world-space center, `zoom`); `worldToScreen`, `screenToWorld`, `pan(dx, dy)`, `zoomBy(factor, anchor)`, `reset()` |
-| `src/renderer.lua` | Replace static `getLayout` offset math with camera-driven transform per tile |
-| `src/config.lua` | `cameraZoomMin`, `cameraZoomMax`, `cameraZoomStep`, `cameraDefaultZoom` (`1.0`) |
-| `tests/camera_spec.lua` | Round-trip `worldToScreen`/`screenToWorld`; zoom clamping; pan accumulation |
+| `src/camera.lua` | Camera state (`x`, `y` world-space center, `zoom`); `worldToScreen`, `screenToWorld`, `pan`, `zoomBy`, `reset`, `computeLayout` ✓ |
+| `src/renderer.lua` | `getLayout(config, camera)` → camera-driven offsets + zoomed tile size ✓ |
+| `src/input/board.lua` | Unchanged API; receives camera layout from `main.lua` ✓ |
+| `main.lua` | Camera lifecycle; reset on grid rebuild; debug keys ✓ |
+| `src/config.lua` | `cameraZoomMin/Max/Step`, `cameraDefaultZoom`, `cameraPanStepPx` ✓ |
+| `tests/camera_spec.lua` | Round-trip transforms; zoom clamping; letterbox parity at zoom=1 ✓ |
 
 **Mechanics:**
-- Camera starts centered on the board at `zoom = 1`, matching current `renderer.getLayout` output exactly.
-- Pan moves the camera center in world-space pixels; zoom scales tile render size around a chosen anchor (view center for the Phase 7 toolbar buttons — cursor-anchored scroll-wheel zoom is a **future stretch**, not requested/in scope here; see [`12-deferred-and-backlog.md`](12-deferred-and-backlog.md)).
-- World stays toroidal for simulation purposes; how the camera renders past the board edges (if it can see "past" a finite toroidal world) is an open rendering question — flag rather than resolve now.
+- Camera starts centered on the board at `zoom = 1`, matching `layout.computeBoardLayout` offsets exactly (`camera_spec` asserts parity).
+- Pan moves the camera center in world-space pixels; zoom scales tile render size around view center (Phase 7 toolbar +/− will use the same anchor; cursor-anchored scroll-wheel zoom is deferred).
+- World stays toroidal for simulation; rendering past board edges is still an open question — currently empty background.
 
-**Checkpoint:** `love .` at load looks unchanged from today; pan and zoom (temporary debug keys are fine before Phase 7 ships a UI) move/scale the view without altering simulation state; `camera_spec` green.
+**Temporary debug keys (until Phase 7):**
+- `Shift+Arrows` — pan
+- `=` / `-` — zoom in / out (view center)
+- `0` — reset camera to centered zoom=1
+
+**Checkpoint:** `love .` at load looks unchanged from today; pan and zoom move/scale the view without altering simulation state; `camera_spec` green. ✓
 
 ## Open design considerations
 - **Camera vs. Phase 5 forced/letterbox grid mode:** unresolved whether letterbox centering is still needed once a camera can pan — see [`07-grid-settings.md`](07-grid-settings.md).
@@ -41,19 +49,24 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 
 | Key | Default | Phase |
 |-----|---------|-------|
-| `cameraZoomMin`, `cameraZoomMax`, `cameraZoomStep`, `cameraDefaultZoom` | TBD (`cameraDefaultZoom = 1.0`) | Phase 6 (backlog) |
+| `cameraDefaultZoom` | `1` | Phase 6 ✓ |
+| `cameraZoomMin` | `0.25` | Phase 6 ✓ |
+| `cameraZoomMax` | `4` | Phase 6 ✓ |
+| `cameraZoomStep` | `1.25` | Phase 6 ✓ |
+| `cameraPanStepPx` | `40` | Phase 6 ✓ (debug keys) |
 
 ## Planned files
 
 | File | Status | Phase |
 |------|--------|-------|
-| `src/camera.lua` | planned (backlog) | Phase 6 |
-| `tests/camera_spec.lua` | planned (backlog) | Phase 6 |
+| `src/camera.lua` | exists | Phase 6 ✓ |
+| `tests/camera_spec.lua` | exists | Phase 6 ✓ |
 
 ## Validation
-- Initial view matches current output at zoom=1/pan=0; pan/zoom render correctly; `camera_spec` round-trips `worldToScreen`/`screenToWorld`.
+- Initial view matches current output at zoom=1/pan=0; pan/zoom render correctly; `camera_spec` round-trips `worldToScreen`/`screenToWorld`. ✓
 
 ## TODO tracking
 
-### Phase 6 (backlog, not started)
-- [ ] **Phase 6** — Camera & viewport (backlog; pan/zoom, world ≠ visible area, `src/camera.lua`)
+### Phase 6 ✓ (core) / Phase 7 for UI
+- [x] **Phase 6 core** — Camera & viewport (`src/camera.lua`, renderer/board wiring, debug keys)
+- [ ] Phase 7 toolbar replaces temporary pan/zoom keys

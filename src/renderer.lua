@@ -1,6 +1,7 @@
 local stepAnimation = require("src.step_animation")
 local themes = require("src.themes")
 local layout = require("src.layout")
+local camera = require("src.camera")
 
 local M = {}
 
@@ -47,8 +48,12 @@ local function clampDepth(depth, tileSize)
   return math.min(depth, math.floor(tileSize / 3))
 end
 
-function M.getLayout(config)
+function M.getLayout(config, cam)
   local windowWidth, windowHeight = love.graphics.getDimensions()
+  local viewH = windowHeight - config.statusBarHeight
+  if cam then
+    return camera.computeLayout(cam, config, windowWidth, viewH)
+  end
   return layout.computeBoardLayout(
     windowWidth,
     windowHeight,
@@ -202,24 +207,24 @@ local function drawCell(world, theme, config, layout, row, col, animState)
   end
 end
 
-function M.draw(world, theme, config, animState)
-  local layout = M.getLayout(config)
-  local tileSize = layout.tileSize
+function M.draw(world, theme, config, animState, cam)
+  local boardLayout = M.getLayout(config, cam)
+  local tileSize = boardLayout.tileSize
 
   for row = 1, world.rows do
     for col = 1, world.cols do
-      drawCell(world, theme, config, layout, row, col, animState)
+      drawCell(world, theme, config, boardLayout, row, col, animState)
     end
   end
 
   setColor(theme.grid)
   for col = 0, world.cols do
-    local x = layout.offsetX + col * tileSize + 0.5
-    love.graphics.line(x, layout.offsetY + 0.5, x, layout.offsetY + layout.boardHeight + 0.5)
+    local x = boardLayout.offsetX + col * tileSize + 0.5
+    love.graphics.line(x, boardLayout.offsetY + 0.5, x, boardLayout.offsetY + boardLayout.boardHeight + 0.5)
   end
   for row = 0, world.rows do
-    local y = layout.offsetY + row * tileSize + 0.5
-    love.graphics.line(layout.offsetX + 0.5, y, layout.offsetX + layout.boardWidth + 0.5, y)
+    local y = boardLayout.offsetY + row * tileSize + 0.5
+    love.graphics.line(boardLayout.offsetX + 0.5, y, boardLayout.offsetX + boardLayout.boardWidth + 0.5, y)
   end
 end
 

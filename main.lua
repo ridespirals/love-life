@@ -12,6 +12,7 @@ local rule_pane = require("src.ui.panes.rule_pane")
 local theme_pane = require("src.ui.panes.theme_pane")
 local board = require("src.input.board")
 local layout = require("src.layout")
+local camera = require("src.camera")
 local settings_pane = require("src.ui.panes.settings_pane")
 local stepAnimation = require("src.step_animation")
 local buttonFx = require("src.ui.button_fx")
@@ -26,6 +27,7 @@ local playbackState
 local animState
 local controlFx
 local lastPlaybackRunning
+local cameraState
 local generation = 0
 local fastMode = false
 local fastKeyboard = false
@@ -396,7 +398,7 @@ local function canDrawOnBoard()
 end
 
 local function boardCellAt(x, y)
-  return board.screenToCell(x, y, renderer.getLayout(config), world)
+  return board.screenToCell(x, y, renderer.getLayout(config, cameraState), world)
 end
 
 local function markBoardEdited()
@@ -423,6 +425,12 @@ local function syncAnimEnabled()
   stepAnimation.syncEnabled(animState, config)
 end
 
+local function resetCamera()
+  if cameraState then
+    camera.resetToBoard(cameraState, config)
+  end
+end
+
 local function migrateWorldToGridSize()
   if not world then
     return false
@@ -437,6 +445,7 @@ local function migrateWorldToGridSize()
   world = grid.resize(world, config.rows, config.cols)
   grid.computeNext(world, activeRule)
   syncAnimEnabled()
+  resetCamera()
   return true
 end
 
@@ -446,6 +455,7 @@ local function rebuildWorldForWindow()
     if not world then
       world = grid.create(config.rows, config.cols)
       reloadAppliedPattern()
+      resetCamera()
       return
     end
     migrateWorldToGridSize()
@@ -483,6 +493,7 @@ local function applyGridSettings()
   end
 
   syncAnimEnabled()
+  resetCamera()
   session.resetGridDraft(sessionState, config)
   pane.close(paneState)
 end
@@ -531,6 +542,7 @@ function love.load()
   playbackState = playback.create(config.stepInterval)
   animState = stepAnimation.create(config)
   controlFx = buttonFx.create(config)
+  cameraState = camera.create(config)
   lastPlaybackRunning = nil
   sessionState = session.create({
     ruleId = config.activeRule,
@@ -552,6 +564,7 @@ function love.load()
   else
     rebuildWorldForWindow()
   end
+  resetCamera()
 end
 
 function love.resize()
@@ -579,7 +592,7 @@ end
 
 function love.draw()
   love.graphics.clear(theme.background[1], theme.background[2], theme.background[3], 1)
-  renderer.draw(world, theme, config, animState)
+  renderer.draw(world, theme, config, animState, cameraState)
   statusbar.draw(
     world,
     theme,
@@ -646,7 +659,31 @@ function love.keypressed(key)
   elseif key == "s" then
     playback.play(playbackState)
   elseif key == "n" or key == "right" then
-    stepForward()
+    local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+    if shift and key == "right" then
+      local step = (config.cameraPanStepPx or 40) / cameraState.zoom
+      camera.pan(cameraState, step, 0)
+    else
+      stepForward()
+    end
+  elseif key == "left" or key == "up" or key == "down" then
+    local shift = love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+    if shift then
+      local step = (config.cameraPanStepPx or 40) / cameraState.zoom
+      if key == "left" then
+        camera.pan(cameraState, -step, 0)
+      elseif key == "up" then
+        camera.pan(cameraState, 0, -step)
+      else
+        camera.pan(cameraState, 0, step)
+      end
+    end
+  elseif key == "=" or key == "+" then
+    camera.zoomAtViewCenter(cameraState, cameraState.zoomStep)
+  elseif key == "-" then
+    camera.zoomAtViewCenter(cameraState, 1 / cameraState.zoomStep)
+  elseif key == "0" then
+    resetCamera()
   elseif key == "r" then
     restartWorld()
   elseif key == "f" then
