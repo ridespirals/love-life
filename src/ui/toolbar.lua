@@ -71,22 +71,56 @@ local function drawPanIcon(button, theme)
   love.graphics.line(cx, cy + arm, cx + 3, cy + arm - 4)
 end
 
+-- Diagonal pencil: tip lower-left, eraser upper-right.
 local function drawPencilIcon(button, theme)
-  local x = button.x + button.w * 0.28
-  local y = button.y + button.h * 0.62
-  local len = button.w * 0.42
+  local cx = button.x + button.w / 2
+  local cy = button.y + button.h / 2
+  local s = button.w * 0.32
+
+  -- Unit direction along the pencil (tip -> eraser) and perpendicular.
+  local ux, uy = 0.7071, -0.7071
+  local px, py = 0.7071, 0.7071
+
+  local function pt(along, across)
+    return cx + ux * along * s + px * across * s,
+      cy + uy * along * s + py * across * s
+  end
+
   setColor(theme.alive, 1)
-  love.graphics.line(x, y, x + len, y - len)
-  love.graphics.line(x + len - 2, y - len - 2, x + len + 2, y - len + 2)
-  love.graphics.polygon(
-    "fill",
-    x - 1,
-    y + 1,
-    x + 4,
-    y + 1,
-    x + 1,
-    y + 4
-  )
+
+  -- Tip (lead)
+  local t1x, t1y = pt(-1.15, 0)
+  local t2x, t2y = pt(-0.55, 0.38)
+  local t3x, t3y = pt(-0.55, -0.38)
+  love.graphics.polygon("fill", t1x, t1y, t2x, t2y, t3x, t3y)
+
+  -- Barrel
+  local b1x, b1y = pt(-0.55, 0.38)
+  local b2x, b2y = pt(0.55, 0.38)
+  local b3x, b3y = pt(0.55, -0.38)
+  local b4x, b4y = pt(-0.55, -0.38)
+  love.graphics.polygon("fill", b1x, b1y, b2x, b2y, b3x, b3y, b4x, b4y)
+
+  -- Tip / wood join line
+  love.graphics.setColor(theme.dead[1], theme.dead[2], theme.dead[3], 1)
+  love.graphics.line(t2x, t2y, t3x, t3y)
+  setColor(theme.alive, 1)
+
+  -- Ferrule band
+  local f1x, f1y = pt(0.55, 0.38)
+  local f2x, f2y = pt(0.75, 0.38)
+  local f3x, f3y = pt(0.75, -0.38)
+  local f4x, f4y = pt(0.55, -0.38)
+  love.graphics.setColor(theme.grid[1], theme.grid[2], theme.grid[3], 1)
+  love.graphics.polygon("fill", f1x, f1y, f2x, f2y, f3x, f3y, f4x, f4y)
+
+  -- Eraser
+  setColor(theme.alive, 1)
+  local e1x, e1y = pt(0.75, 0.32)
+  local e2x, e2y = pt(1.15, 0.32)
+  local e3x, e3y = pt(1.15, -0.32)
+  local e4x, e4y = pt(0.75, -0.32)
+  love.graphics.polygon("fill", e1x, e1y, e2x, e2y, e3x, e3y, e4x, e4y)
 end
 
 local function drawZoomLabel(button, theme, label)
