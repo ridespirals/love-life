@@ -46,7 +46,7 @@ lua tests/run.lua
 
 Or, with direnv set up (see [Run](#run) above): `check`.
 
-Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/ui/text_field.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, playback timer state, step morph timing, status bar/pane hit regions, session drafts, text-field editing, theme registry, and userspace serialize/save round-trips.
+Coverage: `src/grid.lua`, `src/rules.lua`, `src/patterns.lua`, `src/patterns/rle.lua`, `src/playback.lua`, `src/layout.lua`, `src/step_animation.lua`, `src/ui/statusbar.lua`, `src/ui/pane.lua`, `src/ui/text_field.lua`, `src/ui/button_fx.lua`, `src/session.lua`, `src/ui/panes/*` (via `phase2_spec` / `phase4_spec` / `phase5_spec`), `src/input/board.lua`, `src/themes.lua`, `src/userdata.lua`, and `src/color.lua` — toroidal wrap, rulestring parsing, Lua/RLE pattern loading, pattern export/merge, board drawing math, auto-fit and letterbox layout, playback timer state, step morph timing, status bar/pane hit regions, session drafts, text-field editing, Play/Pause button fx math, theme registry, and userspace serialize/save round-trips.
 
 CI runs the same command on every push to `main` and on pull requests via [`.github/workflows/test.yml`](.github/workflows/test.yml).
 
@@ -76,6 +76,11 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `previewDotMinPx` | Minimum preview square side length in pixels (default `4`) |
 | `tileDepthAlivePx` | Pseudo-3D extrusion depth for alive tiles in pixels (default `3`; `0` disables) |
 | `tileDepthDeadPx` | Pseudo-3D extrusion for dead tiles (default `0` = flat) |
+| `buttonFxEnabled` | Play/Pause expanding-outline transition (`true`) |
+| `buttonFxDurationSec` | How long each trail expands/fades (default `0.4`) |
+| `buttonFxTrailCount` | Number of delayed trail copies after the lead outline (default `3`) |
+| `buttonFxTrailSpacingSec` | Delay between trail copies (default `0.05`) |
+| `buttonFxExpandPx` | How far outlines grow outward from the button (default `10`) |
 | `accentBlendAlive` | Blend toward theme `accent` on alive-tile extrusion shadows (0–1; default `0.72`) |
 | `accentBlendDead` | Blend toward theme `accent` on dead tiles and pane chrome (0–1; default `0.42`) |
 
@@ -111,7 +116,7 @@ Deferred: history stack (step backward), RLE export, import UI, **pattern groupi
 
 **Clickable chips (left):** `Rule`, `Theme`, `Pattern`, `Size` — open a pane docked above the chip; the rest of the screen dims. `Gen` is read-only.
 
-**Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play).
+**Buttons (right):** `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click). Play shows `Play +` while fast mode is held (`f` or mouse held on Play). Play, Pause, Step, and Restart animate an expanding outline with fading trails on activation (config: `buttonFx*`).
 
 While a pane is open, playback **keyboard** shortcuts are disabled; the simulation **keeps running** if it was already playing. Text fields support caret, selection, and clipboard-style editing. Press `Esc`, click outside the pane, or click × to close. Clicking another stat chip switches panes.
 

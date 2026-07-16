@@ -9,7 +9,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Related: [`01-simulatio
 1. **M1** — theme registry + static renderer (done, historical).
 2. **Window layout / coordinate conventions** — locked early, still in effect.
 3. **Phase 0** — generation step animation (square preview → commit morph, idle markers, pseudo-3D tiles). ✓ shipped.
-4. **Button fx** (backlog, independent, small) — extract Phase 0's phase-timer shape into a reusable component for Play/Pause button feedback.
+4. **Button fx** ✓ — reusable Play/Pause expanding-outline + trails (`src/ui/button_fx.lua`).
 
 ---
 
@@ -98,18 +98,18 @@ Early iterations: static preview dots, circle morph, two-phase circle morph, mul
 
 ## Reusable button transition animation (Play/Pause "growing rectangle + trails")
 
-**Status:** backlog — small and independent of Phases 6–8; can ship whenever convenient.
+**Status:** ✓ shipped — standalone `src/ui/button_fx.lua`; Play/Pause/Step/Restart transitions in `main.lua`.
 
-Visual feedback on the status bar Play/Pause button when playback starts or pauses: a rectangle grows from the button outward with fading trail copies, then settles (exact look is a later fine-tuning pass). Must be a **standalone, reusable, tunable component** — not hard-coded into `statusbar.lua` — so the same effect could decorate other buttons later.
+Visual feedback on status bar control buttons when activated: a rectangle grows from the button outward with fading trail copies, then settles (exact look can still be fine-tuned via config). Standalone and config-driven — not hard-coded into `statusbar.lua` — so the same effect can decorate any `{x, y, w, h}` rect later.
 
 | File | Work |
 |------|------|
-| `src/ui/button_fx.lua` | Generic timer/easing state machine (`create(config)`, `trigger(state)`, `update(state, dt)`, `draw(state, rect, theme)`) — same shape as `step_animation.lua`'s phase machine, but for a single UI element instead of the whole board |
-| `src/config.lua` | `buttonFxEnabled`, `buttonFxDurationSec`, `buttonFxTrailCount`, `buttonFxTrailSpacingSec` |
-| `src/ui/statusbar.lua` | Trigger the effect on Play/Pause state transitions (see [`04-ui-shell-and-panes.md`](04-ui-shell-and-panes.md)) |
-| `tests/button_fx_spec.lua` | Timer/trail math, pure Lua (mirrors `step_animation_spec.lua`) |
+| `src/ui/button_fx.lua` | Timer/easing state machine (`create`, `trigger`, `update`, `draw`, `trailFrames`) ✓ |
+| `src/config.lua` | `buttonFxEnabled`, `buttonFxDurationSec`, `buttonFxTrailCount`, `buttonFxTrailSpacingSec`, `buttonFxExpandPx` ✓ |
+| `main.lua` | Trigger on Play/Pause state changes, Step, and Restart; draw fx on the matching button rect ✓ |
+| `tests/button_fx_spec.lua` | Timer/trail math, pure Lua ✓ |
 
-**Checkpoint:** toggling play/pause visibly animates the button; effect is fully config-driven and doesn't reference `statusbar` internals (could be attached to any `{x, y, w, h}` rect).
+**Checkpoint:** ✓ Play, Pause, Step, and Restart animate; effect is config-driven and attachable to any rect.
 
 ## Open design considerations
 - Theme contrast policy: status bar currently uses theme colors directly; decide if accessibility overrides are needed for low-contrast themes.
@@ -131,7 +131,11 @@ Visual feedback on the status bar Play/Pause button when playback starts or paus
 | `tileDepthDeadPx` | `0` | Phase 0 ✓ |
 | `accentBlendAlive` | `0.72` | vim themes ✓ |
 | `accentBlendDead` | `0.42` | vim themes ✓ |
-| `buttonFxEnabled`, `buttonFxDurationSec`, `buttonFxTrailCount`, `buttonFxTrailSpacingSec` | TBD | Button fx (backlog) |
+| `buttonFxEnabled` | `true` | Button fx ✓ |
+| `buttonFxDurationSec` | `0.4` | Button fx ✓ |
+| `buttonFxTrailCount` | `3` | Button fx ✓ |
+| `buttonFxTrailSpacingSec` | `0.05` | Button fx ✓ |
+| `buttonFxExpandPx` | `10` | Button fx ✓ |
 
 ## Planned/existing files
 
@@ -142,8 +146,8 @@ Visual feedback on the status bar Play/Pause button when playback starts or paus
 | `src/step_animation.lua` | exists | Phase 0 ✓ |
 | `tests/step_animation_spec.lua` | exists | Phase 0 ✓ |
 | `tests/themes_spec.lua` | exists | Phase 2 regression coverage |
-| `src/ui/button_fx.lua` | planned (backlog) | Button fx (independent) |
-| `tests/button_fx_spec.lua` | planned (backlog) | Button fx (independent) |
+| `src/ui/button_fx.lua` | exists | Button fx ✓ |
+| `tests/button_fx_spec.lua` | exists | Button fx ✓ |
 
 ## TODO tracking
 
@@ -156,5 +160,5 @@ Visual feedback on the status bar Play/Pause button when playback starts or paus
 - [x] **Phase 0** — Generation step animation (`src/step_animation.lua`; defer `grid.step`)
 - [x] Add more built-in themes beyond `classic`, `zenburn`, `solarized` (21 vim-derived presets + accent shadows)
 
-### Button fx (backlog)
-- [ ] **Button fx** — Reusable Play/Pause "growing rectangle + trails" transition animation (backlog; independent of Phases 6–8, `src/ui/button_fx.lua`)
+### Button fx ✓
+- [x] **Button fx** — Reusable Play/Pause "growing rectangle + trails" transition animation (`src/ui/button_fx.lua`)

@@ -17,11 +17,11 @@ See [`README.md`](README.md) for the cross-area roadmap.
 | `camera` world↔screen transforms | Pure Lua unit tests (Phase 6, see [`08-camera-and-viewport.md`](08-camera-and-viewport.md)) |
 | `toolbar` hit-test regions | Pure Lua unit tests (Phase 7, see [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md)) |
 | `controller` action dispatch | Mocked input events, no real `love.joystick` (Phase 8, see [`10-controller-input.md`](10-controller-input.md)) |
-| `button_fx` timer/trail math | Pure Lua unit tests (backlog, see [`02-rendering-and-animation.md`](02-rendering-and-animation.md)) |
+| `button_fx` timer/trail math | Pure Lua unit tests ✓ (see [`02-rendering-and-animation.md`](02-rendering-and-animation.md)) |
 | Full UI | Manual smoke per phase |
 | Fullscreen | Manual smoke — F11 toggle, grid auto-fit, playback after exit (no unit tests; `love.window` is LÖVE-only) |
 
-Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 17 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 6–8 backlog adds `camera_spec`, `toolbar_spec`, `controller_spec`, `button_fx_spec`.
+Run via `lua tests/run.lua` from repo root (stdlib Lua, no LÖVE). Currently registers 18 specs: `grid_spec`, `rules_spec`, `patterns_spec`, `rle_spec`, `playback_spec`, `layout_spec`, `statusbar_spec`, `step_animation_spec`, `pane_spec`, `phase2_spec`, `phase4_spec`, `phase5_spec`, `text_field_spec`, `button_fx_spec`, `themes_spec`, `userdata_spec`, `color_spec`, `board_spec`. Phase 6–8 backlog adds `camera_spec`, `toolbar_spec`, `controller_spec`.
 
 Defer renderer/LÖVE integration tests.
 

@@ -12,7 +12,8 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 - **Version:** v1.4.0 shipped; Phase 5 ✓
 - **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0, Phase 1 (UI shell), Phase 2 (rule/theme pickers), Phase 3 (userspace save/load), Phase 4 (pattern picker + board drawing), Phase 5 (grid settings)
 - **Next:** Phase 6 camera/viewport (backlog, may be resequenced)
-- **Backlog (not started, not sequenced):** Phase 6 (camera/viewport), Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer), reusable button transition fx
+- **Backlog (not started, not sequenced):** Phase 6 (camera/viewport), Phase 7 (floating toolbar: pan/draw/zoom), Phase 8 (controller input layer)
+- **Shipped outside phase sequence:** Play/Pause button transition fx (`src/ui/button_fx.lua`)
 
 ## Directory map
 

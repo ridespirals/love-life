@@ -14,6 +14,7 @@ local board = require("src.input.board")
 local layout = require("src.layout")
 local settings_pane = require("src.ui.panes.settings_pane")
 local stepAnimation = require("src.step_animation")
+local buttonFx = require("src.ui.button_fx")
 local userdata = require("src.userdata")
 local color_picker = require("src.ui.color_picker")
 local color = require("src.color")
@@ -23,6 +24,8 @@ local theme
 local activeRule
 local playbackState
 local animState
+local controlFx
+local lastPlaybackRunning
 local generation = 0
 local fastMode = false
 local fastKeyboard = false
@@ -229,11 +232,21 @@ local function requestStep()
   end
 end
 
+local function triggerControlFx(buttonId)
+  buttonFx.trigger(controlFx, buttonId)
+  -- Keep play/pause transition detection in sync so an explicit Step/Restart
+  -- trigger is not overwritten by a coincidental running-state change.
+  if playbackState then
+    lastPlaybackRunning = playbackState.running
+  end
+end
+
 local function stepForward()
   if not canRequestStep() then
     return
   end
   playback.stepForward(playbackState, requestStep)
+  triggerControlFx("step")
 end
 
 local function applyStepInterval()
@@ -305,6 +318,7 @@ end
 
 local function restartWorld()
   resetSimulation()
+  triggerControlFx("restart")
 end
 
 local function applyPatternDraft()
@@ -516,6 +530,8 @@ function love.load()
   theme = themes.get(config.activeTheme)
   playbackState = playback.create(config.stepInterval)
   animState = stepAnimation.create(config)
+  controlFx = buttonFx.create(config)
+  lastPlaybackRunning = nil
   sessionState = session.create({
     ruleId = config.activeRule,
     themeId = config.activeTheme,
@@ -551,6 +567,14 @@ function love.update(dt)
   if stepAnimation.isIdle(animState) then
     playback.update(playbackState, dt, requestStep)
   end
+
+  buttonFx.update(controlFx, dt)
+  local running = playbackState.running
+  if lastPlaybackRunning == nil then
+    lastPlaybackRunning = running
+  elseif running ~= lastPlaybackRunning then
+    triggerControlFx(running and "play" or "pause")
+  end
 end
 
 function love.draw()
@@ -566,6 +590,12 @@ function love.draw()
     fastMode,
     paneState
   )
+  if buttonFx.isAnimating(controlFx) and controlFx.targetId then
+    local fxButton = statusbar.getButton(config, fastMode, controlFx.targetId)
+    if fxButton then
+      buttonFx.draw(controlFx, fxButton, theme)
+    end
+  end
   pane.draw(paneState, theme, config, sessionState)
   if pane.isOpen(paneState) then
     statusbar.drawOpenerLabel(
