@@ -123,14 +123,20 @@ function M.draw(rect, contentY, theme, _config, session)
   local ui = layout(rect, contentY, session)
 
   for _, button in ipairs(ui.presetButtons) do
-    widgets.drawButton(button, theme, session.draftPatternId == button.id)
+    widgets.drawButton(
+      button,
+      theme,
+      session.draftPatternId == button.id,
+      false,
+      widgets.isHovered(button, session)
+    )
   end
 
   widgets.drawField(ui.nameField.label, ui.nameField, theme, false, session)
-  widgets.drawButton(ui.apply, theme, false)
-  widgets.drawButton(ui.clear, theme, false)
-  widgets.drawButton(ui.save, theme, false)
-  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
+  widgets.drawButton(ui.apply, theme, false, false, widgets.isHovered(ui.apply, session))
+  widgets.drawButton(ui.clear, theme, false, false, widgets.isHovered(ui.clear, session))
+  widgets.drawButton(ui.save, theme, false, false, widgets.isHovered(ui.save, session))
+  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled, widgets.isHovered(ui.delete, session))
 
   love.graphics.setColor(theme.alive[1], theme.alive[2], theme.alive[3], 0.7)
   love.graphics.print(HINT, rect.x + PANE_PAD_X, ui.hintY)

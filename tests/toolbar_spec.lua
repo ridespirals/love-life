@@ -32,8 +32,10 @@ test("hitTest returns panel for chrome and nil outside", function()
   assert.equal(toolbar.hitTest(config, 400, 400), nil)
 end)
 
-test("contains is true over panel bounds", function()
+test("tooltipAt returns text for hovered button", function()
   local panel = toolbar.getButtons(config)
-  assert.isTrue(toolbar.contains(config, panel.x + 1, panel.y + 1))
-  assert.isFalse(toolbar.contains(config, 0, 0))
+  local pan = panel.buttons[1]
+  local tip = toolbar.tooltipAt(config, pan.x + 2, pan.y + 2)
+  assert.equal(tip.text, "Mouse mode: pan screen")
+  assert.equal(tip.rect.id, "pan")
 end)

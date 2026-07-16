@@ -144,14 +144,20 @@ function M.draw(rect, contentY, theme, _config, session)
   )
 
   for _, button in ipairs(ui.presetButtons) do
-    widgets.drawButton(button, theme, session.draftRulePresetId == button.id)
+    widgets.drawButton(
+      button,
+      theme,
+      session.draftRulePresetId == button.id,
+      false,
+      widgets.isHovered(button, session)
+    )
   end
 
   widgets.drawField(ui.field.label, ui.field, theme, false, session)
   widgets.drawField(ui.nameField.label, ui.nameField, theme, false, session)
-  widgets.drawButton(ui.apply, theme, false)
-  widgets.drawButton(ui.save, theme, false)
-  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
+  widgets.drawButton(ui.apply, theme, false, false, widgets.isHovered(ui.apply, session))
+  widgets.drawButton(ui.save, theme, false, false, widgets.isHovered(ui.save, session))
+  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled, widgets.isHovered(ui.delete, session))
 end
 
 function M.mousepressed(rect, contentY, session, x, y)

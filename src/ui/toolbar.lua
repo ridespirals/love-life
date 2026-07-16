@@ -1,11 +1,13 @@
 -- Always-visible floating toolbar (upper-left). Not part of the docked-pane system.
+local widgets = require("src.ui.pane_widgets")
+
 local M = {}
 
 local TOOLS = {
-  { id = "pan", kind = "tool" },
-  { id = "draw", kind = "tool" },
-  { id = "zoom_in", kind = "action" },
-  { id = "zoom_out", kind = "action" },
+  { id = "pan", kind = "tool", tooltip = "Mouse mode: pan screen" },
+  { id = "draw", kind = "tool", tooltip = "Mouse mode: draw" },
+  { id = "zoom_in", kind = "action", tooltip = "Zoom In" },
+  { id = "zoom_out", kind = "action", tooltip = "Zoom out" },
 }
 
 local function setColor(color, alpha)
@@ -34,6 +36,7 @@ function M.getButtons(config)
     buttons[#buttons + 1] = {
       id = spec.id,
       kind = spec.kind,
+      tooltip = spec.tooltip,
       x = x,
       y = y,
       w = size,
@@ -94,6 +97,8 @@ end
 function M.draw(theme, config, session)
   local panel = M.getButtons(config)
   local active = session and session.activeTool or nil
+  local pointerX = session and session.pointerX
+  local pointerY = session and session.pointerY
 
   setColor(theme.dead, 0.92)
   love.graphics.rectangle("fill", panel.x, panel.y, panel.w, panel.h)
@@ -102,9 +107,12 @@ function M.draw(theme, config, session)
 
   for _, button in ipairs(panel.buttons) do
     local selected = button.kind == "tool" and active == button.id
+    local hovered = pointerX ~= nil and contains(button, pointerX, pointerY)
     if selected then
-      setColor(theme.alive, 0.22)
+      setColor(theme.alive, 0.25)
       love.graphics.rectangle("fill", button.x, button.y, button.w, button.h)
+    elseif hovered then
+      widgets.drawHoverWash(button, theme, 0.14)
     end
     setColor(theme.grid, 1)
     love.graphics.rectangle("line", button.x + 0.5, button.y + 0.5, button.w, button.h)
@@ -119,6 +127,23 @@ function M.draw(theme, config, session)
       drawZoomLabel(button, theme, "−")
     end
   end
+end
+
+-- Returns { text, rect } for the hovered toolbar button, or nil.
+function M.tooltipAt(config, x, y)
+  if x == nil or y == nil then
+    return nil
+  end
+  local panel = M.getButtons(config)
+  for _, button in ipairs(panel.buttons) do
+    if contains(button, x, y) then
+      return {
+        text = button.tooltip,
+        rect = button,
+      }
+    end
+  end
+  return nil
 end
 
 function M.hitTest(config, x, y)

@@ -15,6 +15,7 @@ local layout = require("src.layout")
 local camera = require("src.camera")
 local settings_pane = require("src.ui.panes.settings_pane")
 local toolbar = require("src.ui.toolbar")
+local tooltip = require("src.ui.tooltip")
 local stepAnimation = require("src.step_animation")
 local buttonFx = require("src.ui.button_fx")
 local userdata = require("src.userdata")
@@ -646,7 +647,9 @@ function love.draw()
     generation,
     sessionState.appliedPatternId,
     fastMode,
-    paneState
+    paneState,
+    sessionState.pointerX,
+    sessionState.pointerY
   )
   if buttonFx.isAnimating(controlFx) and controlFx.targetId then
     local fxButton = statusbar.getButton(config, fastMode, controlFx.targetId)
@@ -668,6 +671,11 @@ function love.draw()
     )
   end
   color_picker.draw(colorPickerState, theme, config)
+
+  local tip = toolbar.tooltipAt(config, sessionState.pointerX, sessionState.pointerY)
+  if tip then
+    tooltip.draw(theme, tip.text, sessionState.pointerX, sessionState.pointerY, tip.rect)
+  end
 end
 
 function love.keypressed(key)
@@ -822,6 +830,9 @@ function love.mousepressed(x, y, button)
 end
 
 function love.mousemoved(x, y)
+  sessionState.pointerX = x
+  sessionState.pointerY = y
+
   color_picker.mousemoved(colorPickerState, x, y)
 
   if pane.isOpen(paneState) then

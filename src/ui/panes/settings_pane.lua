@@ -145,7 +145,13 @@ function M.draw(rect, contentY, theme, _config, session)
   )
 
   for _, button in ipairs(ui.modeButtons) do
-    widgets.drawButton(button, theme, session.draftGridMode == button.id)
+    widgets.drawButton(
+      button,
+      theme,
+      session.draftGridMode == button.id,
+      false,
+      widgets.isHovered(button, session)
+    )
   end
 
   local animY = contentY + BTN_H + GAP
@@ -157,13 +163,13 @@ function M.draw(rect, contentY, theme, _config, session)
   for _, button in ipairs(ui.animButtons) do
     local selected = (session.draftStepAnimEnabled and button.id == "on")
       or (not session.draftStepAnimEnabled and button.id == "off")
-    widgets.drawButton(button, theme, selected)
+    widgets.drawButton(button, theme, selected, false, widgets.isHovered(button, session))
   end
 
   widgets.drawField(ui.tileField.label, ui.tileField, theme, false, session)
   widgets.drawField(ui.rowsField.label, ui.rowsField, theme, not ui.rowsField.enabled, session)
   widgets.drawField(ui.colsField.label, ui.colsField, theme, not ui.colsField.enabled, session)
-  widgets.drawButton(ui.apply, theme, false)
+  widgets.drawButton(ui.apply, theme, false, false, widgets.isHovered(ui.apply, session))
 
   love.graphics.setColor(theme.alive[1], theme.alive[2], theme.alive[3], 0.7)
   love.graphics.print(HINT, rect.x + PANE_PAD_X, ui.hintY)

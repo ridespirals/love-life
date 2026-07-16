@@ -3,6 +3,7 @@ local M = {}
 local CHIP_GAP = 16
 local CHIP_PAD_X = 4
 local CHIP_PAD_Y = 2
+local widgets = require("src.ui.pane_widgets")
 
 local buttonSpecs = {
   { id = "settings", label = "Settings" },
@@ -132,7 +133,7 @@ function M.drawOpenerLabel(world, theme, config, activeRule, generation, pattern
   end
 end
 
-function M.draw(world, theme, config, activeRule, generation, patternId, fastMode, paneState)
+function M.draw(world, theme, config, activeRule, generation, patternId, fastMode, paneState, pointerX, pointerY)
   local width, height = love.graphics.getDimensions()
   local barTop = height - config.statusBarHeight
 
@@ -143,12 +144,18 @@ function M.draw(world, theme, config, activeRule, generation, patternId, fastMod
   love.graphics.line(0, barTop + 0.5, width, barTop + 0.5)
 
   local activeAnchor = paneState and paneState.anchor or nil
+  local hasPointer = pointerX ~= nil and pointerY ~= nil
 
   local chips = M.getChips(world, theme, config, activeRule, generation, patternId)
   for _, chip in ipairs(chips) do
     if chip.clickable and not matchesAnchor(activeAnchor, chip) then
-      setColor(theme.grid, 0.35)
-      love.graphics.rectangle("fill", chip.x, chip.y, chip.w, chip.h)
+      local hovered = hasPointer and contains(chip, pointerX, pointerY)
+      if hovered then
+        widgets.drawHoverWash(chip, theme, 0.18)
+      else
+        setColor(theme.grid, 0.35)
+        love.graphics.rectangle("fill", chip.x, chip.y, chip.w, chip.h)
+      end
       setColor(theme.grid, 0.8)
       love.graphics.rectangle("line", chip.x + 0.5, chip.y + 0.5, chip.w, chip.h)
     end
@@ -161,6 +168,10 @@ function M.draw(world, theme, config, activeRule, generation, patternId, fastMod
   local buttons = M.getButtons(config, fastMode)
   for _, button in ipairs(buttons) do
     if not matchesAnchor(activeAnchor, button) then
+      local hovered = hasPointer and contains(button, pointerX, pointerY)
+      if hovered then
+        widgets.drawHoverWash(button, theme, 0.14)
+      end
       setColor(theme.grid, 1)
       love.graphics.rectangle("line", button.x + 0.5, button.y + 0.5, button.w, button.h)
       setColor(theme.alive, 1)

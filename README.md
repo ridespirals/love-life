@@ -137,7 +137,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Board drawing:** select **Draw** on the floating toolbar (pauses). Left-click/drag paints alive; right-click/drag erases. Unsaved edits show as `Pattern: custom` until you Apply a catalog entry or Save.
 
-**Floating toolbar (upper-left):** Pan (drag view), Draw (paint cells), Zoom + / −. Always visible; does not dim the board.
+**Floating toolbar (upper-left):** Pan (default; drag view), Draw (paint cells), Zoom + / −. Hover tooltips follow the cursor. Always visible; does not dim the board.
 
 **Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** (or **Enter** in a text field) rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
 

@@ -139,7 +139,13 @@ function M.draw(rect, contentY, theme, _config, session)
   local colors = session.draftThemeColors
 
   for _, button in ipairs(ui.presetButtons) do
-    widgets.drawButton(button, theme, session.draftThemePresetId == button.id)
+    widgets.drawButton(
+      button,
+      theme,
+      session.draftThemePresetId == button.id,
+      false,
+      widgets.isHovered(button, session)
+    )
   end
 
   for _, field in ipairs(ui.fields) do
@@ -148,8 +154,8 @@ function M.draw(rect, contentY, theme, _config, session)
   end
 
   widgets.drawField(ui.nameField.label, ui.nameField, theme, false, session)
-  widgets.drawButton(ui.save, theme, false)
-  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled)
+  widgets.drawButton(ui.save, theme, false, false, widgets.isHovered(ui.save, session))
+  widgets.drawButton(ui.delete, theme, false, not ui.delete.enabled, widgets.isHovered(ui.delete, session))
 end
 
 function M.mousepressed(rect, contentY, session, x, y)
