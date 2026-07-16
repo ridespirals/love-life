@@ -30,7 +30,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 
 **Mechanics:**
 - Camera starts centered on the board at `zoom = 1`, matching `layout.computeBoardLayout` offsets exactly (`camera_spec` asserts parity).
-- Pan moves the camera center in world-space pixels; zoom scales tile render size around view center (Phase 7 toolbar +/− will use the same anchor; cursor-anchored scroll-wheel zoom is deferred).
+- Pan moves the camera center in world-space pixels; zoom scales tile render size. Toolbar +/− anchors on **view center**; **scroll wheel** zooms around the **cursor** (world point under the pointer stays fixed).
 - World stays toroidal for simulation; rendering past board edges is still an open question — currently empty background.
 
 **Temporary debug keys:** removed — use the Phase 7 floating toolbar (Pan / Zoom +/−) instead.
@@ -39,7 +39,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 ## Open design considerations
 - **Camera vs. Phase 5 forced/letterbox grid mode:** unresolved whether letterbox centering is still needed once a camera can pan — see [`07-grid-settings.md`](07-grid-settings.md).
 - **Camera + toroidal rendering at the edges:** how the camera should render a finite toroidal world when panned/zoomed past its bounds is unresolved.
-- **Zoom anchor policy:** toolbar +/− buttons (Phase 7) anchor on view center per the current request; cursor-anchored scroll-wheel zoom is an adjacent idea, not yet requested/scoped — see [`12-deferred-and-backlog.md`](12-deferred-and-backlog.md).
+- **Zoom anchor policy:** toolbar +/− buttons anchor on view center; scroll-wheel zoom anchors on the cursor. ✓
 
 ## Config keys (this area)
 

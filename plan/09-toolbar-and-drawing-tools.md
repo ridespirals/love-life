@@ -37,7 +37,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on [`08-camera-
 
 ## Open design considerations
 - **Toolbar icon strategy:** drawn glyphs now; optional future sprite sheet.
-- **Zoom anchor policy:** view center; cursor-anchored scroll-wheel zoom deferred — see [`12-deferred-and-backlog.md`](12-deferred-and-backlog.md).
+- **Zoom anchor policy:** toolbar +/− use view center; scroll-wheel zoom uses cursor anchor ✓ — see [`08-camera-and-viewport.md`](08-camera-and-viewport.md).
 
 ## Config keys (this area)
 

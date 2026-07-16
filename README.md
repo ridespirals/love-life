@@ -156,6 +156,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)
 - Status bar buttons: `Settings`, `Play`, `Pause`, `Step`, `Restart` (mouse click)
 - **Toolbar:** Pan / Draw / Zoom+/− (mouse); Draw required to paint cells
+- **Scroll wheel:** zoom camera toward / away from the cursor (disabled while a pane or color picker is open)
 
 Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimensions and migrates the live board (playback and generation continue). In **forced** mode, only recenters the board — dimensions unchanged.
 

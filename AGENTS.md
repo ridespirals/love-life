@@ -21,7 +21,7 @@
 - **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
 - **Shipped grid settings (Phase 5):** `src/ui/panes/settings_pane.lua` — Auto/Forced mode, Animate On/Off, tile/rows/cols fields, Apply; `layout.computeBoardLayout` letterbox centering; auto resize refits grid and migrates live board; forced resize only recenters; `grid.resize` centers cells on dimension change. `src/ui/text_field.lua` — shared caret/selection editing for pane fields; Enter applies rule/pattern/grid drafts.
-- **Shipped camera (Phase 6):** `src/camera.lua` — world↔screen transforms, pan/zoom; renderer/board input read camera layout. Load-time view matches prior letterbox centering at zoom=1.
+- **Shipped camera (Phase 6):** `src/camera.lua` — world↔screen transforms, pan/zoom; renderer/board input read camera layout. Load-time view matches prior letterbox centering at zoom=1. Scroll wheel zooms around the cursor; toolbar +/− zoom around view center.
 - **Shipped floating toolbar (Phase 7):** `src/ui/toolbar.lua` — always-visible Pan / Draw / Zoom+/− (Pan selected by default); mouse-following tooltips; Draw pauses on select and supersedes always-on paused board drawing; Pan drag does not pause. Shared hover wash on toolbar, status-bar chips/buttons, and pane buttons.
 - **Phase 8+ scope:** Controller input — backlog. See `plan/10-controller-input.md`.
 - **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.

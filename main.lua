@@ -861,6 +861,30 @@ function love.mousemoved(x, y)
   end
 end
 
+function love.wheelmoved(_dx, dy)
+  if dy == 0 then
+    return
+  end
+  if color_picker.isOpen(colorPickerState) or pane.isOpen(paneState) then
+    return
+  end
+
+  local mx = sessionState.pointerX
+  local my = sessionState.pointerY
+  if mx == nil or my == nil then
+    mx, my = love.mouse.getPosition()
+  end
+
+  local windowW, windowH = love.graphics.getDimensions()
+  local viewH = windowH - config.statusBarHeight
+  if my >= viewH then
+    return
+  end
+
+  local worldX, worldY = camera.screenToWorld(cameraState, mx, my, windowW, viewH)
+  camera.zoomBy(cameraState, cameraState.zoomStep ^ dy, worldX, worldY)
+end
+
 function love.mousereleased(x, y, button)
   if button == 1 then
     panDrag = nil
