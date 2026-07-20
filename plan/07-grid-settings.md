@@ -2,9 +2,9 @@
 
 Covers the Settings pane for tile size, rows, cols, and the auto-fit vs. forced/letterboxed grid mode toggle.
 
-See [`README.md`](README.md) for the cross-area roadmap. Extends [`02-rendering-and-animation.md`](02-rendering-and-animation.md) window layout math and `src/layout.lua` (also touched by [`03-playback.md`](03-playback.md) auto-fit resize). Has an **open interaction** with [`08-camera-and-viewport.md`](08-camera-and-viewport.md) (Phase 6 backlog) — see below.
+See [`README.md`](README.md) for the cross-area roadmap. Extends [`02-rendering-and-animation.md`](02-rendering-and-animation.md) window layout math and `src/layout.lua` (also touched by [`03-playback.md`](03-playback.md)). Auto-fit vs forced as **world sizing policy** is superseded by [`13-world-and-camera-model.md`](13-world-and-camera-model.md) (fixed world + camera); Settings now edits world rows/cols + Animate.
 
-**Status:** ✓ shipped — Settings pane with Auto/Forced toggle, Animate On/Off, tile/rows/cols fields, Apply; `layout.computeBoardLayout` letterbox centering; auto resize refits grid, forced resize only recenters. Step morph animations honor `stepAnimEnabled` and are skipped when tile size is below `stepAnimMinTileSize` (default 6).
+**Status:** ✓ shipped (Phase 5) — later superseded for product policy by W1–W2 (fixed world, no Auto/Forced, no Settings tile size). Historical Phase 5 deliverable: Auto/Forced toggle, letterbox layout, Animate On/Off.
 
 ## Development order
 
@@ -72,3 +72,7 @@ Config additions in `src/config.lua`: `gridMode`, `forcedRows`, `forcedCols`, `f
 - [x] `computeBoardLayout` letterbox centering
 - [x] Settings pane Auto/Forced + Animate On/Off + tile/rows/cols Apply
 - [x] Auto resize refits; forced resize recenters only
+
+### Superseded by world model (see [`13-world-and-camera-model.md`](13-world-and-camera-model.md))
+- Auto-fit no longer resizes the simulation on window resize
+- Settings tile size / Auto vs Forced removed; zoom owns visual scale

@@ -25,16 +25,18 @@ function M.create(config)
   }
 end
 
-function M.effectiveEnabled(config)
+-- visualTile is screen pixels per cell (preferred). Falls back to config.tileSize.
+function M.effectiveEnabled(config, visualTile)
   if config.stepAnimEnabled == false then
     return false
   end
   local minTile = config.stepAnimMinTileSize or 6
-  return (config.tileSize or 0) >= minTile
+  local tile = visualTile or config.visualTileSize or config.tileSize or 0
+  return tile >= minTile
 end
 
-function M.syncEnabled(state, config)
-  local enabled = M.effectiveEnabled(config)
+function M.syncEnabled(state, config, visualTile)
+  local enabled = M.effectiveEnabled(config, visualTile)
   if state.enabled and not enabled then
     M.cancel(state)
   end

@@ -8,7 +8,7 @@ function M.create(opts)
     appliedRuleId = opts.ruleId,
     appliedThemeId = opts.themeId,
     appliedPatternId = opts.patternId,
-    gridMode = opts.gridMode or "auto",
+    gridMode = opts.gridMode or "forced",
     draftGridMode = nil,
     draftTileSize = nil,
     draftRows = nil,
@@ -61,13 +61,13 @@ function M.resetThemeDraft(session, theme, themes)
 end
 
 function M.resetGridDraft(session, config)
-  session.draftGridMode = session.gridMode
-  session.draftTileSize = tostring(config.tileSize)
+  session.draftGridMode = "forced"
+  session.draftTileSize = nil
   session.draftRows = tostring(config.rows)
   session.draftCols = tostring(config.cols)
   session.draftStepAnimEnabled = config.stepAnimEnabled ~= false
   session.draftGridFocus = nil
-  text_field.onFocus(session, session.draftTileSize)
+  text_field.onFocus(session, session.draftRows)
 end
 
 return M

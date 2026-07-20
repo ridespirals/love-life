@@ -8,9 +8,9 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 
 ## Plan status
 
-- **Branch:** `phase67-camera-and-world` (merge to `main` for v1.5.0)
-- **Version:** v1.5.0 ready to tag; Phases 6–7 ✓
-- **Done:** M1–M3, post-M3 polish, release CI, 1a fullscreen, Phase 0–7, button fx (v1.4.1), scroll-wheel zoom
+- **Branch:** `phase67-camera-and-world`
+- **Version:** post-v1.5.0 — world/camera model (W1–W3)
+- **Done:** M1–M3, Phase 0–7, button fx, scroll-wheel zoom, fixed world + camera clamp + visual-tile zoom + render culling
 - **Next:** Phase 8 controller input (backlog)
 - **Backlog (not started):** Phase 8 (controller input layer)
 
@@ -30,6 +30,7 @@ Create a playable Conway's Game of Life in LÖVE: configurable toroidal grid, th
 | [`10-controller-input.md`](10-controller-input.md) | Controller input | Phase 8 (backlog) — unified mouse/keyboard/gamepad action layer |
 | [`11-testing-and-ci.md`](11-testing-and-ci.md) | Testing & CI | Testing strategy, GitHub Actions (test + release), validation checklists |
 | [`12-deferred-and-backlog.md`](12-deferred-and-backlog.md) | Deferred & backlog | Explicitly deferred items, superseded history, adjacent ideas not yet scoped |
+| [`13-world-and-camera-model.md`](13-world-and-camera-model.md) | World & camera | Fixed dense world, zoom-as-tile-size, pan clamp, viewport culling (W1–W3) |
 
 Each doc contains its own **Development order** section for the steps within it. This README's execution order below is the cross-area sequence.
 

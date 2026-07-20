@@ -64,6 +64,19 @@ test("effectiveEnabled is false when tile size is below minimum", function()
   }))
 end)
 
+test("effectiveEnabled uses visual tile when provided", function()
+  assert.isFalse(stepAnimation.effectiveEnabled({
+    stepAnimEnabled = true,
+    tileSize = 24,
+    stepAnimMinTileSize = 6,
+  }, 4))
+  assert.isTrue(stepAnimation.effectiveEnabled({
+    stepAnimEnabled = true,
+    tileSize = 4,
+    stepAnimMinTileSize = 6,
+  }, 12))
+end)
+
 test("create disables animation when tile size is below minimum", function()
   local state = stepAnimation.create({
     stepAnimEnabled = true,

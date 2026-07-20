@@ -56,7 +56,9 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 
 | Key | Purpose |
 |-----|---------|
-| `rows`, `cols`, `tileSize` | Cell pixels (`tileSize`) and starting grid hints; `rows`/`cols` are recomputed at runtime to fill the window (shipped `tileSize`: `24`) |
+| `rows`, `cols` | Fixed simulation world size (default `512`; Settings Apply changes these) |
+| `baseVisualTile` | Screen pixels per cell at zoom=1 (default `24`); zoom snaps to integer visual tiles |
+| `tileSize` | Legacy alias of `baseVisualTile` (kept for layout helpers) |
 | `activeTheme` | Theme preset id from `themes.list()` (shipped default `"solarized"`) |
 | `activeRule` | Rule preset: `conway` (default) or `ant_colony` |
 | `defaultPattern` | Pattern id to load on start (shipped default `"lifeview"`; `.lua` first, then `.rle` by same id) |
@@ -66,10 +68,8 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `paneHeight` | Minimum docked pane height when open (pixels; default `120`; grows with content) |
 | `paneBackdropAlpha` | Dim overlay strength over the full window when a pane is open (0–1; default `0.55`) |
 | `paneScreenMargin` | Minimum inset from window edges when positioning panes (default `8`) |
-| `gridMode` | `"auto"` (refit rows/cols on resize) or `"forced"` (fixed grid, letterboxed) |
-| `forcedRows`, `forcedCols`, `forcedTileSize` | Starting hints for forced mode (defaults mirror `rows`/`cols`/`tileSize`) |
 | `stepAnimEnabled` | Enable step morph animation (`true`); Settings pane On/Off |
-| `stepAnimMinTileSize` | Minimum tile size (px) before morph animations run (default `6`) |
+| `stepAnimMinTileSize` | Minimum **visual** tile size (px) before morph animations / detailed LOD run (default `6`) |
 | `stepAnimPreviewSec` | Preview-marker phase duration (seconds; default `0.08`) |
 | `stepAnimCommitSec` | Square grow/shrink commit phase (seconds; default `0.12`) |
 | `previewDotScale` | Preview square size as fraction of tile face (default `0.15`) |
@@ -81,12 +81,12 @@ Edit `src/config.lua` (values like `activeTheme` and `defaultPattern` are user-e
 | `buttonFxTrailCount` | Number of delayed trail copies after the lead outline (default `3`) |
 | `buttonFxTrailSpacingSec` | Delay between trail copies (default `0.05`) |
 | `buttonFxExpandPx` | How far outlines grow outward from the button (default `10`) |
-| `cameraZoomMin` | `0.25` | Zoom out floor |
-| `cameraZoomMax` | `4` | Zoom in ceiling |
-| `cameraZoomStep` | `1.25` | Multiplier per zoom key / toolbar +/− / scroll wheel |
-| `cameraDefaultZoom` | `1` | Load / reset zoom |
-| `toolbarMargin` | `12` | Floating toolbar inset from window corner |
-| `toolbarButtonSize` | `32` | Toolbar button side length (px) |
+| `cameraZoomMin` | Zoom out floor (dynamic cover clamp may raise this) |
+| `cameraZoomMax` | Zoom in ceiling |
+| `cameraZoomStep` | Multiplier per toolbar +/− / scroll wheel |
+| `cameraDefaultZoom` | Load / reset zoom |
+| `toolbarMargin` | Floating toolbar inset from window corner |
+| `toolbarButtonSize` | Toolbar button side length (px) |
 | `accentBlendAlive` | Blend toward theme `accent` on alive-tile extrusion shadows (0–1; default `0.72`) |
 | `accentBlendDead` | Blend toward theme `accent` on dead tiles and pane chrome (0–1; default `0.42`) |
 
@@ -118,6 +118,8 @@ See [`plan/README.md`](plan/README.md) for the full implementation roadmap, spli
 
 **v1.5.0** — Phase 6 camera (pan/zoom, letterbox-identical load view, cursor-anchored scroll-wheel zoom); Phase 7 floating toolbar (Pan default, Draw, Zoom +/−, tooltips, hover); Draw tool gates board painting; shared hover wash on status bar and pane buttons.
 
+**World model (W1–W3):** fixed dense world (default 512×512); zoom = integer visual tile size; camera clamped to board; viewport culling + LOD. See [`plan/13-world-and-camera-model.md`](plan/13-world-and-camera-model.md).
+
 **Next:** Phase 8 controller input (backlog) — see [`plan/10-controller-input.md`](plan/10-controller-input.md).
 
 Deferred: history stack (step backward), RLE export, import UI, **pattern grouping by type** (still lifes, oscillators, spaceships, linear growth, …), external RLE repo sync, video export.
@@ -140,7 +142,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 
 **Floating toolbar (upper-left):** Pan (default; drag view), Draw (paint cells), Zoom + / −. Hover tooltips follow the cursor. Scroll wheel zooms toward the cursor. Always visible; does not dim the board.
 
-**Settings pane:** open via **Settings** button or **Size** chip. Choose **Auto** (refit rows/cols to window on resize) or **Forced** (fixed rows/cols/tile with letterbox centering). Edit **Tile** (both modes); **Rows** / **Cols** apply in Forced mode only. **Animate** On/Off toggles step morph animations (animations are skipped automatically when tile size is below `stepAnimMinTileSize`, default 6 px). **Apply** (or **Enter** in a text field) rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen hint: F11 or Alt+Enter.
+**Settings pane:** open via **Settings** button or **Size** chip. Edit world **Rows** / **Cols** and **Animate** On/Off. On-screen tile size comes from zoom (toolbar / scroll wheel), not a Tile field. **Apply** (or **Enter** in a text field) rebuilds the grid while preserving the live board and playback (generation counter unchanged). Fullscreen: F11 or Alt+Enter.
 
 ## Controls
 
@@ -151,7 +153,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - `r`: restart (reload applied pattern; unsaved `custom` falls back to `defaultPattern`, pause playback)
 - `Esc` or click outside the pane: close open settings pane
 - Hold `f` or hold **Play** (mouse): temporary fast mode (`Play +`, uses `0.05` while held)
-- `F11` or `Alt+Enter`: toggle fullscreen (in auto mode, refits grid and migrates the live board; forced mode recenters only)
+- `F11` or `Alt+Enter`: toggle fullscreen (camera reclamps; world size unchanged)
 - `Enter` (in a pane text field): apply rule, pattern, or grid draft (same as each pane's Apply button)
 - `q`: quit app
 - Status bar chips: open Rule / Theme / Pattern / Settings panes (mouse click)
@@ -159,7 +161,7 @@ While a pane is open, playback **keyboard** shortcuts are disabled; the simulati
 - **Toolbar:** Pan / Draw / Zoom+/− (mouse); Draw required to paint cells
 - **Scroll wheel:** zoom camera toward / away from the cursor (disabled while a pane or color picker is open)
 
-Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimensions and migrates the live board (playback and generation continue). In **forced** mode, only recenters the board — dimensions unchanged.
+Resizing the window or toggling fullscreen only clamps the camera so the board stays covering the viewport — simulation `rows`/`cols` are unchanged until Settings Apply.
 
 ## RLE Support
 
@@ -172,8 +174,8 @@ Resizing the window or toggling fullscreen: in **auto** mode, refits grid dimens
 
 ## Features
 
-1. Auto-fit board size to window (`tileSize` fixed; `rows`/`cols` derived on load and resize)
-2. **Step animation** — idle preview dots for next state; on step, square preview → commit morph with pseudo-3D tiles (toggle in Settings; skipped below 6 px tile size)
+1. Fixed world size (`rows`/`cols`, default 512²) with camera pan/zoom (integer visual tiles)
+2. **Step animation** — idle preview dots for next state; on step, square preview → commit morph with pseudo-3D tiles (toggle in Settings; skipped below 6 px visual tile size)
 3. Multiple color schemes (themes)
 4. Alternate rule strings (`Bx/Sy`)
   - `B` digits: neighbor counts that birth a dead cell

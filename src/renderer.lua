@@ -59,7 +59,7 @@ function M.getLayout(config, cam)
     windowHeight,
     config.rows,
     config.cols,
-    config.tileSize,
+    config.baseVisualTile or config.tileSize,
     config.statusBarHeight
   )
 end
@@ -166,7 +166,12 @@ local function drawNextStatePreview(x, y, tileSize, theme, config, alive, change
   drawCenteredSquare(centerX, centerY, theme, previewAlive, previewSize)
 end
 
-local function drawIdleCell(x, y, tileSize, theme, config, alive, change, previewSize)
+local function drawIdleCell(x, y, tileSize, theme, config, alive, change, previewSize, lod)
+  if lod then
+    setColor(alive and theme.alive or theme.dead)
+    love.graphics.rectangle("fill", x, y, tileSize, tileSize)
+    return
+  end
   drawExtrudedTile(x, y, tileSize, theme, alive, tileDepth(config, alive))
   drawNextStatePreview(x, y, tileSize, theme, config, alive, change, previewSize)
 end
@@ -185,7 +190,11 @@ function M.drawHover(config, cam, row, col, theme)
   love.graphics.rectangle("line", x + 0.5, y + 0.5, tileSize, tileSize)
 end
 
-local function drawCell(world, theme, config, layout, row, col, animState)
+local function useLod(tileSize, config)
+  return tileSize < (config.stepAnimMinTileSize or 6)
+end
+
+local function drawCell(world, theme, config, layout, row, col, animState, lod)
   local tileSize = layout.tileSize
   local x = layout.offsetX + (col - 1) * tileSize
   local y = layout.offsetY + (row - 1) * tileSize
@@ -193,8 +202,8 @@ local function drawCell(world, theme, config, layout, row, col, animState)
   local change = stepAnimation.getCellChange(world, row, col)
   local previewSize = previewDotSize(tileSize, config)
 
-  if stepAnimation.isIdle(animState) or not stepAnimation.effectiveEnabled(config) then
-    drawIdleCell(x, y, tileSize, theme, config, alive, change, previewSize)
+  if lod or stepAnimation.isIdle(animState) or not stepAnimation.effectiveEnabled(config, tileSize) then
+    drawIdleCell(x, y, tileSize, theme, config, alive, change, previewSize, lod)
     return
   end
 
@@ -225,21 +234,33 @@ end
 function M.draw(world, theme, config, animState, cam)
   local boardLayout = M.getLayout(config, cam)
   local tileSize = boardLayout.tileSize
+  local windowWidth, windowHeight = love.graphics.getDimensions()
+  local viewH = windowHeight - config.statusBarHeight
+  local lod = useLod(tileSize, config)
+  local rowStart, rowEnd, colStart, colEnd = camera.visibleCellRange(boardLayout, windowWidth, viewH)
 
-  for row = 1, world.rows do
-    for col = 1, world.cols do
-      drawCell(world, theme, config, boardLayout, row, col, animState)
+  for row = rowStart, rowEnd do
+    for col = colStart, colEnd do
+      drawCell(world, theme, config, boardLayout, row, col, animState, lod)
     end
   end
 
-  setColor(theme.grid)
-  for col = 0, world.cols do
-    local x = boardLayout.offsetX + col * tileSize + 0.5
-    love.graphics.line(x, boardLayout.offsetY + 0.5, x, boardLayout.offsetY + boardLayout.boardHeight + 0.5)
+  if lod or tileSize < 3 then
+    return
   end
-  for row = 0, world.rows do
+
+  setColor(theme.grid)
+  for col = colStart - 1, colEnd do
+    local x = boardLayout.offsetX + col * tileSize + 0.5
+    local y0 = boardLayout.offsetY + (rowStart - 1) * tileSize + 0.5
+    local y1 = boardLayout.offsetY + rowEnd * tileSize + 0.5
+    love.graphics.line(x, y0, x, y1)
+  end
+  for row = rowStart - 1, rowEnd do
     local y = boardLayout.offsetY + row * tileSize + 0.5
-    love.graphics.line(boardLayout.offsetX + 0.5, y, boardLayout.offsetX + boardLayout.boardWidth + 0.5, y)
+    local x0 = boardLayout.offsetX + (colStart - 1) * tileSize + 0.5
+    local x1 = boardLayout.offsetX + colEnd * tileSize + 0.5
+    love.graphics.line(x0, y, x1, y)
   end
 end
 

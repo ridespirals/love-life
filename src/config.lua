@@ -1,13 +1,14 @@
 local config = {
-  -- Starting hints for conf.lua window size (also duplicated in conf.lua because
-  -- fused builds cannot dofile inside .love); overridden at runtime by auto-fit.
-  -- App startup pattern is defaultPattern below; patterns.lua uses "glider" as get() fallback only.
-  rows = 40,
-  cols = 60,
+  -- Fixed simulation world (cells). Window resize does not change these;
+  -- Settings Apply can. Visual scale comes from baseVisualTile * camera.zoom.
+  rows = 512,
+  cols = 512,
+  baseVisualTile = 24,
+  -- Legacy alias used by layout helpers and older call sites; keep in sync with baseVisualTile.
   tileSize = 24,
-  gridMode = "auto",
-  forcedRows = 40,
-  forcedCols = 60,
+  gridMode = "forced",
+  forcedRows = 512,
+  forcedCols = 512,
   forcedTileSize = 24,
   activeTheme = "solarized",
   activeRule = "conway",
@@ -28,8 +29,8 @@ local config = {
   buttonFxTrailSpacingSec = 0.05,
   buttonFxExpandPx = 10,
   cameraDefaultZoom = 1,
-  cameraZoomMin = 0.25,
-  cameraZoomMax = 4,
+  cameraZoomMin = 0.05,
+  cameraZoomMax = 8,
   cameraZoomStep = 1.25,
   toolbarMargin = 12,
   toolbarButtonSize = 32,

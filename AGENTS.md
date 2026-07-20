@@ -3,8 +3,8 @@
 ## Project Context
 - Project: `love-life`
 - Purpose: Conway's Game of Life in Lua using LÖVE.
-- **Current phase:** Phase 7 ✓ (floating toolbar); Phase 6 ✓ (camera). **v1.5.0** ready to tag (merge `phase67-camera-and-world` → `main` first).
-- **Active branch:** `phase67-camera-and-world` (camera/toolbar release slice)
+- **Current phase:** World/camera model W1–W3 ✓ (fixed 512² world, zoom-as-tile, cull/LOD). Phase 8 controller still backlog.
+- **Active branch:** `phase67-camera-and-world`
 - **Last merge:** PR #3 `phase-2-rule-theme` (rule/theme pickers + swatches + `layoutGrid`).
 - **Backlog captured (not started, not sequenced):** controller input layer — see `plan/10-controller-input.md`.
 - **Shipped (v1.4.1):** control-button transition fx (`src/ui/button_fx.lua`) — expanding outline + fading trails on Play/Pause/Step/Restart.
@@ -18,10 +18,10 @@
 - **Shipped pattern picker + drawing (Phase 4):** `src/ui/panes/pattern_pane.lua` — catalog grid, Apply/Clear/Save/Delete; `src/input/board.lua` — paused left-drag toggle / right-drag erase; `patterns.fromWorld` export; unsaved edits tracked as `custom` applied id.
 - **Color model:** canonical colors are LÖVE RGB tables with channels in `[0, 1]` (`src/color.lua`). Hex is interchange for UI fields and builtin theme definitions; userspace theme files store float RGB (legacy hex still loads). HSV color picker dialog (`src/ui/color_picker.lua`) opens from theme pane hex fields/swatches.
 - **Shipped animation (Phase 0):** `src/step_animation.lua` (preview → commit phases), `src/renderer.lua` (square morph + 3D extrusion + idle markers), wired in `main.lua`.
-- **Config knobs:** `src/config.lua` — `paneWidth`, `paneHeight`, `paneBackdropAlpha`, `stepAnimPreviewSec`, …
+- **Config knobs:** `src/config.lua` — `rows`/`cols` (fixed world), `baseVisualTile`, `paneWidth`, …
 - **Do not re-litigate Phase 0 visuals** without explicit ask — settled after circle → square → 3D + idle-preview iterations.
-- **Shipped grid settings (Phase 5):** `src/ui/panes/settings_pane.lua` — Auto/Forced mode, Animate On/Off, tile/rows/cols fields, Apply; `layout.computeBoardLayout` letterbox centering; auto resize refits grid and migrates live board; forced resize only recenters; `grid.resize` centers cells on dimension change. `src/ui/text_field.lua` — shared caret/selection editing for pane fields; Enter applies rule/pattern/grid drafts.
-- **Shipped camera (Phase 6):** `src/camera.lua` — world↔screen transforms, pan/zoom; renderer/board input read camera layout. Load-time view matches prior letterbox centering at zoom=1. Scroll wheel zooms around the cursor; toolbar +/− zoom around view center.
+- **Shipped grid settings (Phase 5 → W1/W2):** Settings pane is world **Rows/Cols** + Animate On/Off (Auto/Forced and Tile removed). Window resize does not change sim size. See `plan/13-world-and-camera-model.md`.
+- **Shipped camera (Phase 6 + W1–W3):** `src/camera.lua` — cell-unit world, integer visual tiles from zoom, pan/zoom clamped so the board covers the viewport; renderer culls + LOD when tiles are small. Scroll wheel zooms around the cursor; toolbar +/− around view center.
 - **Shipped floating toolbar (Phase 7):** `src/ui/toolbar.lua` — always-visible Pan / Draw / Zoom+/− (Pan selected by default); mouse-following tooltips; Draw pauses on select and supersedes always-on paused board drawing; Pan drag does not pause. Shared hover wash on toolbar, status-bar chips/buttons, and pane buttons.
 - **Phase 8+ scope:** Controller input — backlog. See `plan/10-controller-input.md`.
 - **Avoid parallelizing** large renderer/main.lua work with unrelated features on one branch.
@@ -44,20 +44,21 @@ Complete phases in order; each leaves the app runnable and tests green.
 | **Phase 3** ✓ | Userspace save/load (`src/userdata.lua`) |
 | **Phase 4** ✓ | Pattern picker + board drawing |
 | **Phase 5** ✓ | Grid settings (auto vs forced, letterbox) |
-| **Phase 6** ✓ | Camera & viewport — pan/zoom, world ≠ visible area (`src/camera.lua`) |
-| **Phase 7** ✓ | Floating toolbar — pan tool, draw tool, zoom +/− (`src/ui/toolbar.lua`) |
+| **Phase 6** ✓ | Camera & viewport — pan/zoom (`src/camera.lua`) |
+| **Phase 7** ✓ | Floating toolbar — pan/draw/zoom (`src/ui/toolbar.lua`) |
+| **W1–W3** ✓ | Fixed world, zoom-as-tile-size, cull/LOD (`plan/13-world-and-camera-model.md`) |
 | **Phase 8** (backlog) | Controller input layer — unified mouse/keyboard/gamepad actions (`src/input/controller.lua`) |
 
-Phase 0 ✓ · Phase 1 ✓ · Phase 2 ✓ · Phase 3 ✓ · Phase 4 ✓ · Phase 5 ✓ · Phase 6 ✓ · Phase 7 ✓. **Next:** Phase 8 (controller) after v1.5.0 ships.
+Phase 0–7 ✓ · W1–W3 ✓. **Next:** Phase 8 (controller) or resequence per `plan/README.md`.
 
 See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoints, vision diagram, and file-level detail split by application area).
 
 ## Product Direction
 - Build a configurable board of square tiles representing world state.
-- Grid `rows`/`cols` **auto-fit** the window at load and on resize (see `src/layout.lua`); config values are starting hints for initial window sizing.
+- Simulation world is a **fixed** dense `rows`×`cols` (default **512×512**); camera pan/zoom shows a viewport. Window resize clamps the camera only — does not resize the sim.
 - Cell states: alive, dead.
 - Toroidal universe (edges wrap).
-- Visuals use named **themes** (colors only, not sizes).
+- Visuals use named **themes** (colors only, not sizes). Visual cell size comes from `baseVisualTile * zoom` (integer-snapped).
 - Built-in themes: 21 presets in `src/themes.lua` (`classic`, `zenburn`, `solarized`, plus vim-derived schemes such as `monokai`, `gruvbox`, `dracula`, `nord`, …). Each theme has `alive`, `dead`, `grid`, `background`, and optional `accent` (vim syntax hue for pseudo-3D extrusion shadows).
 - Default active theme in shipped `src/config.lua`: `solarized` (product direction still treats `classic` as the reference preset).
 - Default load pattern in shipped `src/config.lua`: `lifeview` (`patterns.lua` still falls back to `glider` for unknown ids).
@@ -65,18 +66,17 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 ## Post-1.0 Product Direction
 - Status bar becomes the **primary control surface**: clickable chips open docked panes above the bar.
 - **Draft vs save:** Theme drafts auto-apply while editing; Rule, Pattern, and Grid use explicit Apply. Save writes to the LÖVE save directory (`patterns/`, `rules/`, `themes/`).
-- **Grid modes:** `"auto"` (current resize behavior) or `"forced"` (fixed rows/cols/tileSize with letterbox centering).
-- **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (auto mode migrates live board; forced mode recenters only).
+- **World size:** Settings edits rows/cols; zoom (toolbar / scroll) sets on-screen tile size. Auto-fit as sim policy is retired (see `plan/13-world-and-camera-model.md`).
+- **Fullscreen:** F11 and Alt+Enter toggle (`main.lua`); keyboard-only. Triggers `love.resize` (camera clamp only).
 - Board drawing and editing require the **Draw** tool (selecting it pauses playback).
 - **Playback continuity:** opening a pane does **not** pause the simulation. Theme selection auto-applies as a live visual swap while play continues. Rule **Apply** pauses and recomputes next-state preview (cells preserved). Pattern **Apply** pauses and reloads the board. Grid **Apply** rebuilds dimensions while preserving the live board and playback. Only block playback **keyboard** shortcuts while a pane has focus—not the timer in `love.update`.
 
 ## Backlog: controller input (Phase 8, not started)
-- **Camera/viewport (Phase 6) ✓:** `src/camera.lua` (world↔screen transforms, pan, zoom). Load-time view remains pixel-identical to centered zoom=1 board.
+- **Camera/viewport (Phase 6 + W1–W3) ✓:** fixed world, integer visual tiles, pan/zoom clamped to board, viewport culling + LOD. See `plan/13-world-and-camera-model.md`.
 - **Floating toolbar (Phase 7) ✓:** always-visible panel (upper-left) — Pan, Draw, Zoom +/−. Draw pauses on select; Pan does not. Supersedes always-on paused board drawing.
 - **Controller input layer (Phase 8):** deliberately its own phase — adds `src/input/controller.lua`, an action-dispatch layer so mouse, keyboard, and gamepad (`love.gamepadpressed`/`love.gamepadaxis`) all drive the same named actions (pan, zoom, play/pause, step, tool select).
 - **Play/Pause/Step/Restart button transition fx ✓:** standalone config-driven component (`src/ui/button_fx.lua`).
-- **Open, not decided:** whether Phase 5's forced/letterbox grid mode is still needed once a camera exists; toolbar icon sprite sheet vs glyphs. See `plan/08-camera-and-viewport.md` and `plan/07-grid-settings.md`.
-
+- **Later (optional):** expand/crop hybrid (W4); sparse/open world (W5).
 ## Rulestrings
 - Life rulestrings use the form `Bx/Sy`:
   - `B` digits = neighbor counts that birth a dead cell (exact match).
@@ -104,7 +104,7 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - **M3-C** ✓: RLE parser and file resolution in `src/patterns.lua` (`.lua` first, then `.rle`).
 - **Fast mode:** hold `f` → Play button shows `Play +`, step interval `0.05` via `playback.setStepInterval`.
 - `stepInterval` = seconds between auto-generations when playing (config default `0.10`; not shown on status bar).
-- **Resize:** In **auto** mode, `love.resize` refits rows/cols and migrates the live board (playback and generation continue). In **forced** mode, resize only recenters the letterboxed board; dimensions stay fixed until Settings Apply.
+- **Resize:** window resize / fullscreen only clamps the camera; world `rows`/`cols` stay fixed until Settings Apply.
 - **Panes open:** playback timer keeps running; only keyboard shortcuts are blocked. Theme selection auto-applies (does not pause). Rule Apply pauses and recomputes `next` under the new rulestring.
 - **Step backward:** deferred; future **history stack** (needs `grid.clone`).
 
@@ -112,10 +112,9 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 - Maintain both `current` and `next` generation buffers; `grid.computeNext` runs after each commit and on load/restart.
 - **Idle / paused:** `current` on pseudo-3D tiles plus tiny square markers where `current ~= next` (unobtrusive next-state preview).
 - **Step/play:** preview phase animates the marker; commit phase grows/shrinks the square to the new state; `grid.step` runs when both phases complete.
-- **Rendering:** square morphs (not circles); alive tiles extruded (`tileDepthAlivePx`); dead tiles flat or shallow (`tileDepthDeadPx`).
-- Config: `stepAnimEnabled`, `stepAnimMinTileSize`, `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`. Fast mode scales morph speed and step interval. Animations are skipped when `stepAnimEnabled` is false or `tileSize` is below `stepAnimMinTileSize` (default 6); Settings pane exposes the On/Off preference.
-- Shipped defaults (see `src/config.lua`): `tileSize` 24, preview min 4px / scale 0.15, alive depth 3px, dead depth 0.
-
+- **Rendering:** square morphs (not circles); alive tiles extruded (`tileDepthAlivePx`); dead tiles flat or shallow (`tileDepthDeadPx`). Viewport-culled; LOD (flat fill) when visual tiles are small.
+- Config: `stepAnimEnabled`, `stepAnimMinTileSize`, `stepAnimPreviewSec`, `stepAnimCommitSec`, `previewDotScale`, `previewDotMinPx`, `tileDepthAlivePx`, `tileDepthDeadPx`. Fast mode scales morph speed and step interval. Animations are skipped when `stepAnimEnabled` is false or **visual** tile size is below `stepAnimMinTileSize` (default 6); Settings pane exposes the On/Off preference.
+- Shipped defaults (see `src/config.lua`): world 512×512, `baseVisualTile` 24, preview min 4px / scale 0.15, alive depth 3px, dead depth 0.
 ## Conway Rules Reference
 - Default preset `conway` (`B3/S23`); alternate `ant_colony` (`B3/S234`) via `activeRule` in config.
 - Universe: 2D square grid with **toroidal wrap** at edges.
@@ -130,27 +129,27 @@ See [`plan/README.md`](plan/README.md) for the plan directory overview (checkpoi
 ## Planned Runtime/Code Shape
 - `conf.lua`: window/app configuration (resizable).
 - `main.lua`: LÖVE entry, input, lifecycle.
-- `src/config.lua`: board dimensions (runtime auto-fit), theme, `activeRule`, `defaultPattern`, `stepInterval`, status bar height, step animation and tile depth keys.
+- `src/config.lua`: fixed world `rows`/`cols`, `baseVisualTile`, theme, `activeRule`, `defaultPattern`, `stepInterval`, status bar height, step animation and tile depth keys.
 - `src/themes.lua`: named theme registry.
 - `src/rules.lua`: named rulestring presets and `Bx/Sy` parser.
 - `src/grid.lua`: world buffers, toroidal neighbor logic, `computeNext(world, rules)`, `step(world, rules)`.
 - `src/patterns.lua`: load/apply patterns from `patterns/*.lua` and `patterns/*.rle`.
 - `src/patterns/rle.lua`: RLE parser (`x/y/rule` header, run counts, `$`, `!`).
-- `src/renderer.lua`: theme-driven board render (viewport above status bar).
+- `src/renderer.lua`: theme-driven board render with viewport culling + LOD.
 - `src/ui/statusbar.lua`: bottom stats + playback controls (**M2-C** display, **M3-B** controls; **Phase 1+** clickable chips).
 - `src/ui/pane.lua`: pane manager (**Phase 1** ✓).
 - `src/session.lua`: draft/applied session state (**Phase 1** ✓).
 - `src/ui/text_field.lua`: shared pane text-field editing (caret, selection) (**Phase 5** ✓).
-- `src/ui/panes/*.lua`: rule, theme, pattern, settings panes (**Phases 2–5**).
+- `src/ui/panes/*.lua`: rule, theme, pattern, settings panes (**Phases 2–5**; Settings = world rows/cols + Animate).
 - `src/step_animation.lua`: per-step morph timer; defers `grid.step` until complete (**Phase 0**).
 - `src/color.lua`: LÖVE-native RGB 0–1 color helpers + HSV/hex conversions.
 - `src/userdata.lua`: userspace save/load (**Phase 3** ✓).
 - `src/ui/color_picker.lua`: modal HSV (saturation×value square + hue bar) dialog.
 - `src/input/board.lua`: screen-to-cell + stroke drawing (**Phase 4**; gated by Phase 7 Draw tool).
 - `src/playback.lua`: play/pause/step-forward state (**M3-A**; **Phase 0** defers `grid.step` until morph completes).
-- `src/layout.lua`: viewport-to-grid sizing (`computeGridSize`; **Phase 5** ✓ forced letterbox via `computeBoardLayout`).
+- `src/layout.lua`: legacy letterbox helpers (still used by tests / fallback layout).
 - `src/util.lua`: shared helpers (`wrap`).
-- `src/camera.lua`: world↔screen transforms, pan/zoom state (**Phase 6** ✓).
+- `src/camera.lua`: cell-unit world↔screen, visual tile snap, pan/zoom clamp, visible range (**Phase 6 + W1–W3** ✓).
 - `src/ui/toolbar.lua`: always-visible floating panel — pan/draw tool buttons, zoom +/− (**Phase 7** ✓).
 - `src/input/controller.lua`: unified mouse/keyboard/gamepad action dispatch (**Phase 8**, backlog).
 - `src/ui/button_fx.lua`: reusable button transition animation for Play/Pause/Step/Restart (expanding outline + trails) ✓.

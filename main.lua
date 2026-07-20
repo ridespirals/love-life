@@ -11,7 +11,6 @@ local session = require("src.session")
 local rule_pane = require("src.ui.panes.rule_pane")
 local theme_pane = require("src.ui.panes.theme_pane")
 local board = require("src.input.board")
-local layout = require("src.layout")
 local camera = require("src.camera")
 local settings_pane = require("src.ui.panes.settings_pane")
 local toolbar = require("src.ui.toolbar")
@@ -298,25 +297,15 @@ local function reloadAppliedPattern()
   sessionState.appliedPatternId = patternId
 end
 
-local function applyAutoGridSize()
+local function viewSize()
   local windowWidth, windowHeight = love.graphics.getDimensions()
-  config.rows, config.cols = layout.computeGridSize(
-    windowWidth,
-    windowHeight,
-    config.tileSize,
-    config.statusBarHeight
-  )
+  return windowWidth, windowHeight - config.statusBarHeight
 end
 
 local function resetSimulation(opts)
   stepAnimation.cancel(animState)
 
-  if opts and opts.resize then
-    if sessionState.gridMode == "auto" then
-      applyAutoGridSize()
-      world = grid.create(config.rows, config.cols)
-    end
-  elseif opts and opts.rebuild then
+  if opts and opts.rebuild then
     world = grid.create(config.rows, config.cols)
   end
 
@@ -426,11 +415,15 @@ local function handleToolbarHit(hit)
     return true
   end
   if hit == "zoom_in" then
-    camera.zoomAtViewCenter(cameraState, cameraState.zoomStep)
+    local viewW, viewH = viewSize()
+    camera.zoomAtViewCenter(cameraState, cameraState.zoomStep, config, viewW, viewH)
+    syncAnimEnabled()
     return true
   end
   if hit == "zoom_out" then
-    camera.zoomAtViewCenter(cameraState, 1 / cameraState.zoomStep)
+    local viewW, viewH = viewSize()
+    camera.zoomAtViewCenter(cameraState, 1 / cameraState.zoomStep, config, viewW, viewH)
+    syncAnimEnabled()
     return true
   end
   if hit == "panel" then
@@ -464,12 +457,26 @@ local function tryBeginBoardStroke(x, y, button)
 end
 
 local function syncAnimEnabled()
-  stepAnimation.syncEnabled(animState, config)
+  if not animState or not cameraState then
+    return
+  end
+  local visualTile = camera.visualTileSize(cameraState, config)
+  stepAnimation.syncEnabled(animState, config, visualTile)
+end
+
+local function clampCamera()
+  if not cameraState then
+    return
+  end
+  local viewW, viewH = viewSize()
+  camera.clampToBoard(cameraState, config, viewW, viewH)
+  syncAnimEnabled()
 end
 
 local function resetCamera()
   if cameraState then
     camera.resetToBoard(cameraState, config)
+    clampCamera()
   end
 end
 
@@ -486,22 +493,8 @@ local function migrateWorldToGridSize()
   stepAnimation.cancel(animState)
   world = grid.resize(world, config.rows, config.cols)
   grid.computeNext(world, activeRule)
-  syncAnimEnabled()
   resetCamera()
   return true
-end
-
-local function rebuildWorldForWindow()
-  if sessionState.gridMode == "auto" then
-    applyAutoGridSize()
-    if not world then
-      world = grid.create(config.rows, config.cols)
-      reloadAppliedPattern()
-      resetCamera()
-      return
-    end
-    migrateWorldToGridSize()
-  end
 end
 
 local function applyGridSettings()
@@ -510,21 +503,14 @@ local function applyGridSettings()
     return
   end
 
-  sessionState.gridMode = settings.mode
-  config.gridMode = settings.mode
-  config.tileSize = settings.tileSize
+  sessionState.gridMode = "forced"
+  config.gridMode = "forced"
+  config.rows = settings.rows
+  config.cols = settings.cols
+  config.forcedRows = settings.rows
+  config.forcedCols = settings.cols
   if settings.stepAnimEnabled ~= nil then
     config.stepAnimEnabled = settings.stepAnimEnabled
-  end
-
-  if settings.mode == "forced" then
-    config.forcedRows = settings.forcedRows
-    config.forcedCols = settings.forcedCols
-    config.forcedTileSize = settings.forcedTileSize
-    config.rows = settings.rows
-    config.cols = settings.cols
-  else
-    applyAutoGridSize()
   end
 
   if not world then
@@ -590,27 +576,21 @@ function love.load()
     ruleId = config.activeRule,
     themeId = config.activeTheme,
     patternId = config.defaultPattern,
-    gridMode = config.gridMode or "auto",
+    gridMode = "forced",
   })
   paneState = pane.create()
   colorPickerState = color_picker.create()
   boardState = board.create()
   fastMode = false
   applyAnimSpeed()
-  if sessionState.gridMode == "forced" then
-    config.rows = config.forcedRows
-    config.cols = config.forcedCols
-    config.tileSize = config.forcedTileSize
-    world = grid.create(config.rows, config.cols)
-    reloadAppliedPattern()
-  else
-    rebuildWorldForWindow()
-  end
+  config.gridMode = "forced"
+  world = grid.create(config.rows, config.cols)
+  reloadAppliedPattern()
   resetCamera()
 end
 
 function love.resize()
-  rebuildWorldForWindow()
+  clampCamera()
 end
 
 function love.update(dt)
@@ -840,7 +820,8 @@ function love.mousemoved(x, y)
   end
 
   if panDrag then
-    camera.panScreen(cameraState, x - panDrag.lastX, y - panDrag.lastY)
+    camera.panScreen(cameraState, x - panDrag.lastX, y - panDrag.lastY, config)
+    clampCamera()
     panDrag.lastX = x
     panDrag.lastY = y
     hoverRow, hoverCol = nil, nil
@@ -881,8 +862,9 @@ function love.wheelmoved(_dx, dy)
     return
   end
 
-  local worldX, worldY = camera.screenToWorld(cameraState, mx, my, windowW, viewH)
-  camera.zoomBy(cameraState, cameraState.zoomStep ^ dy, worldX, worldY)
+  local worldX, worldY = camera.screenToWorld(cameraState, mx, my, windowW, viewH, config)
+  camera.zoomBy(cameraState, cameraState.zoomStep ^ dy, worldX, worldY, config, windowW, viewH)
+  syncAnimEnabled()
 end
 
 function love.mousereleased(x, y, button)

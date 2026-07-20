@@ -1,6 +1,7 @@
--- World↔screen camera: pan/zoom independent of simulation grid size.
--- World origin is the top-left of cell (1,1) in board pixel space (cols*tileSize).
--- At reset (centered, zoom=1) screen offsets match layout.computeBoardLayout.
+-- World↔screen camera: pan/zoom over a fixed dense board.
+-- World units are cells (board size = cols × rows). Screen tile size is an
+-- integer visualTile = max(1, round(baseVisualTile * zoom)).
+-- Pan/zoom are clamped so the board always covers the viewport (no void).
 local M = {}
 
 local function clamp(value, minValue, maxValue)
@@ -19,23 +20,35 @@ function M.create(config)
     x = 0,
     y = 0,
     zoom = config.cameraDefaultZoom or 1,
-    zoomMin = config.cameraZoomMin or 0.25,
-    zoomMax = config.cameraZoomMax or 4,
+    zoomMin = config.cameraZoomMin or 0.05,
+    zoomMax = config.cameraZoomMax or 8,
     zoomStep = config.cameraZoomStep or 1.25,
     defaultZoom = config.cameraDefaultZoom or 1,
   }
 end
 
--- Center on the board at default zoom. boardWidth/Height are world pixels.
+function M.baseVisualTile(config)
+  config = config or {}
+  return config.baseVisualTile or config.tileSize or 24
+end
+
+-- Integer screen pixels per cell (snapped).
+function M.visualTileSize(camera, config)
+  local base = M.baseVisualTile(config)
+  local zoom = camera and camera.zoom or 1
+  return math.max(1, math.floor(base * zoom + 0.5))
+end
+
+-- Board size in cell units.
+function M.boardSize(config)
+  return config.cols or 1, config.rows or 1
+end
+
+-- Center on the board at default zoom. boardWidth/Height are cell units.
 function M.reset(camera, boardWidth, boardHeight)
   camera.x = boardWidth / 2
   camera.y = boardHeight / 2
   camera.zoom = camera.defaultZoom
-end
-
-function M.boardSize(config)
-  local tileSize = config.tileSize or 1
-  return (config.cols or 1) * tileSize, (config.rows or 1) * tileSize
 end
 
 function M.resetToBoard(camera, config)
@@ -43,62 +56,138 @@ function M.resetToBoard(camera, config)
   M.reset(camera, boardWidth, boardHeight)
 end
 
--- Screen origin of world (0,0): matches letterbox floor math at zoom=1 centered.
-function M.origin(camera, viewW, viewH)
-  local zoom = camera.zoom
-  return math.floor(viewW / 2 - camera.x * zoom), math.floor(viewH / 2 - camera.y * zoom)
+-- Minimum zoom so the board still covers the entire viewport (no letterbox void).
+function M.coverZoom(config, viewW, viewH)
+  local base = M.baseVisualTile(config)
+  local cols, rows = M.boardSize(config)
+  if cols < 1 then
+    cols = 1
+  end
+  if rows < 1 then
+    rows = 1
+  end
+  return math.max(viewW / (cols * base), viewH / (rows * base))
 end
 
-function M.worldToScreen(camera, worldX, worldY, viewW, viewH)
-  local ox, oy = M.origin(camera, viewW, viewH)
-  local zoom = camera.zoom
-  return ox + worldX * zoom, oy + worldY * zoom
+function M.zoomMinForView(camera, config, viewW, viewH)
+  local cover = M.coverZoom(config, viewW, viewH)
+  return math.max(camera.zoomMin or 0.05, cover)
 end
 
-function M.screenToWorld(camera, screenX, screenY, viewW, viewH)
-  local ox, oy = M.origin(camera, viewW, viewH)
-  local zoom = camera.zoom
-  return (screenX - ox) / zoom, (screenY - oy) / zoom
+-- Keep pan/zoom so the viewport stays over the board.
+function M.clampToBoard(camera, config, viewW, viewH)
+  local minZoom = M.zoomMinForView(camera, config, viewW, viewH)
+  local maxZoom = camera.zoomMax or 8
+  camera.zoom = clamp(camera.zoom, minZoom, maxZoom)
+
+  local vt = M.visualTileSize(camera, config)
+  local cols, rows = M.boardSize(config)
+  local viewCellsW = viewW / vt
+  local viewCellsH = viewH / vt
+
+  local minX = viewCellsW / 2
+  local maxX = cols - viewCellsW / 2
+  if minX > maxX then
+    camera.x = cols / 2
+  else
+    camera.x = clamp(camera.x, minX, maxX)
+  end
+
+  local minY = viewCellsH / 2
+  local maxY = rows - viewCellsH / 2
+  if minY > maxY then
+    camera.y = rows / 2
+  else
+    camera.y = clamp(camera.y, minY, maxY)
+  end
 end
 
--- Move the camera in world-space pixels (positive x moves view right content left).
+function M.origin(camera, viewW, viewH, config)
+  local vt = M.visualTileSize(camera, config)
+  return math.floor(viewW / 2 - camera.x * vt), math.floor(viewH / 2 - camera.y * vt)
+end
+
+function M.worldToScreen(camera, worldX, worldY, viewW, viewH, config)
+  local ox, oy = M.origin(camera, viewW, viewH, config)
+  local vt = M.visualTileSize(camera, config)
+  return ox + worldX * vt, oy + worldY * vt
+end
+
+function M.screenToWorld(camera, screenX, screenY, viewW, viewH, config)
+  local ox, oy = M.origin(camera, viewW, viewH, config)
+  local vt = M.visualTileSize(camera, config)
+  return (screenX - ox) / vt, (screenY - oy) / vt
+end
+
+-- Move the camera in cell units (positive x moves view right content left).
 function M.pan(camera, dxWorld, dyWorld)
   camera.x = camera.x + dxWorld
   camera.y = camera.y + dyWorld
 end
 
 -- Pan by screen-pixel drag (positive dxScreen = drag right = content follows finger).
-function M.panScreen(camera, dxScreen, dyScreen)
-  camera.x = camera.x - dxScreen / camera.zoom
-  camera.y = camera.y - dyScreen / camera.zoom
+function M.panScreen(camera, dxScreen, dyScreen, config)
+  local vt = M.visualTileSize(camera, config)
+  camera.x = camera.x - dxScreen / vt
+  camera.y = camera.y - dyScreen / vt
 end
 
--- Zoom by factor around a world-space anchor (anchor stays fixed on screen).
-function M.zoomBy(camera, factor, anchorWorldX, anchorWorldY)
+-- Zoom by factor around a world-space (cell) anchor. Optional view size enables cover clamp.
+function M.zoomBy(camera, factor, anchorWorldX, anchorWorldY, config, viewW, viewH)
   local oldZoom = camera.zoom
-  local newZoom = clamp(oldZoom * factor, camera.zoomMin, camera.zoomMax)
+  local minZoom = camera.zoomMin or 0.05
+  local maxZoom = camera.zoomMax or 8
+  if config and viewW and viewH then
+    minZoom = M.zoomMinForView(camera, config, viewW, viewH)
+  end
+  local newZoom = clamp(oldZoom * factor, minZoom, maxZoom)
   if newZoom == oldZoom then
+    if config and viewW and viewH then
+      M.clampToBoard(camera, config, viewW, viewH)
+    end
     return false
   end
 
   camera.x = anchorWorldX + (camera.x - anchorWorldX) * (oldZoom / newZoom)
   camera.y = anchorWorldY + (camera.y - anchorWorldY) * (oldZoom / newZoom)
   camera.zoom = newZoom
+  if config and viewW and viewH then
+    M.clampToBoard(camera, config, viewW, viewH)
+  end
   return true
 end
 
-function M.zoomAtViewCenter(camera, factor)
-  return M.zoomBy(camera, factor, camera.x, camera.y)
+function M.zoomAtViewCenter(camera, factor, config, viewW, viewH)
+  return M.zoomBy(camera, factor, camera.x, camera.y, config, viewW, viewH)
 end
 
--- Layout table compatible with renderer/board (screen-space tile size includes zoom).
+-- Inclusive visible cell indices for viewport culling.
+function M.visibleCellRange(layout, viewW, viewH)
+  local tileSize = layout.tileSize
+  local cols = layout.cols
+  local rows = layout.rows
+  if not tileSize or tileSize <= 0 then
+    return 1, rows, 1, cols
+  end
+
+  local colStart = math.max(1, math.floor((0 - layout.offsetX) / tileSize) + 1)
+  local colEnd = math.min(cols, math.ceil((viewW - layout.offsetX) / tileSize))
+  local rowStart = math.max(1, math.floor((0 - layout.offsetY) / tileSize) + 1)
+  local rowEnd = math.min(rows, math.ceil((viewH - layout.offsetY) / tileSize))
+  if colStart > colEnd or rowStart > rowEnd then
+    return 1, 0, 1, 0
+  end
+  return rowStart, rowEnd, colStart, colEnd
+end
+
+-- Layout table compatible with renderer/board (screen-space tile size is snapped).
 function M.computeLayout(camera, config, viewW, viewH)
-  local baseTile = config.tileSize
   local rows = config.rows
   local cols = config.cols
   local zoom = camera.zoom
-  local screenTile = baseTile * zoom
-  local ox, oy = M.origin(camera, viewW, viewH)
+  local screenTile = M.visualTileSize(camera, config)
+  local baseTile = M.baseVisualTile(config)
+  local ox, oy = M.origin(camera, viewW, viewH, config)
 
   return {
     offsetX = ox,

@@ -2,9 +2,9 @@
 
 Decouples the simulated world from the on-screen viewport: pan/zoom, world ≠ visible area.
 
-See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts with [`02-rendering-and-animation.md`](02-rendering-and-animation.md) (replaces the static layout offset math), [`07-grid-settings.md`](07-grid-settings.md) (open overlap with forced/letterbox mode), [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md) (Phase 7 depends on this phase's coordinate transforms), [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md) (board drawing needs the same `screenToCell` math).
+See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts with [`02-rendering-and-animation.md`](02-rendering-and-animation.md) (replaces the static layout offset math), [`07-grid-settings.md`](07-grid-settings.md) (historical forced/letterbox), [`13-world-and-camera-model.md`](13-world-and-camera-model.md) (fixed world, pan clamp, zoom-as-tile-size), [`09-toolbar-and-drawing-tools.md`](09-toolbar-and-drawing-tools.md), [`06-pattern-picker-and-drawing.md`](06-pattern-picker-and-drawing.md).
 
-**Status:** ✓ shipped — `src/camera.lua` + renderer/board wiring; Phase 7 toolbar replaced temporary debug keys.
+**Status:** ✓ shipped — `src/camera.lua` + renderer/board wiring; Phase 7 toolbar; extended by W1–W3 (clamp, integer visual tiles, culling).
 
 ## Development order
 
@@ -37,8 +37,7 @@ See [`README.md`](README.md) for the cross-area roadmap. Depends on / interacts 
 **Checkpoint:** `love .` at load looks unchanged from today; pan and zoom move/scale the view without altering simulation state; `camera_spec` green. ✓
 
 ## Open design considerations
-- **Camera vs. Phase 5 forced/letterbox grid mode:** unresolved whether letterbox centering is still needed once a camera can pan — see [`07-grid-settings.md`](07-grid-settings.md).
-- **Camera + toroidal rendering at the edges:** how the camera should render a finite toroidal world when panned/zoomed past its bounds is unresolved.
+- **Camera vs. Phase 5 forced/letterbox:** resolved in [`13-world-and-camera-model.md`](13-world-and-camera-model.md) — fixed world; auto-fit no longer owns sim size; camera clamps so void is not shown.
 - **Zoom anchor policy:** toolbar +/− buttons anchor on view center; scroll-wheel zoom anchors on the cursor. ✓
 
 ## Config keys (this area)
